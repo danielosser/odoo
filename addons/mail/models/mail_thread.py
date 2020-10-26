@@ -254,21 +254,22 @@ class MailThread(models.AbstractModel):
             - subscribe followers of parent
             - log a creation message
         """
+        threads = super(MailThread, self).create(vals_list)
         if self._context.get('tracking_disable'):
-            threads = super(MailThread, self).create(vals_list)
             threads._discard_tracking()
             return threads
 
-        threads = super(MailThread, self).create(vals_list)
+        if not threads:
+            return threads
+
         # subscribe uid unless asked not to
         if not self._context.get('mail_create_nosubscribe'):
-            for thread in threads:
-                self.env['mail.followers']._insert_followers(
-                    thread._name, thread.ids, self.env.user.partner_id.ids,
-                    None, None, None,
-                    customer_ids=[],
-                    check_existing=False
-                )
+            self.env['mail.followers']._insert_followers(
+                threads._name, threads.ids, self.env.user.partner_id.ids,
+                None, None, None,
+                customer_ids=[],
+                check_existing=False
+            )
 
         # auto_subscribe: take values and defaults into account
         create_values_list = {}
