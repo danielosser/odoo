@@ -17,7 +17,7 @@ import socket
 import time
 import threading
 
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from email.message import EmailMessage
 from lxml import etree
 from werkzeug import urls
@@ -284,10 +284,11 @@ class MailThread(models.AbstractModel):
         # automatic logging unless asked not to (mainly for various testing purpose)
         if not self._context.get('mail_create_nolog'):
             threads_no_subtype = self.env[self._name]
+            threads_subtype = defaultdict(list)
             for thread in threads:
                 subtype = thread._creation_subtype()
                 if subtype:  # if we have a subtype, post message to notify users from _message_auto_subscribe
-                    thread.sudo().message_post(subtype_id=subtype.id, author_id=self.env.user.partner_id.id)
+                    threads_subtype[subtype.id] += [thread.id]
                 else:
                     threads_no_subtype += thread
             if threads_no_subtype:
@@ -295,6 +296,9 @@ class MailThread(models.AbstractModel):
                     (thread.id, thread._creation_message())
                     for thread in threads_no_subtype)
                 threads_no_subtype._message_log_batch(bodies=bodies)
+            if threads_subtype:
+                for subtype_id, thread_ids in threads_subtype.items():
+                    self.browse(thread_ids).message_post(subtype_id=subtype_id, author_id=self.env.user.partner_id.id)
 
         # post track template if a tracked field changed
         threads._discard_tracking()
