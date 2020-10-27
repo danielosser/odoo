@@ -341,56 +341,68 @@ class Channel(models.Model):
             }
         return super(Channel, self)._notify_email_recipient_values(whitelist.ids)
 
-    def _extract_moderation_values(self, message_type, **kwargs):
-        """ This method is used to compute moderation status before the creation
-        of a message.  For this operation the message's author email address is required.
-        This address is returned with status for other computations. """
-        moderation_status = 'accepted'
-        email = ''
-        if self.moderation and message_type in ['email', 'comment']:
-            author_id = kwargs.get('author_id')
-            if author_id and isinstance(author_id, int):
-                email = self.env['res.partner'].browse([author_id]).email
-            elif author_id:
-                email = author_id.email
-            elif kwargs.get('email_from'):
-                email = tools.email_split(kwargs['email_from'])[0]
-            else:
-                email = self.env.user.email
-            if email in self.mapped('moderator_ids.email'):
-                return moderation_status, email
-            status = self.env['mail.moderation'].sudo().search([('email', '=', email), ('channel_id', 'in', self.ids)]).mapped('status')
-            if status and status[0] == 'allow':
-                moderation_status = 'accepted'
-            elif status and status[0] == 'ban':
-                moderation_status = 'rejected'
-            else:
-                moderation_status = 'pending_moderation'
-        return moderation_status, email
+    def _get_moderation_email(self, author_id, email_from):
+        if author_id and isinstance(author_id, int):
+            email = self.env['res.partner'].browse(author_id).email
+        elif author_id:
+            email = author_id.email
+        elif email_from:
+            email = tools.email_split(email_from)[0]
+        else:
+            email = self.env.user.email
+        return email
+
+    def _get_moderation_status(self, email, message_type):
+        if message_type not in ['email', 'comment'] or not self.moderation or email in self.moderator_ids.mapped('email'):
+            return 'accepted'
+        status = self.env['mail.moderation'].sudo().search([
+            ('email', '=', email),
+            ('channel_id', 'in', self.ids)
+        ], limit=1).mapped('status')
+        moderation_status = ''
+        if status and status[0] == 'allow':
+            moderation_status = 'accepted'
+        elif status and status[0] == 'ban':
+            moderation_status = 'rejected'
+        else:
+            moderation_status = 'pending_moderation'
+        return moderation_status
 
     @api.returns('mail.message', lambda value: value.id)
-    def message_post(self, *, message_type='notification', **kwargs):
-        moderation_status, email = self._extract_moderation_values(message_type, **kwargs)
-        if moderation_status == 'rejected':
-            return self.env['mail.message']
+    def message_post(self, *, email_from=None, author_id=None, message_type='notification', **kwargs):
+        """WARNING: this override breaks the logic len(returned messages) == len(self)"""
+        moderation_email_to = ''
+        if any(channel.moderation for channel in self):
+            moderation_email_to = self._get_moderation_email(author_id, email_from)
 
-        self.filtered(lambda channel: channel.is_chat).mapped('channel_last_seen_partner_ids').write({'is_pinned': True})
+        messages = self.env['mail.message']
+        for channel in self:
+            email = moderation_email_to if channel.moderation else ''
+            moderation_status = channel._get_moderation_status(email, message_type)
 
-        message = super(Channel, self.with_context(mail_create_nosubscribe=True)).message_post(message_type=message_type, moderation_status=moderation_status, **kwargs)
+            if moderation_status == 'rejected':
+                continue
 
-        # Notifies the message author when his message is pending moderation if required on channel.
-        # The fields "email_from" and "reply_to" are filled in automatically by method create in model mail.message.
-        if self.moderation_notify and self.moderation_notify_msg and message_type in ['email','comment'] and moderation_status == 'pending_moderation':
-            self.env['mail.mail'].sudo().create({
-                'author_id': self.env.user.partner_id.id,
-                'email_from': self.env.user.company_id.catchall_formatted or self.env.user.company_id.email_formatted,
-                'body_html': self.moderation_notify_msg,
-                'subject': 'Re: %s' % (kwargs.get('subject', '')),
-                'email_to': email,
-                'auto_delete': True,
-                'state': 'outgoing'
-            })
-        return message
+            if channel.is_chat:
+                channel.channel_last_seen_partner_ids.write({'is_pinned': True})
+
+            messages += super(Channel, channel.with_context(mail_create_nosubscribe=True)).message_post(
+                author_id=author_id, email_from=email_from,
+                message_type=message_type, moderation_status=moderation_status, **kwargs)
+
+            # Notifies the message author when his message is pending moderation if required on channel.
+            # The fields "email_from" and "reply_to" are filled in automatically by method create in model mail.message.
+            if channel.moderation_notify and channel.moderation_notify_msg and message_type in ['email','comment'] and moderation_status == 'pending_moderation':
+                self.env['mail.mail'].sudo().create({
+                    'author_id': self.env.user.partner_id.id,
+                    'email_from': self.env.user.company_id.catchall_formatted or self.env.user.company_id.email_formatted,
+                    'body_html': channel.moderation_notify_msg,
+                    'subject': 'Re: %s' % (kwargs.get('subject', '')),
+                    'email_to': email,
+                    'auto_delete': True,
+                    'state': 'outgoing'
+                })
+        return messages
 
     def _message_post_after_hook(self, message, msg_vals):
         """
@@ -450,7 +462,7 @@ class Channel(models.Model):
         return True
 
     def _update_moderation_email(self, emails, status):
-        """ This method adds emails into either white or black of the channel list of emails 
+        """ This method adds emails into either white or black of the channel list of emails
             according to status. If an email in emails is already moderated, the method updates the email status.
             :param emails: list of email addresses to put in white or black list of channel.
             :param status: value is 'allow' or 'ban'. Emails are put in white list if 'allow', in black list if 'ban'.

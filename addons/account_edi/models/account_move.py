@@ -209,33 +209,39 @@ class AccountMove(models.Model):
         # OVERRIDE
         # When posting a message, analyse the attachment to check if it is an EDI document and update the invoice
         # with the imported data.
-        res = super().message_post(**kwargs)
+        messages = super().message_post(**kwargs)
 
-        if len(self) != 1 or self.env.context.get('no_new_invoice') or not self.is_invoice(include_receipts=True):
-            return res
+        if self.env.context.get('no_new_invoice'):
+            return messages
 
         attachments = self.env['ir.attachment'].browse(kwargs.get('attachment_ids', []))
-        odoobot = self.env.ref('base.partner_root')
-        if attachments and self.state != 'draft':
-            self.message_post(body='The invoice is not a draft, it was not updated from the attachment.',
-                              message_type='comment',
-                              subtype_xmlid='mail.mt_note',
-                              author_id=odoobot.id)
-            return res
-        if attachments and self.line_ids:
-            self.message_post(body='The invoice already contains lines, it was not updated from the attachment.',
-                              message_type='comment',
-                              subtype_xmlid='mail.mt_note',
-                              author_id=odoobot.id)
-            return res
+        if not attachments:
+            return messages
 
-        edi_formats = self.env['account.edi.format'].search([])
-        for attachment in attachments:
-            invoice = edi_formats._update_invoice_from_attachment(attachment, self)
-            if invoice:
-                break
+        odoobot_id = self.env['ir.model.data'].xmlid_to_res_id('base.partner_root')
+        for move in self:
+            if not move.is_invoice(include_receipts=True):
+                continue
 
-        return res
+            if move.state != 'draft':
+                move.message_post(body='The invoice is not a draft, it was not updated from the attachment.',
+                                message_type='comment',
+                                subtype_xmlid='mail.mt_note',
+                                author_id=odoobot_id)
+                continue
+            if move.line_ids:
+                move.message_post(body='The invoice already contains lines, it was not updated from the attachment.',
+                                message_type='comment',
+                                subtype_xmlid='mail.mt_note',
+                                author_id=odoobot_id)
+                continue
+
+            edi_formats = self.env['account.edi.format'].search([])
+            for attachment in attachments:
+                if edi_formats._update_invoice_from_attachment(attachment, move):
+                    continue
+
+        return messages
 
     ####################################################
     # Business operations

@@ -11,19 +11,20 @@ class MailThread(models.AbstractModel):
     def message_post(self, **kwargs):
         rating_value = kwargs.pop('rating_value', False)
         rating_feedback = kwargs.pop('rating_feedback', False)
-        message = super(MailThread, self).message_post(**kwargs)
+        messages = super(MailThread, self).message_post(**kwargs)
 
         # create rating.rating record linked to given rating_value. Using sudo as portal users may have
         # rights to create messages and therefore ratings (security should be checked beforehand)
         if rating_value:
-            ir_model = self.env['ir.model'].sudo().search([('model', '=', self._name)])
-            self.env['rating.rating'].sudo().create({
-                'rating': float(rating_value) if rating_value is not None else False,
+            ir_model_id = self.env['ir.model'].sudo()._get_id(self._name)
+            rating = float(rating_value) if rating_value is not None else False
+            self.env['rating.rating'].sudo().create([{
+                'rating': rating,
                 'feedback': rating_feedback,
-                'res_model_id': ir_model.id,
-                'res_id': self.id,
+                'res_model_id': ir_model_id,
+                'res_id': record.id,
                 'message_id': message.id,
                 'consumed': True,
                 'partner_id': self.env.user.partner_id.id,
-            })
-        return message
+            } for record, message in zip(self, messages)])
+        return messages

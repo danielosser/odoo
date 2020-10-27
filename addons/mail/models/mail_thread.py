@@ -1640,9 +1640,13 @@ class MailThread(models.AbstractModel):
         :param list attachments: list of attachment tuples in the form ``(name,content)``, #todo xdo update that
                                  where content is NOT base64 encoded
         :param list attachment_ids: a list of attachment ids, not in tomany command form
-        :param dict message_data: model: the model of the attachments parent record,
-          res_id: the id of the attachments parent record
+        :param dict message_values:
+            model: the model of the attachments parent record,
+            res_id: the id of the attachments parent record
         """
+        if not attachments and not attachment_ids:
+            return dict(attachment_ids=[])
+
         return_values = {}
         body = message_values.get('body')
         model = message_values['model']
@@ -1767,12 +1771,15 @@ class MailThread(models.AbstractModel):
             new mail.message record.
             :return int: ID of newly created mail.message
         """
-        self.ensure_one()  # should always be posted on a record, use message_notify if no record
+        self = self.filtered('id')
+        if not self:
+            # should always be posted on a record, use message_notify if no record
+            raise ValueError(_("No record is specified to post the message."))
         # split message additional values from notify additional values
         msg_kwargs = dict((key, val) for key, val in kwargs.items() if key in self.env['mail.message']._fields)
         notif_kwargs = dict((key, val) for key, val in kwargs.items() if key not in msg_kwargs)
 
-        if self._name == 'mail.thread' or not self.id or message_type == 'user_notification':
+        if self._name == 'mail.thread' or message_type == 'user_notification':
             raise ValueError('message_post should only be call to post message on record. Use message_notify instead')
 
         if 'model' in msg_kwargs or 'res_id' in msg_kwargs:
@@ -1785,7 +1792,6 @@ class MailThread(models.AbstractModel):
         # Explicit access rights check, because display_name is computed as sudo.
         self.check_access_rights('read')
         self.check_access_rule('read')
-        record_name = record_name or self.display_name
 
         partner_ids = set(partner_ids or [])
         channel_ids = set(channel_ids or [])
@@ -1806,12 +1812,7 @@ class MailThread(models.AbstractModel):
             self.message_subscribe(list(partner_ids))
 
         MailMessage_sudo = self.env['mail.message'].sudo()
-        if self._mail_flat_thread and not parent_id:
-            parent_message = MailMessage_sudo.search([('res_id', '=', self.id), ('model', '=', self._name), ('message_type', '!=', 'user_notification')], order="id ASC", limit=1)
-            # parent_message searched in sudo for performance, only used for id.
-            # Note that with sudo we will match message with internal subtypes.
-            parent_id = parent_message.id if parent_message else False
-        elif parent_id:
+        if parent_id:
             old_parent_id = parent_id
             parent_message = MailMessage_sudo.search([('id', '=', parent_id), ('parent_id', '!=', False)], limit=1)
             # avoid loops when finding ancestors
@@ -1828,7 +1829,6 @@ class MailThread(models.AbstractModel):
             'author_id': author_id,
             'email_from': email_from,
             'model': self._name,
-            'res_id': self.id,
             'body': body,
             'subject': subject or False,
             'message_type': message_type,
@@ -1837,25 +1837,47 @@ class MailThread(models.AbstractModel):
             'partner_ids': partner_ids,
             'channel_ids': channel_ids,
             'add_sign': add_sign,
-            'record_name': record_name,
+            'attachment_ids': [],
         })
+        vals_list = [
+            dict(
+                values,
+                record_name=record_name or record.display_name,
+                res_id=record.id,
+                parent_id=parent_id or (self._mail_flat_thread and MailMessage_sudo.search([
+                    ('res_id', '=', record.id),
+                    ('model', '=', self._name),
+                    ('message_type', '!=', 'user_notification')
+                ], order="id ASC", limit=1).id)
+            ) for record in self
+        ]
+
         attachments = attachments or []
         attachment_ids = attachment_ids or []
-        attachement_values = self._message_post_process_attachments(attachments, attachment_ids, values)
-        values.update(attachement_values)  # attachement_ids, [body]
+        if attachment_ids or attachments:
+            self.ensure_one()
+            # Sending the same attachment(s) on multiple chatters is not supported.
+            values = vals_list[0]
+            attachment_values = self._message_post_process_attachments(
+                attachments, attachment_ids, values)
+            values.update(attachment_values)  # attachement_ids, [body]
 
-        new_message = self._message_create(values)
+        messages = self._message_create(vals_list)
 
-        # Set main attachment field if necessary
-        self._message_set_main_attachment_id(values['attachment_ids'])
+        if values.get('attachment_ids'):
+            # Set main attachment field if necessary
+            self._message_set_main_attachment_id(values['attachment_ids'])
 
-        if values['author_id'] and values['message_type'] != 'notification' and not self._context.get('mail_create_nosubscribe'):
-            if self.env['res.partner'].browse(values['author_id']).active:  # we dont want to add odoobot/inactive as a follower
-                self._message_subscribe([values['author_id']])
+        if not self._context.get('mail_create_nosubscribe') and author_id and message_type != 'notification':
+            # we dont want to add odoobot/inactive as a follower
+            if self.env['res.partner'].browse(author_id).active:
+                self._message_subscribe([author_id])
 
-        self._message_post_after_hook(new_message, values)
-        self._notify_thread(new_message, values, **notif_kwargs)
-        return new_message
+        for thread, new_message, values in zip(self, messages, vals_list):
+            thread._message_post_after_hook(new_message, values)
+            thread._notify_thread(new_message, values, **notif_kwargs)
+
+        return messages
 
     def _message_set_main_attachment_id(self, attachment_ids):  # todo move this out of mail.thread
         if not self._abstract and attachment_ids and not self.message_main_attachment_id:
