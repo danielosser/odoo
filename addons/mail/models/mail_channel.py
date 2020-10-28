@@ -514,9 +514,11 @@ class Channel(models.Model):
     def _notify_thread(self, message, msg_vals=False, **kwargs):
         # When posting a message on a mail channel, manage moderation and postpone notify users
         if not msg_vals or msg_vals.get('moderation_status') != 'pending_moderation':
-            super(Channel, self)._notify_thread(message, msg_vals=msg_vals, **kwargs)
+            return super(Channel, self)._notify_thread(message, msg_vals=msg_vals, **kwargs)
         else:
             message._notify_pending_by_chat()
+            # keep method return standard.
+            return dict(partners=[], channels=[])
 
     def _channel_message_notifications(self, message, message_format=False):
         """ Generate the bus notifications for the given message

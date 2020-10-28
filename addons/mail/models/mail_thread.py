@@ -1753,27 +1753,33 @@ class MailThread(models.AbstractModel):
                      attachments=None, attachment_ids=None,
                      add_sign=True, record_name=False,
                      **kwargs):
-        """ Post a new message in an existing thread, returning the new
-            mail.message ID.
-            :param str body: body of the message, usually raw HTML that will
-                be sanitized
-            :param str subject: subject of the message
-            :param str message_type: see mail_message.message_type field. Can be anything but 
-                user_notification, reserved for message_notify
-            :param int parent_id: handle thread formation
-            :param int subtype_id: subtype_id of the message, mainly use fore
-                followers mechanism
-            :param list(int) partner_ids: partner_ids to notify
-            :param list(int) channel_ids: channel_ids to notify
-            :param list(tuple(str,str), tuple(str,str, dict) or int) attachments : list of attachment tuples in the form
-                ``(name,content)`` or ``(name,content, info)``, where content is NOT base64 encoded
-            :param list id attachment_ids: list of existing attachement to link to this message
-                -Should only be setted by chatter
-                -Attachement object attached to mail.compose.message(0) will be attached
-                    to the related document.
-            Extra keyword arguments will be used as default column values for the
-            new mail.message record.
-            :return int: ID of newly created mail.message
+        """ Post a new message into existing threads.
+
+        :param str body: body of the message, usually raw HTML that will
+            be sanitized
+        :param str subject: subject of the message
+        :param str message_type: see mail_message.message_type field. Can be anything but
+            user_notification, reserved for message_notify
+        :param int parent_id: handle thread formation
+        :param int subtype_id: subtype_id of the message, mainly use fore
+            followers mechanism
+        :param list(int) partner_ids: partner_ids to notify
+        :param list(int) channel_ids: channel_ids to notify
+        :param list(tuple(str,str), tuple(str,str, dict) or int) attachments : list of attachment tuples in the form
+            ``(name,content)`` or ``(name,content, info)``, where content is NOT base64 encoded
+        :param list attachment_ids: list of existing attachement ids to link to this message
+            -Should only be set by chatter
+            -Attachement object attached to mail.compose.message(0) will be attached
+                to the related document.
+
+        NOTE: if attachemnt and/or attachment_ids is/are specified, self has to be a unique
+            message.  Posting the same attachments in multiple messages at once is NOT supported.
+
+        Extra keyword arguments will be used as default column values for the
+        new mail.message record.
+
+        :return: newly created messages
+        :rtype: mail.message recordset
         """
         self = self.filtered('id')
         if not self:
@@ -1892,9 +1898,14 @@ class MailThread(models.AbstractModel):
             self.sudo().with_context(tracking_disable=True).write({'message_main_attachment_id': prioritary_attachments[0].id})
 
     def _message_post_after_hook(self, message, msg_vals):
-        """ Hook to add custom behavior after having posted the message. Both
-        message and computed value are given, to try to lessen query count by
-        using already-computed values instead of having to rebrowse things. """
+        """ Hook to add custom behavior after having posted the message.
+        Both record, message and computed value are given, to try to lessen query count
+        by using already-computed values instead of having to rebrowse things.
+
+        :param message: mail.message record
+        :param dict msg_vals:
+        :returns: None
+        """
         pass
 
     # ------------------------------------------------------
@@ -1927,8 +1938,9 @@ class MailThread(models.AbstractModel):
 
     def message_post_with_template(self, template_id, email_layout_xmlid=None, auto_commit=False, **kwargs):
         """ Helper method to send a mail with a template
-            :param template_id : the id of the template to render to create the body of the message
-            :param **kwargs : parameter to create a mail.compose.message woaerd (which inherit from mail.message)
+
+        :param int template_id : the id of the template to render to create the body of the message
+        :param **kwargs : parameter to create a mail.compose.message wizard (which inherit from mail.message)
         """
         # Get composition mode, or force it according to the number of record in self
         if not kwargs.get('composition_mode'):
@@ -2028,10 +2040,10 @@ class MailThread(models.AbstractModel):
         return self.sudo()._message_create(message_values)
 
     def _message_log_batch(self, bodies, author_id=None, email_from=None, subject=False, message_type='notification'):
-        """ Shortcut allowing to post notes on a batch of documents. It achieve the
+        """ Shortcut allowing to post notes on a batch of documents. It achieves the
         same purpose as _message_log, done in batch to speedup quick note log.
 
-          :param bodies: dict {record_id: body}
+        :param dict bodies: {record_id: body}
         """
         author_id, email_from = self._message_compute_author(author_id, email_from, raise_exception=False)
 
@@ -2110,22 +2122,19 @@ class MailThread(models.AbstractModel):
         mechanism like mail.channel moderation.
 
         :param message: mail.message record to notify;
-        :param msg_vals: dictionary of values used to create the message. If given
+        :param dict msg_vals: values used to create the message. If given
           it is used instead of accessing ``self`` to lessen query count in some
           simple cases where no notification is actually required;
 
         Kwargs allow to pass various parameters that are given to sub notification
         methods. See those methods for more details about the additional parameters.
         Parameters used for email-style notifications
+
+        :returns: recipients data (see _notify_compute_recipients)
+        :rtype: dict
         """
         msg_vals = msg_vals if msg_vals else {}
         rdata = self._notify_compute_recipients(message, msg_vals)
-        if not rdata:
-            return False
-
-        message_values = {}
-        if rdata['channels']:
-            message_values['channel_ids'] = [(6, 0, [r['id'] for r in rdata['channels']])]
 
         self._notify_record_by_inbox(message, rdata, msg_vals=msg_vals, **kwargs)
         if notify_by_email:
@@ -2400,7 +2409,10 @@ class MailThread(models.AbstractModel):
 
     def _notify_compute_recipients(self, message, msg_vals):
         """ Compute recipients to notify based on subtype and followers. This
-        method returns data structured as expected for ``_notify_recipients``. """
+        method returns data structured as expected for ``_notify_recipients``.
+
+        :rtype: dict
+        """
         msg_sudo = message.sudo()
         # get values from msg_vals or from message if msg_vals doen't exists
         pids = msg_vals.get('partner_ids', []) if msg_vals else msg_sudo.partner_ids.ids
