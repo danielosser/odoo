@@ -524,7 +524,7 @@ class TestSaleCouponProgramNumbers(TestSaleCouponCommon):
         sol2 = order.order_line.filtered(lambda l: l.id != sol1.id)
         self.assertEqual(len(sol2.tax_id.ids), 1, "One tax should be present on the reward line")
         self.assertEqual(sol2.tax_id.id, self.tax_0pc_excl.id, "The tax should be 0% Tax excl")
-        fixed_amount_program.write({'active': False})  # Check archived product will remove discount lines on recompute
+        fixed_amount_program.action_archive()  # Check archived product will remove discount lines on recompute
         order.recompute_coupon_lines()
         self.assertEqual(len(order.order_line.ids), 1, "Archiving the program should remove the program reward line")
 

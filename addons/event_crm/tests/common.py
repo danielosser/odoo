@@ -12,7 +12,7 @@ class TestEventCrmCommon(TestCrmCommon, TestEventCommon):
         super(TestEventCrmCommon, cls).setUpClass()
 
         # avoid clash with existing rules
-        cls.env['event.lead.rule'].search([]).write({'active': False})
+        cls.env['event.lead.rule'].search([]).action_archive()
 
         cls.test_lead_tag = cls.env['crm.tag'].create({'name': 'TagTest'})
 

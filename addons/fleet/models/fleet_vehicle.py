@@ -256,7 +256,7 @@ class FleetVehicle(models.Model):
 
         res = super(FleetVehicle, self).write(vals)
         if 'active' in vals and not vals['active']:
-            self.mapped('log_contracts').write({'active': False})
+            self.log_contracts.action_archive()
         return res
 
     def create_driver_history(self, driver_id):

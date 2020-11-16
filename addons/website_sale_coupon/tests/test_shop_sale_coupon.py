@@ -60,7 +60,7 @@ class TestUi(TestSaleProductAttributeValueCommon, HttpCase):
             'taxes_id': False,
         })
 
-        self.env['coupon.program'].search([]).write({'active': False})
+        self.env['coupon.program'].search([]).action_archive()
 
         self.env['coupon.program'].create({
             'name': "Buy 3 Small Cabinets, get one for free",
@@ -85,7 +85,7 @@ class TestUi(TestSaleProductAttributeValueCommon, HttpCase):
             'discount_line_product_id': ten_percent.id
         })
 
-        self.env.ref("website_sale.search_count_box").write({"active": True})
+        self.env.ref("website_sale.search_count_box").action_unarchive()
         self.start_tour("/", 'shop_sale_coupon', login="admin")
 
 

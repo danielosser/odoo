@@ -4830,13 +4830,13 @@ Fields:
         """ Set (x_)active=False on a recordset, by calling toggle_active to
             take the corresponding actions according to the model
         """
-        return self.filtered(lambda record: record[self._active_name]).toggle_active()
+        return self and self.filtered(lambda record: record[self._active_name]).toggle_active()
 
     def action_unarchive(self):
         """ Set (x_)active=True on a recordset, by calling toggle_active to
             take the corresponding actions according to the model
         """
-        return self.filtered(lambda record: not record[self._active_name]).toggle_active()
+        return self and self.filtered(lambda record: not record[self._active_name]).toggle_active()
 
     def _register_hook(self):
         """ stuff to do right after the registry is built """

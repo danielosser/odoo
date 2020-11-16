@@ -270,8 +270,7 @@ class HrEmployeePrivate(models.Model):
             'departure_description': False,
             'departure_date': False
         })
-        archived_addresses = unarchived_employees.mapped('address_home_id').filtered(lambda addr: not addr.active)
-        archived_addresses.toggle_active()
+        archived_addresses = unarchived_employees.address_home_id.action_unarchive()
         if len(self) == 1 and not self.active:
             return {
                 'type': 'ir.actions.act_window',

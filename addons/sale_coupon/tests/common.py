@@ -16,7 +16,7 @@ class TestSaleCouponCommon(TestSaleProductAttributeValueCommon):
         pricelist.currency_id = cls._setup_currency(cls.currency_ratio)
 
         # Set all the existing programs to active=False to avoid interference
-        cls.env['coupon.program'].search([]).write({'active': False})
+        cls.env['coupon.program'].search([]).action_archive()
 
         # create partner for sale order.
         cls.steve = cls.env['res.partner'].create({

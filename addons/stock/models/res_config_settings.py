@@ -77,7 +77,7 @@ class ResConfigSettings(models.TransientModel):
                 ('reception_steps', '=', 'one_step'),
                 ('delivery_steps', '=', 'ship_only')])
             active = False
-        warehouses.mapped('int_type_id').write({'active': active})
+        warehouses.int_type_id.action_unarchive()
 
         if self.group_stock_multi_locations or self.group_stock_production_lot or self.group_stock_tracking_lot:
             picking_types = self.env['stock.picking.type'].with_context(active_test=False).search([

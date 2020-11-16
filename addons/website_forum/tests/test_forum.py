@@ -369,15 +369,15 @@ class TestForum(TestForumCommon):
 
     def test_deactivate_post_crash(self):
         with self.assertRaises(AccessError):
-            self.post.with_user(self.user_portal).write({'active': False})
+            self.post.with_user(self.user_portal).action_archive()
 
     def test_deactivate_post_own(self):
         self.post.create_uid.karma = KARMA['unlink_own']
-        self.post.write({'active': False})
+        self.post.action_archive()
 
     def test_deactivate_post_all(self):
         self.user_portal.karma = KARMA['unlink_all']
-        self.post.with_user(self.user_portal).write({'active': False})
+        self.post.with_user(self.user_portal).action_archive()
 
     def test_unlink_post_crash(self):
         with self.assertRaises(AccessError):

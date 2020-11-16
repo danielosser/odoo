@@ -270,7 +270,7 @@ class TestWebsitePriceListAvailable(TransactionCase):
             'name': 'Website 2 Pricelist',
             'website_id': self.website2.id,
         })
-        existing_pricelists.write({'active': False})
+        existing_pricelists.action_archive()
 
         simulate_frontend_context(self)
 

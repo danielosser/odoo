@@ -147,7 +147,7 @@ class LunchOrder(models.Model):
                     # lines for the same order hence quantity should not always be
                     # line.quantity, but rather a sum
                     matching_lines.update_quantity(line.quantity)
-            lines_to_deactivate.write({'active': False})
+            lines_to_deactivate.action_archive()
             return super(LunchOrder, self - lines_to_deactivate).write(values)
         return super().write(values)
 

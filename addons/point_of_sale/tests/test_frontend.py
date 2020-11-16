@@ -44,6 +44,8 @@ class TestPointOfSaleHttpCommon(odoo.tests.HttpCase):
         all_pos_product = self.env['product.product'].search([('available_in_pos', '=', True)])
         discount = self.env.ref('point_of_sale.product_product_consumable')
         self.tip = self.env.ref('point_of_sale.product_product_tip')
+        # _write is necessary to avoid an error raised
+        # in the write override on product in pos_loyalty (enterprise module).
         (all_pos_product - discount - self.tip)._write({'active': False})
 
         # In DESKS categ: Desk Pad
