@@ -36,9 +36,18 @@
                     </div>
                     <field name="effective_date" attrs="{'invisible': [('effective_date', '=', False)]}"/>
                 </xpath>
+                <xpath expr="//field[@name='effective_date']" position="after">
+                    <field name="delivery_status" attrs="{'invisible': [('state', 'not in', ['sale', 'done'])]}"/>
+                </xpath>
                 <xpath expr="//page[@name='other_information']//field[@name='expected_date']" position="after">
                     <field name="show_json_popover" invisible="1"/>
                     <field string=" " name="json_popover" widget="stock_rescheduling_popover" attrs="{'invisible': [('show_json_popover', '=', False)]}"/>
+                </xpath>
+                <xpath expr="//page/field[@name='order_line']/tree/field[@name='qty_delivered']" position="attributes">
+                    <attribute name="decoration-warning">parent.commitment_date and parent.commitment_date &gt;= current_date and (qty_delivered &lt; product_uom_qty or parent.delivery_status!='full')</attribute>
+                    <attribute name="decoration-danger">parent.commitment_date and parent.commitment_date &lt; current_date and (qty_delivered &lt; product_uom_qty or parent.delivery_status !='full')</attribute>
+                    <attribute name="decoration-success">qty_delivered &gt;= product_uom_qty and parent.delivery_status=='full'</attribute>
+                    <attribute name="decoration-info"></attribute>
                 </xpath>
                 <xpath expr="//field[@name='order_line']/form/group/group/field[@name='analytic_tag_ids']" position="before">
                     <field name="route_id" groups="stock.group_adv_location" options="{'no_create': True}"/>
@@ -67,6 +76,9 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='team_id']" position="after">
                     <field name="warehouse_id" options="{'no_create': True}" groups="stock.group_stock_multi_warehouses" optional="hide"/>
+                </xpath>
+                <xpath expr="//field[@name='state']" position="after">
+                    <field name="delivery_status" optional="hide" widget="badge" decoration-success="delivery_status=='full'" decoration-warning="current_date==commitment_date and delivery_status!='full'" decoration-danger="commitment_date and current_date&gt;commitment_date and delivery_status!='full'"/>
                 </xpath>
             </field>
         </record>

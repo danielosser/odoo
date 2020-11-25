@@ -49,11 +49,17 @@
             <xpath expr="//field[@name='order_line']/form//field[@name='invoice_lines']" position="after">
                 <field name="move_ids"/>
             </xpath>
+            <xpath expr="//field[@name='invoice_status']" position="before">
+                <field name="receipt_status" attrs="{'invisible': [('state', 'not in', ('purchase', 'done'))]}"/>
+            </xpath>
             <xpath expr="//field[@name='order_line']/form//field[@name='account_analytic_id']" position="before">
                 <field name="propagate_cancel" groups="base.group_no_one"/>
             </xpath>
             <xpath expr="//field[@name='order_line']/tree//field[@name='qty_received']" position="attributes">
                 <attribute name="attrs">{'column_invisible': [('parent.state', 'not in', ('purchase', 'done'))], 'readonly': [('product_type', 'in', ('consu', 'product'))]}</attribute>
+                <attribute name="decoration-warning">date_planned and date_planned &gt;= current_date and (qty_received &lt; product_qty or parent.receipt_status!='full')</attribute>
+                <attribute name="decoration-danger">date_planned and date_planned &lt; current_date and (qty_received &lt; product_qty or parent.receipt_status !='full')</attribute>
+                <attribute name="decoration-success">qty_received &gt;= product_qty and parent.receipt_status=='full'</attribute>
             </xpath>
             <xpath expr="//page[@name='purchase_delivery_invoice']/group/group" position="inside">
                 <field name="default_location_dest_id_usage" invisible="1"/>
@@ -78,4 +84,14 @@
         </field>
     </record>
 
+    <record id="purchase_order_view_tree_inherit" model="ir.ui.view">
+        <field name="name">purchase.order.tree.inherit</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='invoice_status']" position="before">
+                <field name="receipt_status" optional="hide" widget="badge" decoration-success="receipt_status=='full'" decoration-danger="date_planned and current_date&gt;date_planned and receipt_status!='full'" decoration-warning="date_planned and date_planned==current_date and receipt_status!='full'"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>
