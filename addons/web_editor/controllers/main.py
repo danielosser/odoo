@@ -14,7 +14,7 @@ from base64 import b64decode, b64encode
 from odoo.http import request
 from odoo import http, tools, _, SUPERUSER_ID
 from odoo.addons.http_routing.models.ir_http import slug, unslug
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, AccessError
 from odoo.modules.module import get_module_path, get_resource_path
 from odoo.tools.misc import file_open
 
@@ -625,3 +625,15 @@ class Web_Editor(http.Controller):
             attachments.append(attachment._get_media_info())
 
         return attachments
+
+    @http.route("/web_editor/name_search_read", type="json", auth="user", website=True)
+    def name_search_read(self, model, name='', args=None, operator='ilike', limit=100, fields=None):
+        """
+        Performs a name_search followed by a search_read of the desired fields
+        """
+        if not request.env.user.has_group('website.group_website_publisher'):
+            raise AccessError(_("You do not have access"))
+        Model = request.env[model]
+        records = Model.name_search(name, args, operator=operator, limit=limit)
+        ids = [record[0] for record in records]
+        return Model.browse(ids)._read_format(fields)

@@ -1159,6 +1159,43 @@ body.editor_enable.editor_has_snippets {
             }
         }
 
+        // Many2one search
+        .o_we_m2o_search {
+            background-color: $o-we-dropdown-item-bg;
+            flex-grow: 1 !important;
+            display: flex;
+            align-items: center;
+            margin-bottom: 1px;
+            border-radius: $o-we-sidebar-content-field-border-radius;
+
+            &::before {
+                content: "\f002";
+                font-size: 1.5em;
+                padding: .25em;
+                font-family: FontAwesome;
+            }
+            
+            input {
+                color: $o-we-sidebar-content-field-pressed-color;
+                border: 1px solid $o-we-sidebar-content-field-pressed-color;
+                border-radius: .25em;
+                background-color: $o-we-bg-dark;
+                margin: .25em;
+                flex-grow: 1;
+                padding-left: .25em;
+            }
+        }
+
+        // Many2one search more indicator
+        .o_we_m2o_search_more {
+            color: var(--o-cc1-btn-primary);
+            margin-top: 1px;
+            width: 100%;
+            cursor: pointer;
+            padding-left: 2em;
+            line-height: $o-we-sidebar-content-field-height - 2 * $o-we-sidebar-content-field-border-width;
+        }
+
         //----------------------------------------------------------------------
         // Layout Utils
         //----------------------------------------------------------------------
