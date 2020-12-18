@@ -762,7 +762,7 @@ class Post(models.Model):
                 new_vote = '0' if vote.vote == '1' else '-1'
             vote.vote = new_vote
 
-        to_create = self - existing_votes
+        to_create = self - existing_votes.mapped('post_ids')
         if to_create:
             new_vote = '1' if upvote else '-1'
             for post_id in to_create:
