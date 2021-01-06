@@ -20,16 +20,15 @@ const dynamicSnippetProductsOptions = s_dynamic_snippet_carousel_options.extend(
      */
     onBuilt: function () {
         this._super.apply(this, arguments);
+        // TODO: can't this just be put in the template through an xpath? Or
+        // make the snippet filter route accept an xml-id?
         this._rpc({
             model: 'ir.model.data',
-            method: 'search_read',
-            kwargs: {
-                domain: [['module', '=', 'website_sale'], ['model', '=', 'website.snippet.filter']],
-                fields: ['id', 'res_id'],
-            }
-        }).then((data) => {
-            this.$target.get(0).dataset.filterId = data[0].res_id;
-            this.$target.get(0).dataset.numberOfRecords = this.dynamicFilters[data[0].res_id].limit;
+            method: 'get_object_reference',
+            args: ['website_sale', 'dynamic_filter_demo_products'],
+        }).then(([, id]) => {
+            this.$target[0].dataset.filterId = id;
+            this.$target[0].dataset.numberOfRecords = 16;
         });
     },
 
@@ -48,44 +47,6 @@ const dynamicSnippetProductsOptions = s_dynamic_snippet_carousel_options.extend(
         }
         return this._super.apply(this, arguments);
     },
-    /**
-     * Fetches product categories.
-     * @private
-     * @returns {Promise}
-     */
-    _fetchProductCategories: function () {
-        return this._rpc({
-            model: 'product.public.category',
-            method: 'search_read',
-            kwargs: {
-                domain: [],
-                fields: ['id', 'name'],
-            }
-        });
-    },
-    /**
-     *
-     * @override
-     * @private
-     */
-    _renderCustomXML: async function (uiFragment) {
-        await this._super.apply(this, arguments);
-        await this._renderProductCategorySelector(uiFragment);
-    },
-    /**
-     * Renders the product categories option selector content into the provided uiFragment.
-     * @private
-     * @param {HTMLElement} uiFragment
-     */
-    _renderProductCategorySelector: async function (uiFragment) {
-        const productCategories = await this._fetchProductCategories();
-        for (let index in productCategories) {
-            this.productCategories[productCategories[index].id] = productCategories[index];
-        }
-        const productCategoriesSelectorEl = uiFragment.querySelector('[data-name="product_category_opt"]');
-        return this._renderSelectUserValueWidgetButtons(productCategoriesSelectorEl, this.productCategories);
-    },
-
 });
 
 options.registry.dynamic_snippet_products = dynamicSnippetProductsOptions;

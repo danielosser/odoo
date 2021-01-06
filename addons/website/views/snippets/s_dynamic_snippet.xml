@@ -19,36 +19,36 @@
     </template>
     <template id="website.s_dynamic_snippet_options_template">
         <div t-attf-data-js="#{snippet_name}" t-attf-data-selector="#{snippet_selector}" data-no-preview="true">
-            <we-select string="Filter" data-name="filter_opt" data-attribute-name="filterId">
-            </we-select>
-            <we-select string="Template" data-name="template_opt" data-attribute-name="templateKey" data-no-preview="true">
-            </we-select>
+            <!-- Currently doesn't account for website domain like it did previously. Problem? -->
+            <we-many2one string="Filter"
+                data-no-preview="true"
+                data-name="filter_opt"
+                data-model="website.snippet.filter"
+                data-fields='["display_name", "limit"]'
+                data-select-data-attribute=""
+                data-attribute-name="filterId"/>
+            <we-many2one string="Template"
+                data-no-preview="true"
+                data-model="ir.ui.view"
+                data-fields='["display_name", "key"]'
+                data-domain='[["key", "ilike", ".dynamic_filter_template_"], ["type", "=", "qweb"]]'
+                data-attribute-name="templateKey"
+                data-select-data-attribute=""
+                data-call-with="key"/>
             <we-select string="Fetched elements" data-name="number_of_records_opt" data-attribute-name="numberOfRecords" data-no-preview="true">
-                <we-button data-select-data-attribute="1">1</we-button>
-                <we-button data-select-data-attribute="2">2</we-button>
-                <we-button data-select-data-attribute="3">3</we-button>
-                <we-button data-select-data-attribute="4">4</we-button>
-                <we-button data-select-data-attribute="6">6</we-button>
-                <we-button data-select-data-attribute="7">7</we-button>
-                <we-button data-select-data-attribute="8">8</we-button>
-                <we-button data-select-data-attribute="9">9</we-button>
-                <we-button data-select-data-attribute="10">10</we-button>
-                <we-button data-select-data-attribute="11">11</we-button>
-                <we-button data-select-data-attribute="12">12</we-button>
-                <we-button data-select-data-attribute="13">13</we-button>
-                <we-button data-select-data-attribute="14">14</we-button>
-                <we-button data-select-data-attribute="15">15</we-button>
-                <we-button data-select-data-attribute="16">16</we-button>
+                <t t-foreach="16" t-as="index">
+                    <we-button t-att-data-select-data-attribute="index + 1"><t t-esc="index + 1"/></we-button>
+                </t>
             </we-select>
             <we-title class="mt-2"><t t-esc="grouping_message"/></we-title>
-            <we-select string="⌙ Normal devices" data-name="number_of_elements_opt" data-attribute-name="numberOfElements" data-no-preview="true"><!-- &emsp; -->
+            <we-select string="⌙ Normal devices" data-name="number_of_elements_opt" data-attribute-name="numberOfElements" data-no-preview="true">
                 <we-button data-select-data-attribute="1">1</we-button>
                 <we-button data-select-data-attribute="2">2</we-button>
                 <we-button data-select-data-attribute="3">3</we-button>
                 <we-button data-select-data-attribute="4">4</we-button>
                 <we-button data-select-data-attribute="6">6</we-button>
             </we-select>
-            <we-select string="⌙ Small devices" data-name="number_of_elements_small_devices_opt" data-attribute-name="numberOfElementsSmallDevices" data-no-preview="true"><!-- &emsp; -->
+            <we-select string="⌙ Small devices" data-name="number_of_elements_small_devices_opt" data-attribute-name="numberOfElementsSmallDevices" data-no-preview="true">
                 <we-button data-select-data-attribute="1">1</we-button>
                 <we-button data-select-data-attribute="2">2</we-button>
                 <we-button data-select-data-attribute="3">3</we-button>
