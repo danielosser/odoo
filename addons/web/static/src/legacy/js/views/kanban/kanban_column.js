@@ -59,6 +59,7 @@ var KanbanColumn = Widget.extend({
         this.deletable = options.deletable;
         this.archivable = options.archivable;
         this.draggable = options.draggable;
+        this.KanbanColumnProgressBar = options.KanbanColumnProgressBar || KanbanColumnProgressBar; // the KanbanColumnProgressBar class to use
         this.KanbanRecord = options.KanbanRecord || KanbanRecord; // the KanbanRecord class to use
         this.records_editable = options.records_editable;
         this.records_deletable = options.records_deletable;
@@ -153,7 +154,7 @@ var KanbanColumn = Widget.extend({
         });
         if (this.barOptions) {
             this.$el.addClass('o_kanban_has_progressbar');
-            this.progressBar = new KanbanColumnProgressBar(this, this.barOptions, this.data);
+            this.progressBar = new this.KanbanColumnProgressBar(this, this.barOptions, this.data);
             defs.push(this.progressBar.appendTo(this.$header));
         }
 

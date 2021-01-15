@@ -1,0 +1,8 @@
+// Lead kanban view related stuff
+.o_kanban_view.o_opportunity_kanban {
+    .o_kanban_counter .o_kanban_counter_progress {
+        &.o_crm_kanban_counter_progress_mrr {
+            width: 50%;
+        }
+    }
+}
