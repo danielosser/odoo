@@ -1221,7 +1221,7 @@ actual arch.
                     self.handle_view_error(msg % (
                         self.env.context.get('install_xmlid') or self.xml_id,
                         child.get('name'),
-                    ), raise_exception=False)
+                    ), child, raise_exception=False)
                 fnames.append(child.get('name'))
 
     # Optional validation, used for cleanup when desired
@@ -1440,7 +1440,7 @@ actual arch.
                 for state in states:
                     if state not in valid_states:
                         msg = "Invalid %s '%s' specified as '%s' attribute" % (fname, state, attr)
-                        self.handle_view_error(msg, raise_exception=False)
+                        self.handle_view_error(msg, node, raise_exception=False)
                 name_manager.must_have_field(fname, "%s='%s'" % (attr, expr))
 
     def _validate_classes(self, node, expr):
