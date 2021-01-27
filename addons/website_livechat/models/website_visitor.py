@@ -92,11 +92,11 @@ class WebsiteVisitor(models.Model):
                 notifications.append([(self._cr.dbname, 'res.partner', operator.partner_id.id), mail_channel_info])
             self.env['bus.bus'].sendmany(notifications)
 
-    def _link_to_visitor(self, target, keep_unique=True):
+    def _link_to_visitor(self, target):
         """ Copy sessions of the secondary visitors to the main partner visitor. """
         if target.partner_id:
             target.mail_channel_ids |= self.mail_channel_ids
-        super(WebsiteVisitor, self)._link_to_visitor(target, keep_unique=keep_unique)
+        super(WebsiteVisitor, self)._link_to_visitor(target)
 
     def _link_to_partner(self, partner, update_values=None):
         """ Adapt partner in members of related livechats """
