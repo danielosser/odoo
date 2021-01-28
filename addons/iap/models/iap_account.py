@@ -118,3 +118,16 @@ class IapAccount(models.Model):
                 credit = -1
 
         return credit
+
+    @api.model
+    def _send_iap_bus_notification(self, service_name, title, is_credit_error=False):
+        param = {
+            'type': 'iap_notification',
+            'title': title,
+            'is_credit_error': is_credit_error
+        }
+        if is_credit_error:
+            param['url'] = self.env['iap.account'].get_credits_url(service_name)
+        self.env['bus.bus']._sendone(
+            self.env.user.partner_id, 'iap_notification', param)
+
