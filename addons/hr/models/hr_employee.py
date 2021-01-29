@@ -11,10 +11,9 @@ from dateutil.relativedelta import relativedelta
 from collections import defaultdict
 
 from odoo import api, fields, models, _
-from odoo.osv.query import Query
 from odoo.exceptions import ValidationError, AccessError, UserError
 from odoo.osv import expression
-from odoo.tools.misc import format_date
+from odoo.tools import format_date, Query
 
 
 class HrEmployeePrivate(models.Model):
