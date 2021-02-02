@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+import uuid
+
 from odoo import api, fields, models
 from odoo.http import request
 
@@ -34,14 +36,8 @@ class UtmMixin(models.AbstractModel):
                     value = request.httprequest.cookies.get(cookie_name)
                 # if we receive a string for a many2one, we search/create the id
                 if field.type == 'many2one' and isinstance(value, str) and value:
-                    Model = self.env[field.comodel_name]
-                    records = Model.search([('name', '=', value)], limit=1)
-                    if not records:
-                        if 'is_auto_campaign' in records._fields:
-                            records = Model.create({'name': value, 'is_auto_campaign': True})
-                        else:
-                            records = Model.create({'name': value})
-                    value = records.id
+                    record = self._find_or_create_record(field.comodel_name, value)
+                    value = record.id
                 if value:
                     values[field_name] = value
         return values
@@ -59,3 +55,32 @@ class UtmMixin(models.AbstractModel):
             ('utm_source', 'source_id', 'odoo_utm_source'),
             ('utm_medium', 'medium_id', 'odoo_utm_medium'),
         ]
+
+    def _find_or_create_record(self, model_name, name):
+        """Based on the URL parameter, retrieve the corresponding record or create it."""
+        Model = self.env[model_name]
+
+        record = Model.search([('name', 'ilike', name)], limit=1)
+
+        if not record:
+            # No record found, create a new one
+            record_values = {'name': name}
+            if 'is_auto_campaign' in record._fields:
+                record_values['is_auto_campaign'] = True
+            record = Model.create(record_values)
+
+        return record
+
+    @api.model
+    def _set_name_unique(self, model_name, name, force_uuid=False):
+        """Try to use the given name for the given model.
+
+        If the name already exists, add random characters at the end.
+        """
+        if not force_uuid:
+            force_uuid = self.env[model_name].search_count([('name', '=', name)])
+
+        if force_uuid:
+            name = f'{name} [{str(uuid.uuid4())[:8]}]'
+
+        return name

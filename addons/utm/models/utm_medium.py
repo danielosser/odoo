@@ -11,8 +11,22 @@ class UtmMedium(models.Model):
     _description = 'UTM Medium'
     _order = 'name'
 
-    name = fields.Char(string='Medium Name', required=True, translate=True)
+    name = fields.Char(string='Medium Name', required=True)
     active = fields.Boolean(default=True)
+
+    _sql_constraints = [
+        ('unique_name', 'UNIQUE(name)', 'The name must be unique'),
+    ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        created_names = []
+        for vals in vals_list:
+            force_uuid = vals.get('name') in created_names
+            vals['name'] = self.env['utm.mixin']._set_name_unique(self._name, vals.get('name'), force_uuid=force_uuid)
+            created_names.append(vals['name'])
+
+        return super(UtmMedium, self).create(vals_list)
 
     @api.ondelete(at_uninstall=False)
     def _unlink_except_utm_medium_email(self):
