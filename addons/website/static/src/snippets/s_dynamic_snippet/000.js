@@ -9,6 +9,9 @@ const DynamicSnippet = publicWidget.Widget.extend({
     selector: '.s_dynamic_snippet',
     xmlDependencies: ['/website/static/src/snippets/s_dynamic_snippet/000.xml'],
     read_events: {
+        // SAD: why are we using read_events instead of a regular link?
+        // this breaks special clicks (middle click, ctrl+click)
+        // Links are also disabled in edit-mode.
         'click [data-url]': '_onCallToAction',
     },
     disabledInEditableMode: false,
@@ -156,6 +159,7 @@ const DynamicSnippet = publicWidget.Widget.extend({
      */
     _getQWebRenderOptions: function () {
         return {
+            // Why aren't we using different col-sm sizes and flex-wrap?
             chunkSize: parseInt(
                 config.device.isMobile
                     ? this.$target[0].dataset.numberOfElementsSmallDevices
@@ -182,6 +186,7 @@ const DynamicSnippet = publicWidget.Widget.extend({
      * @private
      */
     _renderContent: function () {
+        // SAD: why do we have this one-liner method that's called once and never overridden?
         this.$el.find('.dynamic_snippet_template').html(this.renderedContent);
     },
     /**
@@ -202,6 +207,7 @@ const DynamicSnippet = publicWidget.Widget.extend({
      * @private
      */
     _toggleVisibility: function (visible) {
+        // SAD: one liner method, never overriden?
         this.$el.toggleClass('d-none', !visible);
     },
 
