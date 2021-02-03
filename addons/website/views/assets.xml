@@ -168,6 +168,8 @@
     <script type="text/javascript" src="/website/static/src/js/tours/tour_utils.js"/>
 
     <script type="text/javascript" src="/website/static/src/js/widgets/ace.js"/>
+
+    <script type="text/javascript" src="/website/static/src/snippets/s_dynamic_snippet/filter_widget/filter_widget.js"/>
 </template>
 
 </odoo>

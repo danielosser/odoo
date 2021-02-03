@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates id="template" xml:space="preserve">
+    <div t-name="website.snippet_filter_dialog">
+        <t t-set="values" t-value="widget.defaultValues"/>
+        <label>Filter template
+            <select name="filter_template">
+                <t t-foreach="values.filterTemplates" t-as="template">
+                    <option value="">None</option>
+                    <option t-att-value="JSON.stringify(template.fields)" t-esc="template.name"/>
+                </t>
+            </select>
+        </label>
+        <div class="o_we_snippet_filter_fields"/>
+    </div>
+    
+    <div t-name="website.snippet_filter_text_field">
+        <label><t t-esc="fieldLabel"/>
+            <select t-att-name="fieldLabel">
+                <t t-foreach="possibleFields" t-as="field">
+                    <option t-att-value="field" t-esc="field"/>
+                </t>
+            </select>
+        </label>
+        <div class="o_we_snippet_filter_fields"/>
+    </div>
+</templates>

@@ -19,14 +19,6 @@
     </template>
     <template id="website.s_dynamic_snippet_options_template">
         <div t-attf-data-js="#{snippet_name}" t-attf-data-selector="#{snippet_selector}" data-no-preview="true">
-            <!-- Currently doesn't account for website domain like it did previously. Problem? -->
-            <we-many2one string="Filter"
-                data-no-preview="true"
-                data-name="filter_opt"
-                data-model="website.snippet.filter"
-                data-fields='["display_name", "limit"]'
-                data-select-data-attribute=""
-                data-attribute-name="filterId"/>
             <we-many2one string="Template"
                 data-no-preview="true"
                 data-model="ir.ui.view"
@@ -35,6 +27,36 @@
                 data-attribute-name="templateKey"
                 data-select-data-attribute=""
                 data-call-with="key"/>
+            <we-row data-name="snippet_filter_options">
+                <!-- Currently doesn't account for website domain like it did previously. Should filters
+                be website-specific? -->
+                <we-many2one string="Filter"
+                    data-no-preview="true"
+                    data-name="filter_opt_select"
+                    data-model="website.snippet.filter"
+                    data-fields='["display_name", "limit"]'
+                    data-select-data-attribute=""
+                    data-attribute-name="filterId"/>
+                <we-button data-name="filter_opt_edit" data-edit-filter="" class="fa fa-edit" data-no-preview="true" data-dependencies="filter_opt_select"/>
+                <we-button data-name="filter_opt_create" data-create-filter="" class="fa fa-plus text-success" data-no-preview="true"/>
+            </we-row>
+            <!-- Controls creation and edition of snippet filters -->
+            <div class="d-none" data-name="filter_customize_opt">
+                <we-row string="Filter" class="o_we_full_row">
+                    <we-input data-filter-name="" class="o_we_large_input flex-grow-1"/>
+                    <we-button class="fa fa-check" data-save-filter="" title="Validate" data-no-preview="true"/>
+                    <we-button class="fa fa-trash" data-delete-filter="" title="Delete" data-no-preview="true"/>
+                </we-row>
+                <!-- <we-many2one string="Model"
+                    data-no-preview="true"
+                    data-model="ir.model"
+                    data-model=""/> -->
+                <we-many2one string="Domain"
+                    data-no-preview="true"
+                    data-model="ir.filters"
+                    data-ir-filter=""/>
+            </div>
+
             <we-select string="Fetched elements" data-name="number_of_records_opt" data-attribute-name="numberOfRecords" data-no-preview="true">
                 <t t-foreach="16" t-as="index">
                     <we-button t-att-data-select-data-attribute="index + 1"><t t-esc="index + 1"/></we-button>

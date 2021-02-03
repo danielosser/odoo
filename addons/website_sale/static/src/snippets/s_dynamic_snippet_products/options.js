@@ -42,7 +42,7 @@ const dynamicSnippetProductsOptions = s_dynamic_snippet_carousel_options.extend(
      * @private
      */
     _computeWidgetVisibility: function (widgetName, params) {
-        if (widgetName === 'filter_opt') {
+        if (widgetName.startsWith('filter_opt_')) {
             return false;
         }
         return this._super.apply(this, arguments);

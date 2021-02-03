@@ -1872,6 +1872,7 @@ const Many2oneUserValueWidget = SelectUserValueWidget.extend({
         // The currently selected value is not present in the search, need to read
         // its display name.
         if (this.menuTogglerEl.textContent === '/' && value !== '') {
+            console.log(value);
             this.menuTogglerEl.textContent = await this._getDisplayName(parseInt(value));
         }
     },
