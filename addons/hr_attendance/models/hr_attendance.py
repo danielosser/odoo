@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
+
+import pytz
 from odoo import models, fields, api, exceptions, _
 from odoo.tools import format_datetime
 from odoo.osv.expression import AND, OR
@@ -104,9 +106,15 @@ class HrAttendance(models.Model):
 
     def _get_attendances_dates(self):
         attendances_emp = defaultdict(set)
-        for attendance in self.filtered(lambda a: a.employee_id.company_id.hr_attendance_overtime and a.check_in and a.check_in.date() >= a.employee_id.company_id.overtime_start_date and a.check_out):
-            attendances_emp[attendance.employee_id].add(attendance.check_in.date())
-            attendances_emp[attendance.employee_id].add(attendance.check_out.date())
+        for attendance in self.filtered(lambda a: a.employee_id.company_id.hr_attendance_overtime and a.check_in and a.check_out):
+            tz = pytz.timezone(attendance.employee_id.tz or 'UTC')
+            check_in = pytz.utc.localize(attendance.check_in).astimezone(tz).replace(tzinfo=None)
+            check_out = pytz.utc.localize(attendance.check_out).astimezone(tz).replace(tzinfo=None)
+            if check_in < datetime.combine(attendance.employee_id.company_id.overtime_start_date, datetime.min.time()):
+                continue
+            # TODO add dates boundaries in tz
+            attendances_emp[attendance.employee_id].add(check_in)
+            attendances_emp[attendance.employee_id].add(check_out)
         return attendances_emp
 
     def _update_overtime(self, dates=None):
@@ -116,22 +124,29 @@ class HrAttendance(models.Model):
         overtime_unlink = self.env['hr.attendance.overtime']
         overtime_create = []
         for emp, days in dates.items():
+            tz = pytz.timezone(emp.tz or 'UTC')
             domain = []
             for day in days:
                 start = datetime.combine(day, datetime.min.time())
-                stop = datetime.combine(day, datetime.max.time())
+                start_loc = pytz.utc.localize(start).astimezone(tz).replace(tzinfo=None)
                 domain = OR([domain, [
-                    '&', ('check_in', '>=', start), ('check_in', '<=', stop),
+                    '&', ('check_in', '>=', start_loc), ('check_in', '<', start + timedelta(hours=24)),
                 ]])
+
+            # TODO tz stuff
+            # ci = pytz.utc.localize(attendance.check_in).astimezone(tz).replace(tzinfo=None)
+            # co = pytz.utc.localize(attendance.check_out).astimezone(tz).replace(tzinfo=None)
 
             domain = AND([[('employee_id', '=', emp.id)], domain])
             day_attendances = defaultdict(self.browse)
             all_attendances = self.env['hr.attendance'].search(domain)
             for attendance in all_attendances:
-                day_attendances[attendance.check_in.date()] += attendance
+                ci = pytz.utc.localize(attendance.check_in).astimezone(tz).replace(tzinfo=None)
+                day_attendances[ci.date()] += attendance
 
-            start = datetime.combine(min(days), datetime.min.time())
-            stop = datetime.combine(max(days), datetime.max.time())
+            start = pytz.utc.localize(datetime.combine(min(days), datetime.min.time())).astimezone(tz).replace(tzinfo=None)
+            stop = pytz.utc.localize(datetime.combine(max(days), datetime.max.time())).astimezone(tz).replace(tzinfo=None)
+            # stop = datetime.combine(max(days), datetime.max.time())
             working_times = {x[0]: x[1] for x in emp.list_work_time_per_day(start, stop)}
             overtimes = self.env['hr.attendance.overtime'].sudo().search([
                 ('employee_id', '=', emp.id),
@@ -157,7 +172,7 @@ class HrAttendance(models.Model):
                 elif overtime:
                     overtime_unlink |= overtime
         self.env['hr.attendance.overtime'].sudo().create(overtime_create)
-        overtime_unlink.unlink()
+        overtime_unlink.sudo().unlink()
 
     @api.model_create_multi
     def create(self, vals_list):

@@ -23,6 +23,7 @@ class ResCompany(models.Model):
         if start_date:
             for company in self:
                 if not company.overtime_start_date:
+                    # TODO consider TZ
                     search_domain = OR([search_domain, [('employee_id.company_id', '=', company.id), ('check_in', '>=', start_date)]])
                 elif company.overtime_start_date > start_date:
                     search_domain = OR([search_domain, [('employee_id.company_id', '=', company.id), ('check_in', '>=', start_date), ('check_in', '<=', company.overtime_start_date)]])
