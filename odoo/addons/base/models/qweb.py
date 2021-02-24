@@ -119,6 +119,8 @@ allowed_keyword = ['False', 'None', 'True', 'and', 'as', 'elif', 'else', 'for', 
 
 _FORMAT_REGEX = re.compile(r'(?:#\{(.+?)\})|(?:\{\{(.+?)\}\})') # ( ruby-style )|(  jinja-style  )
 _VARNAME_REGEX = re.compile(r'[^a-zA-Z0-9_]')
+_STRIP_REGEX = re.compile(r'[\s\n\r\t]+')
+_EMPTY_LINE_REGEX = re.compile(r'\n\s*\n')
 
 
 ####################################
@@ -144,6 +146,7 @@ class QWeb(object):
         :param dict values: template values to be used for rendering
         :param options: used to compile the template (the dict available for the rendering is frozen)
             * ``load`` (function) overrides the load method (returns: (template, ref))
+            * ``qweb_strip`` (boolean) remove a part of excessive space
             * ``profile`` (boolean) profile the rendering
         """
         render_template = self._compile(template, options)
@@ -199,6 +202,7 @@ class QWeb(object):
         def_name = "template%s" % ("_%s" % ref if isinstance(ref, int) else "")
 
         try:
+            self._strip(element, options)
             _options['_text_concat'] = []
             self._appendText("", _options) # to have at least one yield
             code_lines = [dedent("""def %s(_qweb_self, values, log):""") % def_name] + \
@@ -333,10 +337,25 @@ class QWeb(object):
         if text_concat:
             # yield text
             text = u''.join(text_concat)
+            if options.get('qweb_strip'):
+                text = _EMPTY_LINE_REGEX.sub('\n', text)
             text_concat.clear()
             return [('    ' * indent) + 'yield """%s"""' % text]
         else:
             return []
+
+    def _strip(self, el, options):
+        if not options.get('qweb_strip'):
+            return
+
+        text_concat = options.get('_text_concat')
+        if text_concat:
+            text = u''.join(text_concat).rstrip()
+            text_concat.clear()
+            text_concat.append(text)
+
+        if el.text: el.text = el.text.strip()
+        if el.tail: el.tail = el.tail.strip()
 
     def _indent(self, code, indent):
         return _indent(code, '    ' * indent)
@@ -845,6 +864,12 @@ class QWeb(object):
         code.extend(self._compile_directives(el, options, indent))
         return code
 
+    def _compile_directive_strip(self, el, options, indent):
+        code = self._flushText(options, indent)
+        options['qweb_strip'] = self._compile_bool(el.attrib.pop('t-strip'))
+        code.extend(self._compile_directives(el, options, indent))
+        return code
+
     def _compile_directive_tag(self, el, options, indent):
         el.attrib.pop('t-tag', None)
 
@@ -867,6 +892,8 @@ class QWeb(object):
         varname = el.attrib.pop('t-set')
         directive = 't-set="%s"' % varname
         code = self._flushText(options, indent)
+
+        self._strip(el, options)
 
         if 't-value' in el.attrib:
             expr = el.attrib.pop('t-value') or 'None'
@@ -937,6 +964,8 @@ class QWeb(object):
             expr = el.attrib.pop('t-if')
             directive = 't-if="%s"' % expr
 
+        self._strip(el, options)
+
         code = self._flushText(options, indent)
         content_if = self._compile_directives(el, options, indent + 1) + self._flushText(options, indent + 1)
 
@@ -968,6 +997,7 @@ class QWeb(object):
     def _compile_directive_groups(self, el, options, indent):
         groups = el.attrib.pop('t-groups')
         directive = 'groups="%s"' % groups
+        self._strip(el, options)
         code = self._flushText(options, indent)
         code.extend(self._compile_hook_before_directive(el, directive, options, indent))
         code.append(self._indent("""if _qweb_self.user_has_groups("%s"):""" % self._compile_str(groups), indent))
@@ -979,6 +1009,11 @@ class QWeb(object):
         expr_foreach = el.attrib.pop('t-foreach')
         expr_as = el.attrib.pop('t-as')
         directive = 't-foreach="%s" t-as="%s"' % (expr_foreach, expr_as)
+
+        self._strip(el, options)
+        if options.get('qweb_strip') and el.getchildren():
+            child = el.getchildren()[-1]
+            if child.tail: child.tail = child.tail.strip()
 
         # to remove after v15
         deprecated_regexp = re.compile(r'(^|[^a-zA-Z0-9_])%s(_size|_first|_last|_odd|_event|_parity)([^a-zA-Z0-9_]|$)' % expr_as)
@@ -1143,6 +1178,8 @@ class QWeb(object):
         expr = el.attrib.pop('t-call')
         directive = 't-call="%s"' % expr
         _values = self._make_name('values_copy')
+
+        self._strip(el, options)
 
         if el.attrib.get('t-call-options'): # retro-compatibility
             el.attrib.set('t-options', el.attrib.pop('t-call-options'))

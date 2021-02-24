@@ -719,7 +719,7 @@ class TestQWebBasic(TransactionCase):
                     [2: 1 1]
         """
 
-        rendered = str(self.env['ir.qweb']._render(t.id), 'utf-8')
+        rendered = str(self.env['ir.qweb'].with_context(qweb_strip=False)._render(t.id), 'utf-8')
         self.assertEqual(rendered.strip(), result.strip())
 
     def test_foreach_2_iter_dict(self):
@@ -737,7 +737,7 @@ class TestQWebBasic(TransactionCase):
                     [2: c 1]
         """
 
-        rendered = str(self.env['ir.qweb']._render(t.id), 'utf-8')
+        rendered = str(self.env['ir.qweb'].with_context(qweb_strip=False)._render(t.id), 'utf-8')
         self.assertEqual(rendered.strip(), result.strip())
 
 from copy import deepcopy
@@ -799,7 +799,7 @@ class TestQWebStaticXml(TransactionCase):
         self.env.user.tz = 'Europe/Brussels'
         doc = etree.parse(path).getroot()
         loader = FileSystemLoader(path)
-        qweb = self.env['ir.qweb']
+        qweb = self.env['ir.qweb'].with_context(qweb_strip=False)
 
         for template in loader:
             if not template or template.startswith('_'):
@@ -892,3 +892,76 @@ class TestPageSplit(TransactionCase):
             rendered,
             E.div(E.table(E.tr(), E.tr(), E.tr()))
         )
+
+class TestEmptyLines(TransactionCase):
+    def test_no_empty_lines(self):
+        t = self.env['ir.ui.view'].create({
+            'name': 'test',
+            'type': 'qweb',
+            'arch_db': '''<t t-name='test'>
+            
+                <div>
+                    
+                </div>
+                
+                
+            </t>'''
+        })
+        rendered = str(self.env['ir.qweb']._render(t.id), 'utf-8')
+        self.assertFalse(re.compile(r'^\s+\n').match(rendered))
+        self.assertFalse(re.compile(r'\n\s+\n').match(rendered))
+
+    def test_no_empty_lines_with_comment(self):
+        t = self.env['ir.ui.view'].create({
+            'name': 'test',
+            'type': 'qweb',
+            'arch_db': '''<t t-name='test'>
+            
+                <div>
+                
+                <!-- comment -->
+                    
+                </div>
+                
+                
+            </t>'''
+        })
+        rendered = str(self.env['ir.qweb']._render(t.id), 'utf-8')
+        self.assertFalse(re.compile(r'^\s+\n').match(rendered))
+        self.assertFalse(re.compile(r'\n\s+\n').match(rendered))
+
+    def test_no_empty_lines_with_t(self):
+        t = self.env['ir.ui.view'].create({
+            'name': 'test',
+            'type': 'qweb',
+            'arch_db': '''<t t-name='test'>
+            
+                <div>
+
+                <t t-if="False">no render</t>
+                    
+                </div>
+                
+                
+            </t>'''
+        })
+        rendered = str(self.env['ir.qweb']._render(t.id), 'utf-8')
+        self.assertFalse(re.compile(r'^\s+\n').match(rendered))
+        self.assertFalse(re.compile(r'\n\s+\n').match(rendered))
+
+    def test_keep_empty_lines(self):
+        t = self.env['ir.ui.view'].create({
+            'name': 'test',
+            'type': 'qweb',
+            'arch_db': '''<t t-name='test'>
+            
+                <div>
+                    
+                </div>
+                
+                
+            </t>'''
+        })
+        rendered = str(self.env['ir.qweb'].with_context(qweb_strip=False)._render(t.id), 'utf-8')
+        self.assertTrue(re.compile(r'^\s+\n').match(rendered))
+        self.assertTrue(re.compile(r'\n\s+\n').match(rendered))

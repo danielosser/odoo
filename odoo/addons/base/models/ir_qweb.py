@@ -64,6 +64,7 @@ class IrQWeb(models.AbstractModel, QWeb):
         """
         context = dict(self.env.context, dev_mode='qweb' in tools.config['dev_mode'])
         context.update(options)
+        context.setdefault('qweb_strip', True)
 
         body = super(IrQWeb, self)._render(id_or_xml_id, values=values, **context)
         result = u''.join(body).encode('utf8')
@@ -102,7 +103,7 @@ class IrQWeb(models.AbstractModel, QWeb):
     # assume cache will be invalidated by third party on write to ir.ui.view
     def _get_template_cache_keys(self):
         """ Return the list of context keys to use for caching ``_get_template``. """
-        return ['lang', 'inherit_branding', 'editable', 'translatable', 'edit_translations', 'website_id', 'profile']
+        return ['lang', 'inherit_branding', 'editable', 'translatable', 'edit_translations', 'website_id', 'profile', 'qweb_strip']
 
     # apply ormcache_context decorator unless in dev mode...
     @tools.conditional(
@@ -162,6 +163,8 @@ class IrQWeb(models.AbstractModel, QWeb):
         """ This special 't-call' tag can be used in order to aggregate/minify javascript and css assets"""
         if len(el):
             raise SyntaxError("t-call-assets cannot contain children nodes")
+
+        self._strip(el, options)
 
         directive = 't-call-assets="%s"' % el.get('t-call-assets')
         code = self._flushText(options, indent)

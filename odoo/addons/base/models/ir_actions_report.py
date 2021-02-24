@@ -834,7 +834,7 @@ class IrActionsReport(models.Model):
             data = {}
         data.setdefault('report_type', 'text')
         data = self._get_rendering_context(docids, data)
-        return self._render_template(self.sudo().report_name, data), 'text'
+        return self.with_context(qweb_strip=False)._render_template(self.sudo().report_name, data), 'text'
 
     @api.model
     def _render_qweb_html(self, docids, data=None):
