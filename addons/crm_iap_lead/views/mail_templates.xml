@@ -31,7 +31,7 @@
                     </thead>
                     <tbody>
                         <t t-foreach="people_data" t-as="people">
-                            <tr t-att-style="people_odd and 'background-color:#eeeeee' or None">
+                            <tr t-att-style="people_index % 2 and 'background-color:#eeeeee' or None">
                                 <td style="padding: 5px">
                                     <t t-set="fullName" t-value="people['full_name'] or ''"/>
                                     <t t-set="title" t-value="people['title'] or ''"/>

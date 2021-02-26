@@ -14,7 +14,7 @@
                                 <t t-foreach="blog_post.product_ids" t-as="product">
                                     <t t-set="image_holder" t-value="product._get_image_holder()"/>
                                     <t t-set="combination_info" t-value="product._get_combination_info(only_template=True, add_qty=1, pricelist=pricelist)"/>
-                                    <div t-attf-class="card oe_product_cart carousel-item #{product_first and 'active' or None}">
+                                    <div t-attf-class="card oe_product_cart carousel-item #{product_index == 0 and 'active' or None}">
                                         <div class="card-body p-1 oe_product_image" style="height: 256px;">
                                             <span t-field="image_holder.image_1920" t-options="{'widget': 'image', 'preview_image': 'image_256'}"/>
                                         </div>

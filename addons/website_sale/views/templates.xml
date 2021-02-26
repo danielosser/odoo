@@ -284,7 +284,7 @@
                                 <table class="table table-borderless m-0" t-att-data-ppg="ppg" t-att-data-ppr="ppr">
                                     <colgroup t-ignore="true">
                                         <!-- Force the number of columns (useful when only one row of (x < ppr) products) -->
-                                        <col t-foreach="ppr" t-as="p"/>
+                                        <col t-foreach="range(ppr)" t-as="p"/>
                                     </colgroup>
                                     <tbody>
                                         <tr t-foreach="bins" t-as="tr_product">
@@ -624,8 +624,9 @@
                                         <tr>
                                             <td>
                                                 <span t-field="attribute.name"/>:
+                                                <t t-set="ptal_last_index" t-value="len(single_value_attributes[attribute]) - 1"/>
                                                 <t t-foreach="single_value_attributes[attribute]" t-as="ptal">
-                                                    <span t-field="ptal.product_template_value_ids._only_active().name"/><t t-if="not ptal_last">, </t>
+                                                    <span t-field="ptal.product_template_value_ids._only_active().name"/><t t-if="ptal_index != ptal_last_index">, </t>
                                                 </t>
                                             </td>
                                         </tr>
@@ -941,9 +942,11 @@
     <!-- This template displays all the lines following the first one on the description of the sale order line, with a muted style. For typical products this content will be the product description_sale. -->
     <template id="cart_line_description_following_lines" name="Shopping Cart Line Description Following Lines">
         <div t-if="line.get_description_following_lines()" t-attf-class="text-muted {{div_class}} small">
-            <t t-foreach="line.get_description_following_lines()" t-as="name_line">
+            <t t-set="name_lines" t-value="line.get_description_following_lines()"/>
+            <t t-set="name_line_last_index" t-value="len(name_lines) - 1"/>
+            <t t-foreach="name_lines" t-as="name_line">
                 <span><t t-esc="name_line"/></span>
-                <br t-if="not name_line_last" />
+                <br t-if="name_line_index != name_line_last_index" />
             </t>
         </div>
     </template>
@@ -1847,7 +1850,7 @@
             <div class="o_carousel_product_outer carousel-outer position-relative flex-grow-1">
                 <div class="carousel-inner h-100">
                     <t t-foreach="product_images" t-as="product_image">
-                        <div t-attf-class="carousel-item h-100#{' active' if product_image_first else ''}">
+                        <div t-attf-class="carousel-item h-100#{' active' if product_image_index == 0 else ''}">
                             <div t-if="product_image._name == 'product.image' and product_image.embed_code" class="d-flex align-items-center justify-content-center h-100 embed-responsive embed-responsive-16by9">
                                 <t t-raw="product_image.embed_code"/>
                             </div>

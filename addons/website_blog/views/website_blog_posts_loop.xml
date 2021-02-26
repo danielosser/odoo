@@ -96,6 +96,7 @@ according to the enabled options.
                 </t>
             </t>
             <!-- Loop through posts: exclude the first one if already displayed as top banner -->
+            <t t-set="blog_post_last_index" t-value="len(posts) - 1"/>
             <t t-foreach="posts" t-as="blog_post">
                 <!-- Assign 'colWidth': 'col-12' is default for List-View and mobile -->
                 <div t-attf-class="pb-4 col-12 #{colWidth}">
@@ -141,7 +142,7 @@ according to the enabled options.
                     </article>
                 </div>
                 <!-- List-View Design, add <hr> after post -->
-                <div t-if="opt_blog_list_view and not blog_post_last" class="col-12 mt-2 mb-5 px-2"><hr/></div>
+                <div t-if="opt_blog_list_view and blog_post_index != blog_post_last_index" class="col-12 mt-2 mb-5 px-2"><hr/></div>
             </t>
         </div>
     </div>

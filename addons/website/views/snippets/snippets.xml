@@ -1211,7 +1211,7 @@
         </we-row>
         <we-collapse>
             <we-row string="Grays" class="o_we_gray_preview o_we_collapse_toggler">
-                <t t-foreach="9" t-as="i">
+                <t t-foreach="range(9)" t-as="i">
                     <t t-set="grayCode" t-value="str((9 - i) * 100)"/>
                     <span t-attf-title="Gray #{grayCode}"
                           t-attf-variable="#{grayCode}"

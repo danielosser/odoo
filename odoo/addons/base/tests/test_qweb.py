@@ -14,6 +14,8 @@ from odoo.tests.common import TransactionCase
 from odoo.addons.base.models.qweb import QWebException
 from odoo.tools import misc, ustr
 
+unsafe_eval = eval
+
 
 class TestQWebTField(TransactionCase):
     def setUp(self):
@@ -664,6 +666,79 @@ class TestQWebNS(TransactionCase):
         auto_rendered = view._render(values={'partner': partner}).strip().decode()
         self.assertRegex(auto_rendered, r'<div><img style="width:100%;" alt="Barcode" src="data:image/png;base64,\S+"></div>')
 
+class TestQWebBasic(TransactionCase):
+    def test_compile_expr(self):
+        tests = [
+            #pylint: disable=C0326
+            # source,                                   values,                         result
+            ("1 +2+ 3",                                 {},                             6),
+            ("{'a': True}",                             {},                             {'a': True}),
+            ("object.count(1)",                         {'object': [1, 2, 1 ,1]},       3),
+            ("dict(a=True)",                            {},                             {'a': True}),
+            ("fn(a=11, b=22) or a",                     {'a': 1, 'fn': lambda a,b: 0},  1),
+            ("fn(a=11, b=22) or a",                     {'a': 1, 'fn': lambda a,b: b},  22),
+            ("(lambda a: a)(5)",                        {},                             5),
+            ("(lambda a: a[0])([5])",                   {},                             5),
+            ("{'a': lambda a: a[0], 'b': 3}['a']([5])", {},                             5),
+            ("list(map(lambda a: a[0], r))",            {'r': [(1,11), (2,22)]},        [1, 2]),
+            ("z + (head or 'z')",                       {'z': 'a'},                     "az"),
+            ("z + (head or 'z')",                       {'z': 'a', 'head': 'b'},        "ab"),
+            ("{a:b for a, b in [(1,11), (2, 22)]}",     {},                             {1: 11, 2: 22}),
+            ("any({x == 2 for x in [1,2,3]})",          {},                             True),
+            ("any({x == 5 for x in [1,2,3]})",          {},                             False),
+            ("{x:y for x,y in [('a', 11),('b', 22)]}",  {},                             {'a': 11, 'b': 22}),
+            ("[(y,x) for x,y in [(1, 11),(2, 22)]]",    {},                             [(11, 1), (22, 2)]),
+        ]
+
+        IrQweb = self.env['ir.qweb']
+        for expr, q_values, result in tests:
+            expr_namespace = IrQweb._compile_expr(expr)
+
+            compiled = compile("""def test(values):\n  values['result'] = %s""" % expr_namespace, '<test>', 'exec')
+            globals_dict = IrQweb._prepare_globals({}, {})
+            values = {}
+            unsafe_eval(compiled, globals_dict, values)
+            test = values['test']
+
+            test(q_values)
+            q_result = dict(q_values, result=result)
+            self.assertDictEqual(q_values, q_result, "Should compile: %s" % expr)
+
+    def test_foreach_1_iter_list(self):
+        t = self.env['ir.ui.view'].create({
+            'name': 'test',
+            'type': 'qweb',
+            'arch_db': '''<t t-name="iter-dict">
+                <t t-foreach="[3, 2, 1]" t-as="item">
+                    [<t t-esc="item_index"/>: <t t-esc="item"/> <t t-esc="item_value"/>]</t>
+            </t>'''
+        })
+        result = u"""
+                    [0: 3 3]
+                    [1: 2 2]
+                    [2: 1 1]
+        """
+
+        rendered = str(self.env['ir.qweb']._render(t.id), 'utf-8')
+        self.assertEqual(rendered.strip(), result.strip())
+
+    def test_foreach_2_iter_dict(self):
+        t = self.env['ir.ui.view'].create({
+            'name': 'test',
+            'type': 'qweb',
+            'arch_db': '''<t t-name="iter-dict">
+                <t t-foreach="{'a': 3, 'b': 2, 'c': 1}" t-as="item">
+                    [<t t-esc="item_index"/>: <t t-esc="item"/> <t t-esc="item_value"/>]</t>
+            </t>'''
+        })
+        result = u"""
+                    [0: a 3]
+                    [1: b 2]
+                    [2: c 1]
+        """
+
+        rendered = str(self.env['ir.qweb']._render(t.id), 'utf-8')
+        self.assertEqual(rendered.strip(), result.strip())
 
 from copy import deepcopy
 class FileSystemLoader(object):
@@ -684,10 +759,9 @@ class FileSystemLoader(object):
                 root = etree.Element('templates')
                 root.append(deepcopy(node))
                 arch = etree.tostring(root, encoding='unicode')
-                return arch
+                return (arch, name)
 
-
-class TestQWeb(TransactionCase):
+class TestQWebStaticXml(TransactionCase):
     matcher = re.compile(r'^qweb-test-(.*)\.xml$')
 
     @classmethod
@@ -715,10 +789,18 @@ class TestQWeb(TransactionCase):
         return lambda: self.run_test_file(os.path.join(path, f))
 
     def run_test_file(self, path):
+        if 'qweb-test-foreach.xml' in path:
+            # The functionality for foreach is not the same on the python side.
+            # Values such as parity are not present. Python can only take
+            # iterators or dictionary, not numbers.
+            # Specific tests can be found above.
+            return
+
         self.env.user.tz = 'Europe/Brussels'
         doc = etree.parse(path).getroot()
         loader = FileSystemLoader(path)
         qweb = self.env['ir.qweb']
+
         for template in loader:
             if not template or template.startswith('_'):
                 continue
@@ -728,12 +810,15 @@ class TestQWeb(TransactionCase):
             params = {} if param is None else json.loads(param.text, object_pairs_hook=collections.OrderedDict)
             params.setdefault('__keep_empty_lines', True)
 
-            result = doc.find('result[@id="{}"]'.format(template)).text
-            self.assertEqual(
-                qweb._render(template, values=params, load=loader).strip(),
-                (result or u'').strip().encode('utf-8'),
-                template
-            )
+            result = (doc.find('result[@id="{}"]'.format(template)).text or u'').strip().encode('utf-8')
+            value = qweb._render(template, values=params, load=loader).strip()
+            self.assertEqual(value, result, template)
+
+def load_tests(loader, suite, _):
+    # can't override TestQWebStaticXml.__dir__ because dir() called on *class* not
+    # instance
+    suite.addTests(TestQWebStaticXml.get_cases())
+    return suite
 
 class TestPageSplit(TransactionCase):
     # need to explicitly assertTreesEqual because I guess it's registered for
@@ -807,39 +892,3 @@ class TestPageSplit(TransactionCase):
             rendered,
             E.div(E.table(E.tr(), E.tr(), E.tr()))
         )
-
-class TestEmptyLines(TransactionCase):
-    arch = '''<t t-name='test'>
-            
-                <div>
-                    
-                </div>
-                
-                
-            </t>'''
-
-    def test_no_empty_lines(self):
-        t = self.env['ir.ui.view'].create({
-            'name': 'test',
-            'type': 'qweb',
-            'arch_db': self.arch
-        })
-        rendered = str(self.env['ir.qweb']._render(t.id), 'utf-8')
-        self.assertFalse(re.compile('^\s+\n').match(rendered))
-        self.assertFalse(re.compile('\n\s+\n').match(rendered))
-
-    def test_keep_empty_lines(self):
-        t = self.env['ir.ui.view'].create({
-            'name': 'test',
-            'type': 'qweb',
-            'arch_db': self.arch
-        })
-        rendered = str(self.env['ir.qweb']._render(t.id, {'__keep_empty_lines': True}), 'utf-8')
-        self.assertTrue(re.compile('^\s+\n').match(rendered))
-        self.assertTrue(re.compile('\n\s+\n').match(rendered))
-
-def load_tests(loader, suite, _):
-    # can't override TestQWeb.__dir__ because dir() called on *class* not
-    # instance
-    suite.addTests(TestQWeb.get_cases())
-    return suite

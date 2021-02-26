@@ -5,9 +5,10 @@
                 Tracking:
                 <t t-set="multiple_carrier_tracking" t-value="i.get_multiple_carrier_tracking()"/>
                 <t t-if="multiple_carrier_tracking">
+                     <t t-set="line_last_index" t-value="len(multiple_carrier_tracking) - 1"/>
                      <t t-foreach="multiple_carrier_tracking" t-as="line">
                          <a t-att-href="line[1]" target="_blank"><span t-esc="line[0]"/></a>
-                         <span t-if="not line_last"> + </span>
+                         <span t-if="line_index != line_last_index"> + </span>
                      </t>
                 </t>
                 <t t-else="">

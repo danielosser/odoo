@@ -137,7 +137,7 @@
                         <div id="slip-optical-line">
                             <!--Optical reference-->
                             <div t-attf-style="top: {{ invoice.company_id.l10n_ch_isr_scan_line_top }}mm; left: {{ invoice.company_id.l10n_ch_isr_scan_line_left }}mm;">
-                                <div t-foreach="invoice.l10n_ch_isr_optical_line" t-as="char" t-esc="char" t-attf-style="right: {{ round((char_size - char_index - 1) * 0.1, 1) }}in"/>
+                                <div t-foreach="invoice.l10n_ch_isr_optical_line" t-as="char" t-esc="char" t-attf-style="right: {{ round((len(invoice.l10n_ch_isr_optical_line) - char_index - 1) * 0.1, 1) }}in"/>
                             </div>
                         </div>
                     </div>

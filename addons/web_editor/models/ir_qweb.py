@@ -8,7 +8,6 @@ as well as render a few fields differently.
 Also, adds methods to convert values back to Odoo models.
 """
 
-import ast
 import babel
 import base64
 import io
@@ -47,7 +46,7 @@ class QWeb(models.AbstractModel):
 
     # compile directives
 
-    def _compile_node(self, el, options):
+    def _compile_node(self, el, options, indent):
         snippet_key = options.get('snippet-key')
         if snippet_key == options['template'] \
                 or options.get('snippet-sub-call-key') == options['template']:
@@ -64,18 +63,18 @@ class QWeb(models.AbstractModel):
                 # The first node might be a call to a sub template
                 sub_call = el.get('t-call')
                 if sub_call:
-                    el.set('t-call-options', f"{{'snippet-key': '{snippet_key}', 'snippet-sub-call-key': '{sub_call}'}}")
+                    el.set('t-options', f"{{'snippet-key': '{snippet_key}', 'snippet-sub-call-key': '{sub_call}'}}")
                 # If it already has a data-snippet it is a saved snippet.
                 # Do not override it.
                 elif 'data-snippet' not in el.attrib:
                     el.attrib['data-snippet'] = snippet_key.split('.', 1)[-1]
 
-        return super()._compile_node(el, options)
+        return super()._compile_node(el, options, indent)
 
-    def _compile_directive_snippet(self, el, options):
+    def _compile_directive_snippet(self, el, options, indent):
         key = el.attrib.pop('t-snippet')
         el.set('t-call', key)
-        el.set('t-call-options', "{'snippet-key': '" + key + "'}")
+        el.set('t-options', "{'snippet-key': '" + key + "'}")
         View = self.env['ir.ui.view'].sudo()
         view_id = View.get_view_id(key)
         name = View.browse(view_id).name
@@ -86,15 +85,18 @@ class QWeb(models.AbstractModel):
             escape(pycompat.to_text(view_id)),
             escape(pycompat.to_text(el.findtext('keywords')))
         )
-        return [self._append(ast.Str(div))] + self._compile_node(el, options) + [self._append(ast.Str(u'</div>'))]
+        self._appendText(div, options)
+        code = self._compile_node(el, options, indent)
+        self._appendText(u'</div>', options)
+        return code
 
-    def _compile_directive_snippet_call(self, el, options):
+    def _compile_directive_snippet_call(self, el, options, indent):
         key = el.attrib.pop('t-snippet-call')
         el.set('t-call', key)
-        el.set('t-call-options', "{'snippet-key': '" + key + "'}")
-        return self._compile_node(el, options)
+        el.set('t-options', "{'snippet-key': '" + key + "'}")
+        return self._compile_node(el, options, indent)
 
-    def _compile_directive_install(self, el, options):
+    def _compile_directive_install(self, el, options, indent):
         if self.user_has_groups('base.group_system'):
             module = self.env['ir.module.module'].search([('name', '=', el.attrib.get('t-install'))])
             if not module or module.state == 'installed':
@@ -106,14 +108,13 @@ class QWeb(models.AbstractModel):
                 module.id,
                 escape(pycompat.to_text(thumbnail))
             )
-            return [self._append(ast.Str(div))]
-        else:
-            return []
+            self._appendText(div, options)
+        return []
 
-    def _compile_directive_tag(self, el, options):
+    def _compile_directive_tag(self, el, options, indent):
         if el.get('t-placeholder'):
             el.set('t-att-placeholder', el.attrib.pop('t-placeholder'))
-        return super(QWeb, self)._compile_directive_tag(el, options)
+        return super(QWeb, self)._compile_directive_tag(el, options, indent)
 
     # order and ignore
 

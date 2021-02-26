@@ -285,9 +285,11 @@
         <span t-if="activity.summary">: </span><span t-if="activity.summary" t-field="activity.summary"/>
     </p>
     <div t-if="feedback">
-        <t t-foreach="feedback.split('\n')" t-as="feedback_line">
+        <t t-set="feedback_lines" t-value="feedback.split('\n')"/>
+        <t t-set="feedback_line_last_index" t-value="len(feedback_lines) - 1"/>
+        <t t-foreach="lines" t-as="feedback_line">
             <t t-esc="feedback_line"/>
-            <br t-if="not feedback_line_last"/>
+            <br t-if="feedback_line_index != feedback_line_last_index"/>
         </t>
     </div>
     <t t-if="activity.note and activity.note != '&lt;p&gt;&lt;br&gt;&lt;/p&gt;'"><!-- <p></br></p> -->

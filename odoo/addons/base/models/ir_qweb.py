@@ -1,26 +1,41 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-import ast
+from textwrap import dedent
 import copy
 import json
 import logging
-from collections import OrderedDict
 from time import time
 
 from lxml import html
 from lxml import etree
 
 from odoo import api, models, tools
-from odoo.tools.safe_eval import assert_valid_codeobj, _BUILTINS, _SAFE_OPCODES
+from odoo.tools.safe_eval import check_values, assert_valid_codeobj, _BUILTINS, to_opcodes, _EXPR_OPCODES, _BLACKLIST
 from odoo.tools.misc import get_lang
 from odoo.http import request
 from odoo.modules.module import get_resource_path
 
-from odoo.addons.base.models.qweb import QWeb, Contextifier
+from odoo.addons.base.models.qweb import QWeb
 from odoo.addons.base.models.assetsbundle import AssetsBundle
 from odoo.addons.base.models.ir_asset import can_aggregate, STYLE_EXTENSIONS, SCRIPT_EXTENSIONS
 
 _logger = logging.getLogger(__name__)
+
+
+_SAFE_QWEB_OPCODES = _EXPR_OPCODES.union(to_opcodes([
+    'YIELD_VALUE',
+
+    'MAKE_FUNCTION', 'CALL_FUNCTION', 'CALL_FUNCTION_KW', 'CALL_FUNCTION_EX',
+    'CALL_METHOD', 'LOAD_METHOD',
+
+    'GET_ITER', 'FOR_ITER',
+    'JUMP_ABSOLUTE',
+    'JUMP_IF_TRUE_OR_POP', 'POP_JUMP_IF_TRUE', 'POP_JUMP_IF_FALSE', 'JUMP_IF_FALSE_OR_POP', 'JUMP_FORWARD',
+
+    'UNPACK_SEQUENCE',
+    'LOAD_NAME', 'LOAD_ATTR', 'LOAD_FAST', 'LOAD_GLOBAL',
+    'STORE_SUBSCR', 'STORE_FAST',
+])) - _BLACKLIST
 
 
 class IrQWeb(models.AbstractModel, QWeb):
@@ -41,18 +56,17 @@ class IrQWeb(models.AbstractModel, QWeb):
 
         Render the template specified by the given name.
 
-        :param id_or_xml_id: name or etree (see get_template)
+        :param id_or_xml_id: name or etree (see _get_template)
         :param dict values: template values to be used for rendering
         :param options: used to compile the template (the dict available for the rendering is frozen)
             * ``load`` (function) overrides the load method
-            * ``profile`` (float) profile the rendering (use astor lib) (filter
-              profile line with time ms >= profile)
+            * ``profile`` (Boolean) activate the rendering profile displayed in log as debug
         """
-
         context = dict(self.env.context, dev_mode='qweb' in tools.config['dev_mode'])
         context.update(options)
 
-        result = super(IrQWeb, self)._render(id_or_xml_id, values=values, **context)
+        body = super(IrQWeb, self)._render(id_or_xml_id, values=values, **context)
+        result = u''.join(body).encode('utf8')
 
         if b'data-pagebreak=' not in result:
             return result
@@ -85,29 +99,22 @@ class IrQWeb(models.AbstractModel, QWeb):
 
         return b''.join(html.tostring(f) for f in fragments)
 
-    def default_values(self):
-        """ attributes add to the values for each computed template
-        """
-        default = super(IrQWeb, self).default_values()
-        default.update(request=request, cache_assets=round(time()/180), true=True, false=False) # true and false added for backward compatibility to remove after v10
-        return default
-
     # assume cache will be invalidated by third party on write to ir.ui.view
     def _get_template_cache_keys(self):
         """ Return the list of context keys to use for caching ``_get_template``. """
-        return ['lang', 'inherit_branding', 'editable', 'translatable', 'edit_translations', 'website_id']
+        return ['lang', 'inherit_branding', 'editable', 'translatable', 'edit_translations', 'website_id', 'profile']
 
     # apply ormcache_context decorator unless in dev mode...
     @tools.conditional(
         'xml' not in tools.config['dev_mode'],
         tools.ormcache('id_or_xml_id', 'tuple(options.get(k) for k in self._get_template_cache_keys())'),
     )
-    def compile(self, id_or_xml_id, options):
+    def _compile(self, id_or_xml_id, options):
         try:
             id_or_xml_id = int(id_or_xml_id)
         except:
             pass
-        return super(IrQWeb, self).compile(id_or_xml_id, options=options)
+        return super(IrQWeb, self)._compile(id_or_xml_id, options=options)
 
     def _load(self, name, options):
         lang = options.get('lang', get_lang(self.env).code)
@@ -132,9 +139,9 @@ class IrQWeb(models.AbstractModel, QWeb):
             for node in view:
                 if node.get('t-name'):
                     node.set('t-name', str(name))
-            return view
+            return (view, view_id)
         else:
-            return template
+            return (template, view_id)
 
     # order
 
@@ -146,138 +153,50 @@ class IrQWeb(models.AbstractModel, QWeb):
 
     # compile directives
 
-    def _compile_directive_lang(self, el, options):
-        lang = el.attrib.pop('t-lang', get_lang(self.env).code)
-        if el.get('t-call-options'):
-            el.set('t-call-options', el.get('t-call-options')[0:-1] + u', "lang": %s}' % lang)
-        else:
-            el.set('t-call-options', u'{"lang": %s}' % lang)
-        return self._compile_node(el, options)
+    def _compile_directive_lang(self, el, options, indent):
+        lang = el.attrib.pop('t-lang', "'%s'" % get_lang(self.env).code)
+        el.attrib['t-options-lang'] = lang
+        return self._compile_node(el, options, indent)
 
-    def _compile_directive_call_assets(self, el, options):
+    def _compile_directive_call_assets(self, el, options, indent):
         """ This special 't-call' tag can be used in order to aggregate/minify javascript and css assets"""
         if len(el):
             raise SyntaxError("t-call-assets cannot contain children nodes")
 
-        # nodes = self._get_asset_nodes(bundle, options, css=css, js=js, debug=values.get('debug'), async=async, values=values)
-        #
-        # for index, (tagName, t_attrs, content) in enumerate(nodes):
-        #     if index:
-        #         append('\n        ')
-        #     append('<')
-        #     append(tagName)
-        #
-        #     self._post_processing_att(tagName, t_attrs, options)
-        #     for name, value in t_attrs.items():
-        #         if value or isinstance(value, string_types)):
-        #             append(u' ')
-        #             append(name)
-        #             append(u'="')
-        #             append(escape(pycompat.to_text((value)))
-        #             append(u'"')
-        #
-        #     if not content and tagName in self._void_elements:
-        #         append('/>')
-        #     else:
-        #         append('>')
-        #         if content:
-        #           append(content)
-        #         append('</')
-        #         append(tagName)
-        #         append('>')
-        #
-        space = el.getprevious() is not None and el.getprevious().tail or el.getparent().text
-        sep = u'\n' + space.rsplit('\n').pop()
-        return [
-            ast.Assign(
-                targets=[ast.Name(id='nodes', ctx=ast.Store())],
-                value=ast.Call(
-                    func=ast.Attribute(
-                        value=ast.Name(id='self', ctx=ast.Load()),
-                        attr='_get_asset_nodes',
-                        ctx=ast.Load()
-                    ),
-                    args=[
-                        ast.Str(el.get('t-call-assets')),
-                        ast.Name(id='options', ctx=ast.Load()),
-                    ],
-                    keywords=[
-                        ast.keyword('css', self._get_attr_bool(el.get('t-css', True))),
-                        ast.keyword('js', self._get_attr_bool(el.get('t-js', True))),
-                        ast.keyword('debug', ast.Call(
-                            func=ast.Attribute(
-                                value=ast.Name(id='values', ctx=ast.Load()),
-                                attr='get',
-                                ctx=ast.Load()
-                            ),
-                            args=[ast.Str('debug')],
-                            keywords=[], starargs=None, kwargs=None
-                        )),
-                        ast.keyword('async_load', self._get_attr_bool(el.get('async_load', False))),
-                        ast.keyword('defer_load', self._get_attr_bool(el.get('defer_load', False))),
-                        ast.keyword('lazy_load', self._get_attr_bool(el.get('lazy_load', False))),
-                        ast.keyword('media', ast.Constant(el.get('media'))),
-                    ],
-                    starargs=None, kwargs=None
-                )
-            ),
-            ast.For(
-                target=ast.Tuple(elts=[
-                    ast.Name(id='index', ctx=ast.Store()),
-                    ast.Tuple(elts=[
-                        ast.Name(id='tagName', ctx=ast.Store()),
-                        ast.Name(id='t_attrs', ctx=ast.Store()),
-                        ast.Name(id='content', ctx=ast.Store())
-                    ], ctx=ast.Store())
-                ], ctx=ast.Store()),
-                iter=ast.Call(
-                    func=ast.Name(id='enumerate', ctx=ast.Load()),
-                    args=[ast.Name(id='nodes', ctx=ast.Load())],
-                    keywords=[],
-                    starargs=None, kwargs=None
-                ),
-                body=[
-                    ast.If(
-                        test=ast.Name(id='index', ctx=ast.Load()),
-                        body=[self._append(ast.Str(sep))],
-                        orelse=[]
-                    ),
-                    self._append(ast.Str(u'<')),
-                    self._append(ast.Name(id='tagName', ctx=ast.Load())),
-                ] + self._append_attributes() + [
-                    ast.If(
-                        test=ast.BoolOp(
-                            op=ast.And(),
-                            values=[
-                                ast.UnaryOp(ast.Not(), ast.Name(id='content', ctx=ast.Load()), lineno=0, col_offset=0),
-                                ast.Compare(
-                                    left=ast.Name(id='tagName', ctx=ast.Load()),
-                                    ops=[ast.In()],
-                                    comparators=[ast.Attribute(
-                                        value=ast.Name(id='self', ctx=ast.Load()),
-                                        attr='_void_elements',
-                                        ctx=ast.Load()
-                                    )]
-                                ),
-                            ]
-                        ),
-                        body=[self._append(ast.Str(u'/>'))],
-                        orelse=[
-                            self._append(ast.Str(u'>')),
-                            ast.If(
-                                test=ast.Name(id='content', ctx=ast.Load()),
-                                body=[self._append(ast.Name(id='content', ctx=ast.Load()))],
-                                orelse=[]
-                            ),
-                            self._append(ast.Str(u'</')),
-                            self._append(ast.Name(id='tagName', ctx=ast.Load())),
-                            self._append(ast.Str(u'>')),
-                        ]
-                    )
-                ],
-                orelse=[]
-            )
-        ]
+        directive = 't-call-assets="%s"' % el.get('t-call-assets')
+        code = self._flushText(options, indent)
+        code.extend(self._compile_hook_before_directive(el, directive, options, indent))
+        code.append(self._indent(dedent("""
+            t_call_assets_nodes = _qweb_self._get_asset_nodes("%(xmlid)s", _qweb_options, css=%(css)s, js=%(js)s, debug=values.get("debug"), async_load=%(async_load)s, defer_load=%(defer_load)s, lazy_load=%(lazy_load)s, media=%(media)s)
+            for index, (tagName, attrs, content) in enumerate(t_call_assets_nodes):
+                if index:
+                    yield u'\\n        '
+                yield u'<'
+                yield tagName
+            """).strip() % {
+                'xmlid': self._compile_str(el.get('t-call-assets')),
+                'css': self._compile_bool(el.get('t-css', True)),
+                'js': self._compile_bool(el.get('t-js', True)),
+                'async_load': self._compile_bool(el.get('async_load', False)),
+                'defer_load': self._compile_bool(el.get('defer_load', False)),
+                'lazy_load': self._compile_bool(el.get('lazy_load', False)),
+                'media': '"%s"' % self._compile_str(el.get('media')) if el.get('media') else False,
+            }, indent))
+        code.extend(self._compile_attributes(options, indent + 1))
+        code.append(self._indent(dedent("""
+                if not content and tagName in _qweb_self._void_elements:
+                    yield u'/>'
+                else:
+                    yield u'>'
+                    if content:
+                      yield content
+                    yield u'</'
+                    yield tagName
+                    yield u'>'
+                """).strip(), indent + 1))
+        code.extend(self._compile_hook_after_directive(el, directive, options, indent))
+
+        return code
 
     # method called by computing code
 
@@ -406,38 +325,63 @@ class IrQWeb(models.AbstractModel, QWeb):
 
         # get content
         content = converter.value_to_html(value, field_options)
-        attributes = OrderedDict()
+        attributes = dict()
         attributes['data-oe-type'] = field_options['type']
         attributes['data-oe-expression'] = field_options['expression']
 
         return (attributes, content, None)
 
-    # compile expression add safe_eval
+    def _hook_before_directive(self, xpath, directive, values, options):
+        return (time(), self.env.cr.sql_log_count)
 
-    def _compile_expr(self, expr):
-        """ Compiles a purported Python expression to ast, verifies that it's safe
-        (according to safe_eval's semantics) and alter its variable references to
-        access values data instead
+    def _hook_after_directive(self, xpath, directive, values, options, loginfo):
+        now, query = loginfo
+        delay = (time() - now) * 1000
+        dquery = self.env.cr.sql_log_count - query
+        _logger.debug({
+            'ref': options.get('ref'),
+            'xpath': xpath,
+            'directive': directive,
+            'time': now,
+            'delay': delay,
+            'query': dquery,
+        })
+
+    def _prepare_values(self, values, options):
+        """ Prepare the context that will sent to the compiled and evaluated
+        function. Check if the values received are safe (according to
+        safe_eval's semantics).
+
+        :param values: template values to be used for rendering
+        :param options: frozen dict of compilation parameters.
         """
-        # string must be stripped otherwise whitespace before the start for
-        # formatting purpose are going to break parse/compile
-        st = ast.parse(expr.strip(), mode='eval')
-        assert_valid_codeobj(
-            _SAFE_OPCODES,
-            compile(st, '<>', 'eval'), # could be expr, but eval *should* be fine
-            expr
-        )
+        check_values(values)
+        values['true'] = True
+        values['false'] = False
+        if 'request' not in values:
+            values['request'] = request
+        if 'cache_assets' not in values:
+            values['cache_assets'] = round(time()/180)
+        return super(IrQWeb, self)._prepare_values(values, options)
 
-        # ast.Expression().body -> expr
-        return Contextifier(_BUILTINS).visit(st).body
+    def _prepare_globals(self, globals_dict, options):
+        """ Prepare the global context that will sent to eval the qweb generated
+        code. Add the secure '__builtins__' value.
 
-    def _get_attr_bool(self, attr, default=False):
-        if attr:
-            if attr is True:
-                return ast.Constant(True)
-            attr = attr.lower()
-            if attr in ('false', '0'):
-                return ast.Constant(False)
-            elif attr in ('true', '1'):
-                return ast.Constant(True)
-        return ast.Constant(attr if attr is False else bool(default))
+        :param values: template values to be used for rendering
+        :param options: frozen dict of compilation parameters.
+        """
+        globals_dict = super(IrQWeb, self)._prepare_globals(globals_dict, options)
+        globals_dict['__builtins__'] = _BUILTINS
+        return globals_dict
+
+    def _compile_expr(self, expr, raise_on_missing=False):
+        """ Compiles a purported Python expression to compiled code, verifies
+        that it's safe (according to safe_eval's semantics) and alter its
+        variable references to access values data instead
+
+        :param expr: string
+        """
+        namespace_expr = super(IrQWeb, self)._compile_expr(expr, raise_on_missing=raise_on_missing)
+        assert_valid_codeobj(_SAFE_QWEB_OPCODES, compile(namespace_expr, '<>', 'eval'), expr)
+        return namespace_expr

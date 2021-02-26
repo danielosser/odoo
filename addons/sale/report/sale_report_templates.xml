@@ -83,7 +83,7 @@
                 <tbody class="sale_tbody">
 
                     <t t-set="current_subtotal" t-value="0"/>
-
+                    <t t-set="line_last_index" t-value="len(doc.order_line) - 1"/>
                     <t t-foreach="doc.order_line" t-as="line">
 
                         <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal" groups="account.group_show_line_subtotals_tax_excluded"/>
@@ -124,7 +124,7 @@
                             </t>
                         </tr>
 
-                        <t t-if="current_section and (line_last or doc.order_line[line_index+1].display_type == 'line_section')">
+                        <t t-if="current_section and (line_index == line_last_index or doc.order_line[line_index+1].display_type == 'line_section')">
                             <tr class="is-subtotal text-right">
                                 <td name="td_section_subtotal" colspan="99">
                                     <strong class="mr16">Subtotal</strong>

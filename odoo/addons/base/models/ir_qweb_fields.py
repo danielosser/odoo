@@ -2,7 +2,6 @@
 import base64
 import logging
 import re
-from collections import OrderedDict
 from io import BytesIO
 
 import babel
@@ -80,9 +79,9 @@ class FieldConverter(models.AbstractModel):
         * ``readonly``, has this attribute if the field is readonly
         * ``expression``, the original expression
 
-        :returns: OrderedDict (attribute name, attribute value).
+        :returns: dict (attribute name, attribute value).
         """
-        data = OrderedDict()
+        data = dict()
         field = record._fields[field_name]
 
         if not options['inherit_branding'] and not options['translate']:
@@ -345,7 +344,7 @@ class HTMLConverter(models.AbstractModel):
         # use pos processing for all nodes with attributes
         for element in body.iter():
             if element.attrib:
-                attrib = OrderedDict(element.attrib)
+                attrib = dict(element.attrib)
                 attrib = irQweb._post_processing_att(element.tag, attrib, options.get('template_options'))
                 element.attrib.clear()
                 element.attrib.update(attrib)

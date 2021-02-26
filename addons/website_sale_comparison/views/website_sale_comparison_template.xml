@@ -51,8 +51,9 @@
                                             <tr t-foreach="categories[category].filtered(lambda l: len(l.value_ids) > 1)" t-as="ptal">
                                                 <td class="w-25"><span t-field="ptal.attribute_id.name"/></td>
                                                 <td class="w-75 text-muted">
+                                                    <t t-set="pav_last_index" t-value="len(ptal.value_ids) - 1"/>
                                                     <t t-foreach="ptal.value_ids" t-as="pav">
-                                                        <span t-field="pav.name"/><t t-if="not pav_last"> or</t>
+                                                        <span t-field="pav.name"/><t t-if="pav_index != pav_last_index"> or</t>
                                                     </t>
                                                 </td>
                                             </tr>
@@ -60,8 +61,9 @@
                                             <tr t-foreach="single_value_attributes" t-as="attribute">
                                                 <td class="w-25"><span t-field="attribute.name"/></td>
                                                 <td class="w-75 text-muted">
+                                                    <t t-set="ptal_last_index" t-value="len(single_value_attributes[attribute]) - 1"/>
                                                     <t t-foreach="single_value_attributes[attribute]" t-as="ptal">
-                                                        <span t-field="ptal.product_template_value_ids._only_active().name"/><t t-if="not ptal_last">, </t>
+                                                        <span t-field="ptal.product_template_value_ids._only_active().name"/><t t-if="ptal_index != ptal_last_index">, </t>
                                                     </t>
                                                 </td>
                                             </tr>
@@ -150,8 +152,10 @@
                                     <tr t-foreach="categories[category]" t-as="attribute" t-att-class="'collapse show o_ws_category_%d' % category.id">
                                         <td><span t-field="attribute.name"/></td>
                                         <td t-foreach="categories[category][attribute]" t-as="product">
-                                            <t t-foreach="categories[category][attribute][product]" t-as="ptav">
-                                                <span t-field="ptav.name"/><t t-if="not ptav_last">, </t>
+                                            <t t-set="ptavs" t-value="categories[category][attribute][product]"/>
+                                            <t t-set="ptav_last_index" t-value="len(ptavs) - 1"/>
+                                            <t t-foreach="ptavs" t-as="ptav">
+                                                <span t-field="ptav.name"/><t t-if="ptav_index != ptav_last_index">, </t>
                                             </t>
                                         </td>
                                     </tr>
