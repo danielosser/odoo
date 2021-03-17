@@ -147,7 +147,7 @@ class QWeb(object):
 
         element, document, ref = self._get_template(template, options)
         if not ref:
-            ref = element.get('t-name', str(document))
+            ref = element.get('t-name', document.decode())
 
         # reference to get xml and etree (usually the template ID)
         options['ref'] = ref
@@ -165,27 +165,32 @@ class QWeb(object):
         # Reference to the last node being compiled. It is mainly used for debugging and displaying
         # error messages.
         _options['last_path_node'] = None
-
+        _options['cache'] = {}
         if not options.get('nsmap'):
             _options['nsmap'] = {}
 
         # generate code
 
         def_name = f"template_{ref}" if isinstance(ref, int) else "template"
+        if element.get("t-name"):
+            def_name += _VARNAME_REGEX.sub('_', f'_{element.get("t-name")}')
 
         try:
+            _options['_all_def'] = []
             _options['_text_concat'] = []
             self._appendText("", _options) # To ensure the template function is a generator and doesn't become a regular function
-            code_lines = ([f"def {def_name}(self, values, log):"] +
+            code_lines = ([f"def {def_name}(self, compile_options, values, gen0, log):"] +
                 self._compile_node(element, _options, 1) +
                 self._flushText(_options, 1))
+            for lines in _options['_all_def']:
+                code_lines.extend(lines)
         except QWebException as e:
             raise e
         except QWebCodeFound as e:
             raise e
         except Exception as e:
             raise QWebException("Error when compiling xml template", self, options,
-                error=e, template=template, path=_options.get('last_path_node'))
+                error=e, template=ref, path=_options.get('last_path_node'))
         try:
             code = '\n'.join(code_lines)
         except QWebException as e:
@@ -193,7 +198,7 @@ class QWeb(object):
         except Exception as e:
             code = '\n'.join(map(str, code_lines))
             raise QWebException("Error when compiling xml template", self, options,
-                error=e, template=template, code=code)
+                error=e, template=ref, code=code)
 
         # compile code and defined default values
 
@@ -208,20 +213,23 @@ class QWeb(object):
             raise e
         except Exception as e:
             raise QWebException("Error when compiling xml template", self, options,
-                error=e, template=template, code=code)
+                error=e, template=ref, code=code)
 
         # return the wrapped function
 
-        def render_template(self, values):
+        def render_template(self, values, gen0=None):
             try:
-                log = {'last_path_node': None}
-                values = self._prepare_values(values, options)
-                yield from compiled_fn(self, values, log)
+                log = {'last_path_node': None, 'options': options}
+                if gen0 is None:
+                    gen0 = []
+                else:
+                    yield (template, ref, options)
+                yield from compiled_fn(self, options, self._prepare_values(values, options), gen0, log)
             except (QWebException, TransactionRollbackError) as e:
                 raise e
             except Exception as e:
-                raise QWebException("Error when render the template", self, options,
-                    error=e, template=template, path=log.get('last_path_node'), code=code)
+                raise QWebException("Error when render the template", self, log['options'],
+                    error=e, template=log['options']['ref'], path=log.get('last_path_node'), code=code)
 
         return render_template
 
@@ -240,21 +248,18 @@ class QWeb(object):
         if isinstance(template, etree._Element):
             element = template
             document = etree.tostring(template)
-            return (element, document, template.get('t-name'))
+            return (element, document, None)
+        elif isinstance(template, str) and template.startswith('<'):
+            document = template
+            ref = None
         else:
-            try:
-                loaded = options.get('load', self._load)(template, options)
-                if not loaded:
-                    raise ValueError("Can not load template '%s'" % template)
-                document, ref = loaded
-            except QWebException as e:
-                raise e
-            except Exception as e:
-                template = options.get('caller_template', template)
-                raise QWebException("load could not load template", self, options, e, template)
+            loaded = options.get('load', self._load)(template, options)
+            if not loaded:
+                raise ValueError(f"Can not load template '{template}'")
+            document, ref = loaded
 
         if document is None:
-            raise QWebException("Template not found", self, options, template=template)
+            raise ValueError(f"Template not found '{template}'")
 
         if isinstance(document, etree._Element):
             element = document
@@ -296,7 +301,9 @@ class QWeb(object):
         globals_dict['Markup'] = Markup
         globals_dict['escape'] = escape
         globals_dict['type'] = type
-        globals_dict['compile_options'] = options
+        globals_dict['hasattr'] = hasattr
+        globals_dict['next'] = next
+        globals_dict['frozendict'] = frozendict
         globals_dict.update(self._available_objects)
         return globals_dict
 
@@ -612,6 +619,7 @@ class QWeb(object):
         """
         return [
             'debug',
+            'cache',
             'foreach',
             'if', 'elif', 'else',
             'field', 'esc', 'raw', 'out',
@@ -846,7 +854,7 @@ class QWeb(object):
         """
         compile t-options and add to the dict the t-options-xxx values
         """
-        varname = options.get('t_options_varname', 't_options')
+        varname = options.pop('t_options_varname', 't_options')
         code = []
         dict_arg = []
         for key in list(el.attrib):
@@ -906,24 +914,30 @@ class QWeb(object):
             if varname == '0':
                 raise ValueError('t-set="0" should not contains t-value or t-valuef')
             expr = el.attrib.pop('t-value') or 'None'
-            expr = self._compile_expr(expr)
+            code.append(self._indent(f"values[{repr(varname)}] = {self._compile_expr(expr)}", indent))
         elif 't-valuef' in el.attrib:
             if varname == '0':
                 raise ValueError('t-set="0" should not contains t-value or t-valuef')
             exprf = el.attrib.pop('t-valuef')
-            expr = self._compile_format(exprf)
+            code.append(self._indent(f"values[{repr(varname)}] = {self._compile_format(exprf)}", indent))
         else:
             # set the content as value
-            def_name = f"qweb_t_set_{re.sub(_VARNAME_REGEX, '_', options['last_path_node'])}"
-            content = self._compile_directive_content(el, options, indent + 1) + self._flushText(options, indent + 1)
-            if content:
-                code.append(self._indent(f"def {def_name}():", indent))
-                code.extend(content)
-                expr = f"Markup(''.join({def_name}()))"
+            body_t_set = self._compile_directive_content(el, options, 1) + self._flushText(options, 1)
+            if body_t_set:
+                def_name = self._make_name(f"template_{isinstance(options['ref'], int) and options['ref'] or ''}_t_set_")
+                options['_all_def'].append([f"def {def_name}(self, compile_options, values, gen0, log):"] + body_t_set)
+                code.append(self._indent(dedent(f"""
+                        t_set = []
+                        for item in {def_name}(self, compile_options, values, gen0, log):
+                            if isinstance(item, tuple):
+                                t_set.extend(item[1])
+                            else:
+                                t_set.append(item)
+                        values[{repr(varname)}] = Markup(''.join(t_set))
+                    """), indent))
             else:
-                expr = "''"
+                code.append(self._indent(f"values[{repr(varname)}] = ''", indent))
 
-        code.append(self._indent(f"values[{repr(varname)}] = {expr}", indent))
         return code
 
     def _compile_directive_content(self, el, options, indent):
@@ -1072,10 +1086,16 @@ class QWeb(object):
                     values[{repr(expr_as + '_odd')}] = index % 2
                     values[{repr(expr_as + '_even')}] = not values[{repr(expr_as + '_odd')}]
                     values[{repr(expr_as + '_parity')}] = 'odd' if values[{repr(expr_as + '_odd')}] else 'even'
+                    is_foreach_nested = '__qweb_is_foreach_nested__' in values
+                    values['__qweb_is_foreach_nested__'] = True
             """), indent))
 
         code.append(self._indent(f'log["last_path_node"] = {repr(options["root"].getpath(el))} ', indent + 1))
         code.extend(content_foreach or self._indent('continue', indent + 1))
+        code.append(self._indent(dedent(f"""
+                if not is_foreach_nested:
+                    values.pop('__qweb_is_foreach_nested__')
+            """), indent + 1))
 
         return code
 
@@ -1108,11 +1128,11 @@ class QWeb(object):
 
         if expr == "0":
             if code_options:
-                code.append(self._indent("content = Markup(''.join(values.get('0', [])))", indent))
+                code.append(self._indent("content = Markup(''.join(gen0))", indent))
             else:
                 code.extend(self._compile_tag_open(el, options, indent))
                 code.extend(self._flushText(options, indent))
-                code.append(self._indent("yield from values.get('0', [])", indent))
+                code.append(self._indent("yield from gen0", indent))
                 code.extend(self._compile_tag_close(el, options))
                 return code
         else:
@@ -1218,7 +1238,7 @@ class QWeb(object):
         else:
             content = (self._compile_tag_open(el, options, indent + 1, not without_attributes) +
                 self._compile_tag_close(el, options) +
-                self._flushText(options, indent + 2))
+                self._flushText(options, indent + 1))
             if content:
                 code.append(self._indent("elif force_display:", indent))
                 code.extend(content)
@@ -1226,51 +1246,89 @@ class QWeb(object):
         return code
 
     def _compile_directive_call(self, el, options, indent):
-        """Compile `t-call` expressions into a python code as a list of
-        strings.
-
-        `t-call` allow formating string dynamic at rendering time.
-        Can use `t-options` used to call and render the sub-template at
-        rendering time.
-        The sub-template is called with a copy of the rendering values
-        dictionary. The dictionary contains the key 0 coming from the
-        compilation of the contents of this element
-
-        The code will contain the call of the template and a function from the
-        compilation of the content of this element.
-        """
         expr = el.attrib.pop('t-call')
-
-        if el.attrib.get('t-call-options'): # retro-compatibility
-            el.attrib.set('t-options', el.attrib.pop('t-call-options'))
+        template = self._compile_format(expr)
 
         nsmap = options.get('nsmap')
 
         code = self._flushText(options, indent)
+
+        if el.attrib.get('t-call-options'): # retro-compatibility
+            el.attrib['t-options'] = el.attrib.pop('t-call-options')
+        if el.attrib.get('t-lang'):
+            el.attrib['t-options-lang'] = el.attrib.pop('t-lang')
+
         options['t_options_varname'] = 't_call_t_options'
-        code_options = self._compile_directive(el, options, 'options', indent) or [self._indent("t_call_t_options = {}", indent)]
-        code.extend(code_options)
+        code_options = self._compile_directive(el, options, 'options', 1) # new options to render the template
+
+        options['t_options_varname'] = 't_call_t_arg'
+        code_arg = self._compile_directive(el, options, 'arg', 1) # will be add as values
 
         # content (t-out="0" and variables)
-        def_name = "t_call_content"
-        content = self._compile_directive_content(el, options, indent + 1)
-        if content and not options['_text_concat']:
-            self._appendText('', options) # To ensure the template function is a generator and doesn't become a regular function
-        content.extend(self._flushText(options, indent + 1))
-        if content:
-            code.append(self._indent(f"def {def_name}(self, values, log):", indent))
-            code.extend(content)
-            code.append(self._indent("t_call_values = values.copy()", indent))
-            code.append(self._indent(f"t_call_values['0'] = Markup(''.join({def_name}(self, t_call_values, log)))", indent))
+        content = self._compile_directive_content(el, options, 1)
+        if options['_text_concat']:
+            content.extend(self._flushText(options, 1))
         else:
-            code.append(self._indent("t_call_values = values.copy()", indent))
-            code.append(self._indent("t_call_values['0'] = Markup()", indent))
+            if content:
+                self._appendText('', options) # To ensure the template function is a generator and doesn't become a regular function
+                content.extend(self._flushText(options, 1))
+            else:
+                content.append(self._indent("return []", 1))
 
-        # options
-        code.append(self._indent(dedent(f"""
-            t_call_options = compile_options.copy()
-            t_call_options.update({{'caller_template': {repr(str(options.get('template')))}, 'last_path_node': {repr(str(options['root'].getpath(el)))} }})
-            """).strip(), indent))
+        def_name = self._make_name(f"template_{isinstance(options['ref'], int) and options['ref'] or ''}_t_call")
+        def_cache_name = f"{def_name}_cache"
+        code_content = [f"def {def_name}(self, compile_options, values, gen0, log):"]
+        code_content.extend(content)
+        options['_all_def'].append(code_content)
+        
+        # generate params
+        code_params = [f"def {def_name}_params(self, compile_options, values, gen0, log):"]
+
+        # generate params: call arg
+        code_params.append(self._indent("t_call_values = values.copy()", 1))
+
+        if code_arg:
+            code_params.extend(code_arg)
+            code_params.append(self._indent("t_call_values.update(t_call_t_arg)", 1))
+
+        code_params.append(self._indent(dedent(f"""
+                t_call_gen0 = []
+                if values.get('__qweb_is_cache_nested__') is not None and '__qweb_is_foreach_nested__' not in values:
+                    def {def_cache_name}():
+                        # create the cache and load content in same time to have every t-set
+                        # called in the right order.
+                        cache = []
+                        for item in {def_name}(self, compile_options, t_call_values, gen0, log):
+                            t_call_gen0.append(item)
+                            if isinstance(item, tuple):
+                                cache.append(item[0])
+                            else:
+                                cache.append(item)
+                        return cache
+                    cache_id = (values['__qweb_is_cache_nested__'], {repr(def_name + '_gen0')})
+                    cache_content = self._cache_content(compile_options, cache_id, {def_cache_name})
+                    if t_call_gen0:
+                        cache_content = None
+                else:
+                    cache_content = {def_name}(self, compile_options, t_call_values, gen0, log)
+                if cache_content:
+                    for item in cache_content:
+                        if hasattr(item, '__call__'):
+                            t_call_gen0.append((item, list(item(self, compile_options, t_call_values, gen0, log))))
+                        else:
+                            t_call_gen0.append(item)
+            """), 1))
+
+        # t-call options
+        code_params.append(self._indent(dedent(f"""
+                t_call_options = compile_options.copy()
+                t_call_options['caller_path_node'] = {repr(options['root'].getpath(el))}
+                t_call_options['caller_template'] = t_call_options.pop('template', None)
+                t_call_options['caller_ref'] = t_call_options.pop('ref', None)
+                t_call_options.pop('template', None)
+            """), 1))
+
+        # t_call_options namespace
         if nsmap:
             # update this dict with the current nsmap so that the callee know
             # if he outputting the xmlns attributes is relevenat or not
@@ -1280,22 +1338,142 @@ class QWeb(object):
                     nsmap.append(f'{repr(key)}:{repr(value)}')
                 else:
                     nsmap.append(f'None:{repr(value)}')
-            code.append(self._indent(f"t_call_options.update(nsmap={{{', '.join(nsmap)}}})", indent))
+            code_params.append(self._indent(f"t_call_options.update(nsmap={{{', '.join(nsmap)}}})", 1))
 
-        template = self._compile_format(expr)
-
-        # call
+        # generate params from self, t-lang, and t-options
+        code_params.append(self._indent("t_call_self = self", 1))
         if code_options:
-            code.append(self._indent("t_call_options.update(t_call_t_options)", indent))
-            code.append(self._indent(dedent(f"""
-                if compile_options.get('lang') != t_call_options.get('lang'):
-                    self_lang = self.with_context(lang=t_call_options.get('lang'))
-                    yield from self_lang._compile({template}, t_call_options)(self_lang, t_call_values)
+            code_params.extend(code_options)
+            code_params.append(self._indent(dedent("""
+                t_call_options.update(t_call_t_options)
+                lang = t_call_options.get('lang')
+                if compile_options.get('lang') != lang:
+                    t_call_self = self.with_context(lang=lang)
+                """).strip(), 1))
+
+        # generate params: apply on values
+        code_params.append(self._indent(dedent(f"""
+                values['__qweb_{def_name}_params__'] = (t_call_self, t_call_options, t_call_values, t_call_gen0)
+                return []
+            """), 1))
+
+        options['_all_def'].append(code_params)
+
+        # wrapper: call
+        code.append(self._indent(dedent(f"""
+                {def_name}_params(self, compile_options, values, gen0, log) # to have the params on the first and render the content in order
+                t_call_self, {def_name}_options, t_call_values, t_call_gen0 = values['__qweb_{def_name}_params__']
+                render_template = t_call_self._compile({template}, {def_name}_options)
+                content = render_template(t_call_self, t_call_values, t_call_gen0)
+                {def_name}_template, {def_name}_ref, {def_name}_options = next(content)
+                if '__qweb_is_cache_nested__' in values:
+                    yield ({def_name}_params, []) # to set params when use the cache, but don't re-create params for the first rendering
+                    def wrapper(fn):
+                        def t_call_associate_values(self, compile_options, values, gen0, log):
+                            t_call_self, unused_options, t_call_values, t_call_gen0 = values['__qweb_{def_name}_params__']
+                            old_log_options = log['options']
+                            log['options'] = {def_name}_options
+                            yield from fn(t_call_self, {def_name}_options, t_call_values, t_call_gen0, log)
+                            log['options'] = old_log_options
+                        return t_call_associate_values
+                    for item in content:
+                        if hasattr(item, '__call__'):
+                            fn = wrapper(item)
+                            yield (fn , fn(self, compile_options, values, gen0, log))
+                        elif isinstance(item, tuple):
+                            yield (wrapper(item[0]), item[1])
+                        else:
+                            yield item
                 else:
-                    yield from self._compile({template}, t_call_options)(self, t_call_values)
-                """).strip(), indent))
-        else:
-            code.append(self._indent(f"yield from self._compile({template}, t_call_options)(self, t_call_values)", indent))
+                    yield from content
+            """), indent))
+
+        return code
+
+    def _compile_directive_arg(self, el, options, indent):
+        """
+        compile t-arg and add to the dict the t-call-xxx values
+        t-arg is only associate with t-call
+        """
+        if el.attrib.get('t-arg'):
+            el.attrib['t-options'] = el.attrib.pop('t-arg')
+        for key in list(el.attrib):
+            if key.startswith(f't-arg-'):
+                el.attrib[f't-options-{key[6:]}'] = el.attrib.pop(key)
+        return self._compile_directive_options(el, options, indent)
+
+    def _compile_directive_cache(self, el, options, indent):
+        expr = el.attrib.pop('t-cache')
+        code = self._flushText(options, indent)
+
+        def_name = self._make_name(f"template_{isinstance(options['ref'], int) and options['ref'] or ''}_t_cache")
+        def_cache_name = f"{def_name}_cache"
+        def_code = [self._indent(f"""def {def_name}(self, compile_options, values, gen0, log):""", 0)]
+        def_content = self._compile_directives(el, options, indent=1)
+        if def_content and not options['_text_concat']:
+            self._appendText('', options) # To ensure the template function is a generator and doesn't become a regular function
+        def_code.extend(def_content)
+        def_code.extend(self._flushText(options, 1))
+        options['_all_def'].append(def_code)
+
+        code_wrapper = [dedent(f"""
+            def {def_name}_wrapper(self, compile_options, values, gen0, log):
+                cache_id = {self._compile_expr(expr)}
+                is_nested = '__qweb_is_cache_nested__' in values
+                old_cache_id = values.get('__qweb_is_cache_nested__')
+                values['__qweb_is_cache_nested__'] = cache_id
+                content = []
+                if cache_id is not None:
+                    def {def_cache_name}():
+                        # create the cache and load content in same time to have every t-set
+                        # called in the right order.
+                        cache = []
+                        for item in {def_name}(self, compile_options, values, gen0, log):
+                            if hasattr(item, '__call__'):
+                                cache.append(item)
+                                content.append((item, list(item(self, compile_options, values, gen0, log))))
+                            elif isinstance(item, tuple):
+                                cache.append(item[0])
+                                content.append(item)
+                            else:
+                                cache.append(item)
+                                content.append(item)
+                        return cache
+                    cache_content = self._cache_content(compile_options, cache_id, {def_cache_name})
+                    if content:
+                        cache_content = None
+                else:
+                    cache_content = {def_name}(self, compile_options, values, gen0, log)
+                if cache_content:
+                    for item in cache_content:
+                        if hasattr(item, '__call__'):
+                            content.append((item, list(item(self, compile_options, values, gen0, log))))
+                        else:
+                            content.append(item)
+                if is_nested:
+                    values['__qweb_is_cache_nested__'] = old_cache_id
+                else:
+                    values.pop('__qweb_is_cache_nested__', None)
+                
+                return content
+            """)]
+        options['_all_def'].append(code_wrapper)
+
+        code.append(self._indent(dedent(f"""
+            if '__qweb_is_cache_nested__' in values:
+                yield ({def_name}_wrapper, list({def_name}_wrapper(self, compile_options, values, gen0, log)))
+            else:
+                content = []
+                stack = list({def_name}_wrapper(self, compile_options, values, gen0, log))
+                stack.reverse()
+                while stack:
+                    item = stack.pop()
+                    if isinstance(item, tuple):
+                        item[1].reverse()
+                        stack.extend(item[1])
+                    else:
+                        yield item
+            """), indent))
 
         return code
 
@@ -1339,3 +1517,8 @@ class QWeb(object):
             __import__(debugger).set_trace()
         else:
             raise QWebException(f"unsupported t-debug value: {debugger}", self, options)
+
+    def _cache_content(self, options, cache_id, get_value):
+        if cache_id not in options['cache']:
+            options['cache'][cache_id] = get_value()
+        return options['cache'][cache_id]

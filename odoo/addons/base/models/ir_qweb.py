@@ -68,10 +68,13 @@ class IrQWeb(models.AbstractModel, QWeb):
                   instead of `str`)
         :rtype: MarkupSafe
         """
-        compile_options = dict(self.env.context, dev_mode='qweb' in tools.config['dev_mode'])
+        ir_qweb = self
+        if 'use_qweb_cache' not in ir_qweb.env.context:
+            ir_qweb = ir_qweb.with_context(use_qweb_cache=True)
+        compile_options = dict(ir_qweb.env.context, dev_mode='qweb' in tools.config['dev_mode'])
         compile_options.update(options)
 
-        result = super()._render(template, values=values, **compile_options)
+        result = super(IrQWeb, ir_qweb)._render(template, values=values, **compile_options)
 
         if not values or not values.get('__keep_empty_lines'):
             result = markupsafe.Markup(IrQWeb._empty_lines.sub('\n', result.strip()))
@@ -355,6 +358,18 @@ class IrQWeb(models.AbstractModel, QWeb):
         attributes['data-oe-expression'] = field_options['expression']
 
         return (attributes, content, None)
+
+    def _cache_content(self, options, cache_id, get_value):
+        if not self.env.context.get('use_qweb_cache'):
+            return get_value()
+        return self.__cache_content(options, cache_id, get_value)
+
+    @tools.conditional(
+        'xml' not in tools.config['dev_mode'],
+        tools.ormcache('cache_id', 'options.get("ref")', 'tuple(options.get(k) for k in self._get_template_cache_keys())'),
+    )
+    def __cache_content(self, options, cache_id, get_value):
+        return get_value()
 
     def _prepare_values(self, values, options):
         """ Prepare the context that will be sent to the evaluated function.
