@@ -12,6 +12,7 @@ class AdyenTransaction(models.Model):
     _name = 'adyen.transaction'
     _description = 'Adyen for Platforms Transaction'
     _order = 'date desc'
+    _rec_name = 'reference'
 
     adyen_account_id = fields.Many2one('adyen.account')
     reference = fields.Char('Reference')

@@ -223,11 +223,13 @@ class AdyenAccount(models.Model):
         }
 
     def _upload_photo_id(self, document_type, content, filename):
+        test_mode = self.env['ir.config_parameter'].sudo().get_param('adyen_platforms.test_mode')
         self._adyen_rpc('v1/upload_document', {
             'documentDetail': {
                 'accountHolderCode': self.account_holder_code,
                 'documentType': document_type,
                 'filename': filename,
+                'description': 'PASSED' if test_mode else '',
             },
             'documentContent': content.decode(),
         })
@@ -591,6 +593,13 @@ class AdyenBankAccount(models.Model):
             })
         return super(AdyenBankAccount, self).unlink()
 
+    def name_get(self):
+        res = []
+        for bank_account in self:
+            name = '%s - %s' % (bank_account.owner_name, bank_account.iban or bank_account.account_number)
+            res.append((bank_account.id, name))
+        return res
+
     def _format_data(self):
         return {
             'accountHolderCode': self.adyen_account_id.account_holder_code,
@@ -624,12 +633,14 @@ class AdyenBankAccount(models.Model):
         if file_size >> 20 > 10 or (file_size >> 10 < 10 and file_extension != '.pdf') :
             raise ValidationError(_('Bank statements must be greater than 10kB (except for PDFs) and smaller than 10MB'))
 
+        test_mode = self.env['ir.config_parameter'].sudo().get_param('adyen_platforms.test_mode')
         self.adyen_account_id._adyen_rpc('v1/upload_document', {
             'documentDetail': {
                 'accountHolderCode': self.adyen_account_id.account_holder_code,
                 'bankAccountUUID': self.bank_account_uuid,
                 'documentType': 'BANK_STATEMENT',
                 'filename': filename,
+                'description': 'PASSED' if test_mode else '',
             },
             'documentContent': content,
         })

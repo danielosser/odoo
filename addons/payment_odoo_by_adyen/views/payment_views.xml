@@ -18,5 +18,20 @@
             </field>
         </record>
 
+    <record id="adyen_transaction_action" model="ir.actions.act_window">
+        <field name="name">Adyen Transactions</field>
+        <field name="res_model">adyen.transaction</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="adyen_payout_action" model="ir.actions.act_window">
+        <field name="name">Adyen Payouts</field>
+        <field name="res_model">adyen.payout</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="root_adyen_menu" name="Odoo Payments" parent="account.root_payment_menu" sequence="10" />
+        <menuitem id="menu_adyen_transaction" parent="root_adyen_menu" action="adyen_transaction_action"/>
+        <menuitem id="menu_adyen_payout" parent="root_adyen_menu" action="adyen_payout_action"/>
     </data>
 </odoo>
