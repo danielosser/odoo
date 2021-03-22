@@ -282,8 +282,10 @@ class AdyenAccount(models.Model):
     def _adyen_rpc(self, operation, adyen_data={}):
         if operation == 'v1/create_account_holder':
             url = self.env['ir.config_parameter'].sudo().get_param('adyen_platforms.onboarding_url')
+            base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
             params = {
                 'creation_token': request.session.get('adyen_creation_token'),
+                'base_url': base_url,
                 'adyen_data': adyen_data,
             }
             auth = None
