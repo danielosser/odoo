@@ -232,8 +232,86 @@ var FieldSkills = FieldOne2Many.extend({
     },
 });
 
+var ListRendererGrouped = ListRenderer.extend({
+    groupBy: 'skill_type_id',
+
+    _renderBody: function () {
+        var self = this;
+
+        var grouped_by = _.groupBy(this.state.data, function (record) {
+            return record.data[self.groupBy].res_id;
+        });
+
+        var $body = $('<tbody>');
+        for (var key in grouped_by) {
+            var group = grouped_by[key];
+            var title, groupId;
+            if(key === 'undefined') {
+                title = _('Other');
+                groupId = false;
+            } else {
+                title = group[0].data[self.groupBy].data.display_name;
+                groupId = group[0].data[self.groupBy].data.id;
+            }
+            $body.append(self._renderTitleCell(title, groupId));
+
+            group.forEach(function(record) {
+                $body.append(self._renderRow(record));
+            });
+        }
+
+        if ($body.is(':empty') && self.addCreateLine) {
+            var $div = $('<div>', { class: 'o_field_x2many_list_row_add d-inline'});
+            var $btn = $('<a>', {
+                class: 'btn o-kanban-button-new btn-primary mt-3',
+            });
+            $btn.html(_t('ADD NEW SKILLS'));
+            $btn.appendTo($div);
+            $body.append($div);
+        }
+        return $body;
+    },
+
+    _renderTitleCell: function(name, groupId) {
+        var $tr = $('<tr>', { class: 'o_group_header o_group_has_content o_group_open' });
+        var $td = $('<th>', { class: 'o_group_name border-0 pr-2 font-weight-bold', colspan: 5 }).attr('tabindex', -1);
+        $td.html(name);
+
+        var $div = $('<div>', { class: 'o_field_x2many_list_row_add d-inline pull-right'});
+        var $btn = $('<a>', {
+            class: 'btn o-kanban-button-new btn-secondary btn-sm',
+            'data-context': JSON.stringify({ 'default_skill_type_id': groupId})
+        });
+        $btn.html(_t('ADD'));
+        $btn.appendTo($div);
+        $td.append($div);
+
+        return $tr.append($td);
+    },
+
+    confirmUpdate: function (state, id, fields, ev) {
+        this._setState(state);
+        return this.confirmChange(state, id, fields, ev);
+    },
+
+    // _renderView: function () {
+    //     var def = this._super.apply(this, arguments);
+    //     var self = this;
+    //     return def.then(function () {
+    //         self.$('table.o_list_table').removeClass('o_list_table_ungrouped').addClass('o_list_table_grouped');
+    //     });
+    // },
+});
+
+var FieldsSkillsJustification = FieldOne2Many.extend({
+    _getRenderer: function () {
+        return ListRendererGrouped;
+    }
+});
+
 field_registry.add('hr_resume', FieldResume);
 field_registry.add('hr_skills', FieldSkills);
+field_registry.add('hr_skills_justification', FieldsSkillsJustification);
 
 return FieldResume;
 
