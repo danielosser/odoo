@@ -318,8 +318,9 @@ class AdyenAccount(models.Model):
                 raise UserError(_("We had troubles reaching Adyen, please retry later or contact the support if the problem persists"))
 
         result = response.get('result')
-        if 'verification' in result:
-            self._update_kyc_status(result['verification'])
+        # TODO wait for notification
+        # if 'verification' in result:
+            # self._update_kyc_status(result['verification'])
 
         return result
 
