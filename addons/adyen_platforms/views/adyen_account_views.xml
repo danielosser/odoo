@@ -6,7 +6,7 @@
         <field name="arch" type="xml">
             <form string="Adyen Account" create="false" js_class="adyen_account_form">
                 <header>
-                    <field name="kyc_status" widget="statusbar" statusbar_visible="awaiting_data,pending,passed"/>
+                    <field name="account_status" widget="statusbar" />
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -19,6 +19,10 @@
                         </button>
                     </div>
 
+                    <div class="alert alert-warning" role="alert"
+                        attrs="{'invisible': [('kyc_status_message', '=', False)]}">
+                        <field name="kyc_status_message"/>
+                    </div>
                     <group>
                         <field name="adyen_uuid" invisible="1"/>
 

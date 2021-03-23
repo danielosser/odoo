@@ -128,6 +128,13 @@ class AdyenAccount(models.Model):
     doing_business_as = fields.Char('Doing Business As')
     registration_number = fields.Char('Registration Number')
 
+    account_status = fields.Selection(string='Account Status', selection=[
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+        ('suspended', 'Suspended'),
+        ('closed', 'Closed'),
+    ], default='inactive', readonly=True, tracking=True)
+
     # KYC
     kyc_status = fields.Selection(string='KYC Status', selection=[
         ('awaiting_data', 'Data to provide'),
