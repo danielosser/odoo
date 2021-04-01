@@ -7,7 +7,7 @@ import pytz
 import babel.dates
 from collections import OrderedDict
 
-from odoo import http, fields
+from odoo import http, fields, tools
 from odoo.addons.http_routing.models.ir_http import slug, unslug
 from odoo.addons.website.controllers.main import QueryURL
 from odoo.addons.portal.controllers.portal import _build_url_w_params
@@ -121,19 +121,19 @@ class WebsiteBlog(http.Controller):
             first_post = posts[0]
         posts = posts[offset:offset + self._blog_post_per_page]
 
-        pager = request.website.pager(
+        pager = tools.lazy(lambda: request.website.pager(
             url=request.httprequest.path.partition('/page/')[0],
             total=total,
             page=page,
             step=self._blog_post_per_page,
-        )
+        ))
 
         if not blogs:
             all_tags = request.env['blog.tag']
         else:
-            all_tags = blogs.all_tags(join=True) if not blog else blogs.all_tags().get(blog.id, request.env['blog.tag'])
-        tag_category = sorted(all_tags.mapped('category_id'), key=lambda category: category.name.upper())
-        other_tags = sorted(all_tags.filtered(lambda x: not x.category_id), key=lambda tag: tag.name.upper())
+            all_tags = tools.lazy(lambda: blogs.all_tags(join=True) if not blog else blogs.all_tags().get(blog.id, request.env['blog.tag']))
+        tag_category = tools.lazy(lambda: sorted(all_tags.mapped('category_id'), key=lambda category: category.name.upper()))
+        other_tags = tools.lazy(lambda: sorted(all_tags.filtered(lambda x: not x.category_id), key=lambda tag: tag.name.upper()))
 
         # for performance prefetch the first post with the others
         post_ids = (first_post | posts).ids
@@ -143,13 +143,13 @@ class WebsiteBlog(http.Controller):
         return {
             'date_begin': date_begin,
             'date_end': date_end,
-            'first_post': first_post.with_prefetch(post_ids),
+            'first_post': tools.lazy(lambda: first_post.with_prefetch(post_ids)),
             'other_tags': other_tags,
             'tag_category': tag_category,
-            'nav_list': self.nav_list(),
+            'nav_list': tools.lazy(self.nav_list),
             'tags_list': self.tags_list,
             'pager': pager,
-            'posts': posts.with_prefetch(post_ids),
+            'posts': tools.lazy(lambda: posts.with_prefetch(post_ids)),
             'tag': tags,
             'active_tag_ids': active_tags.ids,
             'domain': domain,
@@ -173,7 +173,7 @@ class WebsiteBlog(http.Controller):
     ], type='http', auth="public", website=True, sitemap=True)
     def blog(self, blog=None, tag=None, page=1, search=None, **opt):
         Blog = request.env['blog.blog']
-        blogs = Blog.search(request.website.website_domain(), order="create_date asc, id asc")
+        blogs = tools.lazy(lambda: Blog.search(request.website.website_domain(), order="create_date asc, id asc"))
 
         if not blog and len(blogs) == 1:
             return request.redirect('/blog/%s' % slug(blogs[0]), code=302)

@@ -19,6 +19,5 @@ from . import res_country
 from . import res_partner
 from . import sale_order
 from . import website
-from . import website_page
 from . import website_snippet_filter
 from . import website_visitor
