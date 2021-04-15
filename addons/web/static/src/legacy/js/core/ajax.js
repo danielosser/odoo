@@ -566,6 +566,22 @@ function loadLibs(libs, context, tplRoute) {
     return mutex.getUnlockedDef();
 }
 
+// TODO: move this somewhere it makes more sense
+async function loadOdooModules(moduleIds) {
+    const paths = moduleIds.map(moduleId => {
+        const match = moduleId.match(/^@([^/]+)(.*)$/);
+        if (!match) {
+            throw new Error(`"${moduleId}" is not a valid module identifier`);
+        }
+        const [, moduleName, path] = match;
+        return `/${moduleName}/static/src${path}.js`;
+    });
+    const scripts = await rpc('/web/webclient/transpiled_js', { paths });
+    await loadLibs({ jsLibs: scripts.map(([, { src }]) => src) });
+    // TODO: accessing defined modules through __DEBUG__.services seems super hacky
+    return moduleIds.map(moduleId => odoo.__DEBUG__.services[moduleId]);
+}
+
 _.extend(ajax, {
     jsonRpc: jsonRpc,
     rpc: rpc,
@@ -574,6 +590,7 @@ _.extend(ajax, {
     loadXML: loadXML,
     loadAsset: loadAsset,
     loadLibs: loadLibs,
+    loadOdooModules: loadOdooModules,
     get_file: get_file,
     post: post,
 });
