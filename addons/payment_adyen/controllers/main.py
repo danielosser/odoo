@@ -77,7 +77,7 @@ class AdyenController(http.Controller):
             payload=data,
             method='POST'
         )
-        _logger.info("paymentMethods request response:\n%s", pprint.pformat(response_content))
+        _logger.debug("paymentMethods request response:\n%s", pprint.pformat(response_content))
         return response_content
 
     @http.route('/payment/adyen/payments', type='json', auth='public')
@@ -105,7 +105,7 @@ class AdyenController(http.Controller):
         ):
             raise ValidationError("Adyen: " + _("Received tampered payment request data."))
 
-        # Make the payment request to Adyen
+        # Prepare the payment request to Adyen
         acquirer_sudo = request.env['payment.acquirer'].sudo().browse(acquirer_id).exists()
         tx_sudo = request.env['payment.transaction'].sudo().search([('reference', '=', reference)])
         data = {
@@ -135,6 +135,12 @@ class AdyenController(http.Controller):
                 f'/payment/adyen/return?merchantReference={reference}'
             ),
         }
+
+        # Avoid authorisation without capture for users who have Adyen settings set as "manual"
+        if not acquirer_sudo.capture_manually:
+            data.update(captureDelayHours=0)
+
+        # Make the payment request to Adyen
         response_content = acquirer_sudo._adyen_make_request(
             url_field_name='adyen_checkout_api_url',
             endpoint='/payments',
@@ -239,7 +245,7 @@ class AdyenController(http.Controller):
         :return: The '[accepted]' string to acknowledge the notification
         :rtype: str
         """
-        data = json.loads(request.httprequest.data)
+        data = request.jsonrequest
         for notification_item in data['notificationItems']:
             notification_data = notification_item['NotificationRequestItem']
 
@@ -270,7 +276,7 @@ class AdyenController(http.Controller):
                     notification_data['resultCode'] = 'Authorised'
                 elif event_code == 'CANCELLATION' and success:
                     notification_data['resultCode'] = 'Cancelled'
-                elif event_code == 'REFUND':
+                elif event_code in ['REFUND', 'CAPTURE']:
                     notification_data['resultCode'] = 'Authorised' if success else 'Error'
                 else:
                     continue  # Don't handle unsupported event codes and failed events
