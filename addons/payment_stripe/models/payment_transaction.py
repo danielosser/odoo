@@ -110,6 +110,7 @@ class PaymentTransaction(models.Model):
                     'line_items[0][quantity]': 1,
                     'payment_intent_data[description]': self.reference,
                     'payment_intent_data[setup_future_usage]': future_usage,
+                    'payment_intent_data[capture_method]': 'manual' if self.acquirer_id.capture_manually else 'automatic',
                 }
             )
             self.stripe_payment_intent = checkout_session['payment_intent']
@@ -166,6 +167,8 @@ class PaymentTransaction(models.Model):
             raise UserError("Stripe: " + _("The transaction is not linked to a token."))
 
         payment_intent = self._stripe_create_payment_intent()
+        # Save payment_intent for futur action like capture or void when authorized
+        self.stripe_payment_intent = payment_intent['id']
         feedback_data = {'reference': self.reference}
         StripeController._include_payment_intent_in_feedback_data(payment_intent, feedback_data)
         _logger.info("entering _handle_feedback_data with data:\n%s", pprint.pformat(feedback_data))
@@ -192,6 +195,7 @@ class PaymentTransaction(models.Model):
                 'off_session': True,
                 'payment_method': self.token_id.stripe_payment_method,
                 'description': self.reference,
+                'capture_method': 'manual' if self.acquirer_id.capture_manually else 'automatic',
             },
             offline=self.operation == 'offline',
         )
@@ -266,6 +270,10 @@ class PaymentTransaction(models.Model):
             pass
         elif intent_status in INTENT_STATUS_MAPPING['pending']:
             self._set_pending()
+        elif intent_status in INTENT_STATUS_MAPPING['authorized']:
+            if self.tokenize:
+                self._stripe_tokenize_from_feedback_data(data)
+            self._set_authorized()
         elif intent_status in INTENT_STATUS_MAPPING['done']:
             if self.tokenize:
                 self._stripe_tokenize_from_feedback_data(data)
@@ -317,3 +325,45 @@ class PaymentTransaction(models.Model):
         _logger.info(
             "created token with id %s for partner with id %s", token.id, self.partner_id.id
         )
+
+    def _send_capture_request(self):
+        """ Override of payment to send a capture request to Stripe.
+
+        Note: self.ensure_one()
+
+        :return: None
+        """
+        super()._send_capture_request()
+        if self.provider != 'stripe':
+            return
+
+        capture_request = self.acquirer_id._stripe_make_request(
+            f'payment_intents/{self.stripe_payment_intent}/capture'
+        )
+        feedback_data = {
+            'reference': self.reference,
+            'payment_intent': capture_request,
+        }
+        _logger.info("entering _handle_feedback_data with data:\n%s", pprint.pformat(feedback_data))
+        self._handle_feedback_data('stripe', feedback_data)
+
+    def _send_void_request(self):
+        """ Override of payment to send a void request to Stripe.
+
+        Note: self.ensure_one()
+
+        :return: None
+        """
+        super()._send_void_request()
+        if self.provider != 'stripe':
+            return
+
+        void_request = self.acquirer_id._stripe_make_request(
+            f'payment_intents/{self.stripe_payment_intent}/cancel'
+        )
+        feedback_data = {
+            'reference': self.reference,
+            'payment_intent': void_request,
+        }
+        _logger.info("entering _handle_feedback_data with data:\n%s", pprint.pformat(feedback_data))
+        self._handle_feedback_data('stripe', feedback_data)
