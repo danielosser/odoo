@@ -23,6 +23,7 @@
                 <field name="name"/>
                 <field name="entry_count"/>
                 <field name="speedscope_url" widget="url"/>
+                <field name="sql_count"/>
                 <field name="duration"/>
             </tree>
         </field>
@@ -35,6 +36,8 @@
             <form string="IR Profile">
                 <group>
                     <field name="name"/>
+                    <field name="sql" invisible="1"/>
+                    <field name="sql_count" attrs="{'invisible': [('sql','=', '')]}"/>
                     <field name="session"/>
                     <field name="entry_count"/>
                     <field name="speedscope_url" widget="url"/>

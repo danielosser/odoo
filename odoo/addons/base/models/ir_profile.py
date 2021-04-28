@@ -32,6 +32,7 @@ class IrProfile(models.Model):
     init_stack_trace = fields.Text('Initial stack trace', prefetch=False)
 
     sql = fields.Text('Sql', prefetch=False)
+    sql_count = fields.Integer('Sql count', compute="_compute_sql_count", prefetch=False)
     traces_async = fields.Text('Traces Async', prefetch=False)
     traces_sync = fields.Text('Traces Sync', prefetch=False)
     qweb = fields.Text('Qweb', prefetch=False)
@@ -45,6 +46,10 @@ class IrProfile(models.Model):
         # remove profiles older than 30 days
         domain = [('create_date', '<', fields.Datetime.now() - datetime.timedelta(days=30))]
         return self.sudo().search(domain).unlink()
+
+    def _compute_sql_count(self):
+        for p in self:
+            p.sql_count = p.sql and len(p.sql.split('"query"')) - 1
 
     def _compute_speedscope(self):
         for execution in self:
