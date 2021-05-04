@@ -1027,14 +1027,14 @@ registerModel({
                 this.update({ followers: unlinkAll() });
                 return;
             }
-            const { followers } = await this.async(() => this.env.services.rpc({
+            const { followers, can_add_followers } = await this.async(() => this.env.services.rpc({
                 route: '/mail/read_followers',
                 params: {
                     res_id: this.id,
                     res_model: this.model,
                 },
             }, { shadow: true }));
-            this.update({ areFollowersLoaded: true });
+            this.update({ areFollowersLoaded: true, canAddFollowers: can_add_followers });
             if (followers.length > 0) {
                 this.update({
                     followers: insertAndReplace(followers.map(data =>
@@ -1883,6 +1883,12 @@ registerModel({
             isCausal: true,
             readonly: true,
             required: true,
+        }),
+        /**
+         * States whether current user can add other followers to this thread.
+         */
+        canAddFollowers: attr({
+            default: false,
         }),
         channel_type: attr(),
         /**

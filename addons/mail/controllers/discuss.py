@@ -8,6 +8,7 @@ from psycopg2 import IntegrityError
 from psycopg2.errorcodes import UNIQUE_VIOLATION
 
 from odoo import http
+from odoo.exceptions import AccessError
 from odoo.http import request
 from odoo.tools import consteq, file_open
 from odoo.tools.misc import get_lang
@@ -398,15 +399,27 @@ class DiscussController(http.Controller):
     @http.route('/mail/read_followers', methods=['POST'], type='json', auth='user')
     def read_followers(self, res_model, res_id):
         request.env['mail.followers'].check_access_rights("read")
-        request.env[res_model].check_access_rights("read")
-        request.env[res_model].browse(res_id).check_access_rule("read")
+        document_model = request.env[res_model]
+        document = document_model.browse(res_id)
+        document_model.check_access_rights("read")
+        document.check_access_rule("read")
+        can_add_followers = False
+        try:
+            document_model.check_access_rights("write")
+            document.check_access_rule("write")
+            can_add_followers = True
+        except AccessError:
+            pass
         follower_recs = request.env['mail.followers'].search([('res_model', '=', res_model), ('res_id', '=', res_id)])
 
         followers = []
         follower_id = None
         for follower in follower_recs:
+            is_editable = can_add_followers
             if follower.partner_id == request.env.user.partner_id:
                 follower_id = follower.id
+                # always allow edition of subtype for logged in user's partner
+                is_editable = True
             followers.append({
                 'id': follower.id,
                 'partner_id': follower.partner_id.id,
@@ -415,12 +428,16 @@ class DiscussController(http.Controller):
                 'email': follower.email,
                 'is_active': follower.is_active,
                 # When editing the followers, the "pencil" icon that leads to the edition of subtypes
-                # should be always be displayed and not only when "debug" mode is activated.
-                'is_editable': True
+                # should be always be displayed and not only when "debug" mode is activated. Note that
+                # if the user does not have write access for document, only own subscription can be
+                # updated. So in that case, the icon will be displayed only besides logged in user's
+                # follower whereas it will be hidden for other followers.
+                'is_editable': is_editable
             })
         return {
+            'can_add_followers': can_add_followers,
             'followers': followers,
-            'subtypes': self.read_subscription_data(follower_id) if follower_id else None
+            'subtypes': self.read_subscription_data(follower_id) if follower_id else None,
         }
 
     @http.route('/mail/read_subscription_data', methods=['POST'], type='json', auth='user')

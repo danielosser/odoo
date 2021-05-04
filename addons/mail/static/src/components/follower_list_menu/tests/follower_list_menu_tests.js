@@ -165,6 +165,7 @@ QUnit.test('click on "add followers" button', async function (assert) {
     const thread = this.messaging.models['mail.thread'].create({
         id: 100,
         model: 'res.partner',
+        canAddFollowers: true,
     });
     await this.createFollowerListMenuComponent(thread);
 
@@ -289,6 +290,132 @@ QUnit.test('click on remove follower', async function (assert) {
         document.body,
         '.o_Follower',
         "should no longer have follower component"
+    );
+});
+
+QUnit.test('Hide "Add follower" and subtypes edition/removal buttons except own user on read only record', async function (assert) {
+    assert.expect(5);
+
+    this.data['res.partner'].records.push({ id: 100, display_name: 'Partner1'});
+    this.data['mail.followers'].records.push(
+        {
+            id: 1,
+            name: "Jean Michang",
+            is_active: true,
+            partner_id: this.data.currentPartnerId,
+            res_id: 100,
+            res_model: 'res.partner',
+            is_editable: true, // mimic logged in user's follower
+        }, {
+            id: 2,
+            name: "Eden Hazard",
+            is_active: true,
+            partner_id: 11,
+            res_id: 100,
+            res_model: 'res.partner',
+        },
+    );
+    await this.start();
+    const thread = this.messaging.models['mail.thread'].create({
+        id: 100,
+        model: 'res.partner',
+    });
+    thread.follow();
+    await this.createFollowerListMenuComponent(thread);
+
+    await afterNextRender(() => {
+        document.querySelector('.o_FollowerListMenu_buttonFollowers').click();
+    });
+
+    assert.containsNone(
+        document.body,
+        '.o_FollowerListMenu_addFollowersButton',
+        "'Add followers' button should not be displayed for a readonly record");
+
+    const followersList = document.querySelectorAll('.o_Follower');
+    assert.containsOnce(
+        followersList[0],
+        '.o_Follower_editButton',
+        "should display edit button for a follower related to logged in user",
+    );
+    assert.containsOnce(
+        followersList[0],
+        '.o_Follower_removeButton',
+        "should display remove button for a follower related to logged in user",
+    );
+    assert.containsNone(
+        followersList[1],
+        '.o_Follower_editButton',
+        "should not display edit button for other followers on a readonly record",
+    );
+    assert.containsNone(
+        followersList[1],
+        '.o_Follower_removeButton',
+        "should not display remove button for others on a readonly record",
+    );
+});
+
+QUnit.test('Show "Add follower" and subtypes edition/removal buttons on all followers if user have write access', async function (assert) {
+    assert.expect(5);
+
+    this.data['res.partner'].records.push({ id: 100, display_name: 'Partner1'});
+    // mimic write access with 'is_editable' set to true for all followers and 'canAddFollowers' set to true
+    this.data['mail.followers'].records.push(
+        {
+            id: 1,
+            name: "Jean Michang",
+            is_active: true,
+            is_editable: true,
+            partner_id: this.data.currentPartnerId,
+            res_id: 100,
+            res_model: 'res.partner',
+        }, {
+            id: 2,
+            name: "Eden Hazard",
+            is_active: true,
+            is_editable: true,
+            partner_id: 11,
+            res_id: 100,
+            res_model: 'res.partner',
+        },
+    );
+    await this.start();
+    const thread = this.messaging.models['mail.thread'].create({
+        id: 100,
+        model: 'res.partner',
+        canAddFollowers: true,
+    });
+    thread.follow();
+    await this.createFollowerListMenuComponent(thread);
+
+    await afterNextRender(() => {
+        document.querySelector('.o_FollowerListMenu_buttonFollowers').click();
+    });
+
+    assert.containsOnce(
+        document.body,
+        '.o_FollowerListMenu_addFollowersButton',
+        "'Add followers' button should be displayed for the writable record");
+    const followersList = document.querySelectorAll('.o_Follower');
+    assert.containsOnce(
+        followersList[0],
+        '.o_Follower_editButton',
+        "should display edit button for a follower related to logged in user",
+    );
+    assert.containsOnce(
+        followersList[0],
+        '.o_Follower_removeButton',
+        "should display remove button for a follower related to logged in user",
+    );
+    assert.containsOnce(
+        followersList[1],
+        '.o_Follower_editButton',
+        "should display edit button for other followers also on the writable record",
+    );
+    assert.containsOnce(
+        followersList[1],
+        '.o_Follower_removeButton',
+        "should display remove button for other followers also on the writable record",
     );
 });
 
