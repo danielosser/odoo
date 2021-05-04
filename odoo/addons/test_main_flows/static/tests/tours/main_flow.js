@@ -665,18 +665,18 @@ tour.stepUtils.openBuggerMenu("li.breadcrumb-item.active:contains('Inventory Ove
     position: "bottom"
 }, {
     mobile: true,
-    trigger: ".o_menu_sections a:contains('Configuration')",
+    trigger: ".o_menu_sections button:contains('Configuration')",
     extra_trigger: '.o_main_navbar',
     content: _t("Go to Configuration"),
     position: "bottom"
 }, {
     mobile: true,
-    trigger: ".o_menu_sections a[data-menu-xmlid='stock.menu_product_in_config_stock']",
+    trigger: ".o_menu_sections button[data-menu-xmlid='stock.menu_product_in_config_stock']",
     content: _t("Click on Product Section"),
     position: "bottom"
 }, {
     mobile: true,
-    trigger: ".o_menu_sections a:contains('Reordering Rules')",
+    trigger: ".o_menu_sections li:contains('Reordering Rules')",
     content: _t("Click on Product Section"),
     position: "bottom"
 }, {
@@ -815,13 +815,13 @@ tour.stepUtils.openBuggerMenu("li.breadcrumb-item.active:contains('Manufacturing
     position: 'bottom',
 }, {
     mobile: true,
-    trigger: ".o_menu_sections a:contains('Operations')",
+    trigger: ".o_menu_sections button:contains('Operations')",
     extra_trigger: '.o_main_navbar',
     content: _t("Let's go to manufacturing order."),
     position: "bottom",
 }, {
     mobile: true,
-    trigger: ".o_menu_sections a:has(span:contains('Manufacturing Orders'))",
+    trigger: ".o_menu_sections li:contains('Manufacturing Orders')",
     content: _t("Let's go to manufacturing order."),
     position: "bottom"
 }, {
