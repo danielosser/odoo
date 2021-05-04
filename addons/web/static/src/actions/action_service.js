@@ -717,7 +717,10 @@ function makeActionManager(env) {
         onClose: options.onClose,
       });
     } else {
-      return clientAction(env, action);
+      const next = clientAction(env, action);
+      if (next) {
+        return doAction(next, options);
+      }
     }
   }
 
