@@ -4,7 +4,7 @@
 from odoo.tests import HttpCase, tagged
 
 
-@tagged('-at_install', 'post_install')
+@tagged('-at_install', 'post_install', 'wowl')
 class TestUi(HttpCase):
 
     @classmethod
