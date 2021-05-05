@@ -155,11 +155,11 @@ tour.register('sale_timesheet_tour', {
             console.error('The quantity delivered on this Sales Order Item should be equal to 1.00 hour. qtyDelivered = ' + qtyDelivered);
     },
 }, {
-    trigger: 'a[data-menu-xmlid="project.menu_project_config"]',
+    trigger: 'button[data-menu-xmlid="project.menu_project_config"]',
     content: 'Click on the Configuration menu.',
     run: 'click',
 }, {
-    trigger: 'a[role="menuitem"][data-menu-xmlid="project.menu_projects_config"]',
+    trigger: 'li[data-menu-xmlid="project.menu_projects_config"]',
     content: 'Select Configuration > Projects.',
     run: 'click',
 }, {
