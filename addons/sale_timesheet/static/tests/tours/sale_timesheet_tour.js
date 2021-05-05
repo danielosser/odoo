@@ -33,7 +33,7 @@ tour.register('sale_timesheet_tour', {
         actions.text('Service Product (Prepaid Hours)', this.$anchor.find('input'));
     },
 }, {
-    trigger: 'ul.ui-menu.ui-widget.ui-autocomplete > li:first-child > a',
+    trigger: 'ul.ui-menu.ui-widget.ui-autocomplete > li:first-child > (a this is a broken)',
     content: 'Select the prepaid service product in the autocomplete dropdown',
     run: 'click',
 }, {
