@@ -8,6 +8,7 @@
         <field name="arch" type="xml">
             <field name="payment_method_id" position="after">
                 <field name="payment_method_code" invisible="1"/>
+                <field name="payment_refund" invisible="1" />
                 <field name="suitable_payment_token_partner_ids" invisible="1"/>
                 <field name="payment_token_id"
                        options="{'no_create': True}"

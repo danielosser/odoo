@@ -20,6 +20,8 @@ class AccountPaymentRegister(models.TransientModel):
         help="Note that tokens from acquirers set to only authorize transactions (instead of capturing the amount) are "
              "not available.")
 
+    payment_refund = fields.Boolean(compute='_compute_payment_refund')
+
     # == Display purpose fields ==
     suitable_payment_token_partner_ids = fields.Many2many(
         comodel_name='res.partner',
@@ -30,6 +32,38 @@ class AccountPaymentRegister(models.TransientModel):
     # -------------------------------------------------------------------------
     # COMPUTE METHODS
     # -------------------------------------------------------------------------
+
+    def default_get(self, fields):
+        res = super().default_get(fields)
+        if res.get('line_ids') and res['line_ids'][0][0] == 6:
+            line_ids = self.env['account.move.line'].browse(res['line_ids'][0][2])
+            reversed_entry = line_ids.move_id.reversed_entry_id
+            if reversed_entry:
+                transaction = reversed_entry.transaction_ids and reversed_entry.transaction_ids[0]
+                if transaction and transaction.acquirer_id.support_refund:
+                    res['journal_id'] = transaction.acquirer_id.journal_id
+        return res
+
+    @api.depends('journal_id', 'currency_id', 'amount')
+    def _compute_payment_refund(self):
+        self.payment_refund = False
+        for wizard in self:
+            move_id = wizard._get_batches()[0]['lines'].move_id
+            if move_id.move_type == 'out_refund':
+                reversed_entry = move_id.reversed_entry_id
+                transaction_id = reversed_entry.transaction_ids and reversed_entry.transaction_ids[0]
+
+                wizard.payment_refund = transaction_id.refund_allowed and wizard.currency_id == transaction_id.currency_id and wizard.journal_id == transaction_id.acquirer_id.journal_id
+
+    def action_create_payments(self):
+        if self.payment_refund:
+            move_id = self._get_batches()[0]['lines'].move_id
+            reversed_entry = move_id.reversed_entry_id
+            transaction_id = reversed_entry.transaction_ids and reversed_entry.transaction_ids[0]
+            refund_transaction = transaction_id._create_refund_transaction(amount=self.amount, invoice_ids=move_id)
+            refund_transaction._send_refund_request()
+
+        return super().action_create_payments()
 
     @api.depends('can_edit_wizard')
     def _compute_suitable_payment_token_partner_ids(self):
@@ -57,6 +91,28 @@ class AccountPaymentRegister(models.TransientModel):
                  ], limit=1)
             else:
                 wizard.payment_token_id = False
+
+    @api.depends('payment_type', 'journal_id', 'available_payment_method_ids')
+    def _compute_payment_method_id(self):
+        super()._compute_payment_method_id()
+
+        for pay in self:
+            if pay.payment_method_id and not pay.available_payment_method_ids:
+                pay.payment_method_id = False
+
+    @api.depends('payment_type',
+                 'payment_refund',
+                 'journal_id.inbound_payment_method_ids',
+                 'journal_id.outbound_payment_method_ids')
+    def _compute_payment_method_fields(self):
+        super()._compute_payment_method_fields()
+
+        for pay in self:
+            move_id = pay._get_batches()[0]['lines'].move_id
+            if move_id.move_type == 'out_refund' and not pay.payment_refund:
+                reversed_entry = move_id.reversed_entry_id
+                transaction_id = reversed_entry.transaction_ids and reversed_entry.transaction_ids[0]
+                pay.available_payment_method_ids = pay.available_payment_method_ids._origin - transaction_id.acquirer_id.journal_id.outbound_payment_method_ids
 
     # -------------------------------------------------------------------------
     # BUSINESS METHODS

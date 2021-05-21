@@ -77,6 +77,8 @@ class PaymentTransaction(models.Model):
         domain=[('move_type', 'in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund'))])
     invoices_count = fields.Integer(string="Invoices Count", compute='_compute_invoices_count')
 
+    refund_allowed = fields.Boolean(compute='_compute_refund_allowed')
+
     # Fields used for user redirection & payment post-processing
     is_post_processed = fields.Boolean(
         string="Is Post-processed", help="Has the payment been post-processed")
@@ -133,6 +135,17 @@ class PaymentTransaction(models.Model):
         tx_data = dict(self.env.cr.fetchall())  # {id: count}
         for tx in self:
             tx.invoices_count = tx_data.get(tx.id, 0)
+
+    @api.depends('acquirer_id.support_refund')
+    def _compute_refund_allowed(self):
+        refund_amounts_rg = self.env['payment.transaction'].read_group([
+            ('acquirer_reference', 'in', self.mapped('acquirer_reference')),
+            ('operation', '=', 'refund'),
+            ('state', '!=', 'draft'),
+        ], ['amount'], ['acquirer_reference'])
+        refund_amounts = {x['acquirer_reference']: x['amount'] for x in refund_amounts_rg}
+        for tx in self:
+            tx.refund_allowed = tx.acquirer_id.support_refund and refund_amounts.get(tx.acquirer_reference, 0) < tx.amount
 
     #=== CONSTRAINT METHODS ===#
 

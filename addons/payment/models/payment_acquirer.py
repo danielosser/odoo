@@ -106,6 +106,7 @@ class PaymentAcquirer(models.Model):
     # Feature support fields
     support_authorization = fields.Boolean(string="Authorize Mechanism Supported")
     support_fees_computation = fields.Boolean(string="Fees Computation Supported")
+    support_refund = fields.Boolean(string="Refund Supported")
     support_tokenization = fields.Boolean(string="Tokenization supported")
 
     # Kanban view fields
@@ -308,6 +309,15 @@ class PaymentAcquirer(models.Model):
             inbound_payment_method_ids.append(
                 (4, self.env.ref('payment.account_payment_method_electronic_in').id)
             )
+        outbound_payment_method_ids = []
+        if self.support_refund:
+            outbound_payment_method_ids.append(
+                (0, 0, {
+                    'name': self.name,
+                    'code': self.name,
+                    'payment_type': 'outbound',
+                })
+            )
         return {
             'name': self.name,
             'code': self.name.upper(),
@@ -319,7 +329,7 @@ class PaymentAcquirer(models.Model):
             'show_on_dashboard': self.state == 'enabled',
             # Don't show payment methods in the backend
             'inbound_payment_method_ids': inbound_payment_method_ids,
-            'outbound_payment_method_ids': [],
+            'outbound_payment_method_ids': outbound_payment_method_ids,
         }
 
     def _get_journal_search_domain(self):
