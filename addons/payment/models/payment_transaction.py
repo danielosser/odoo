@@ -68,7 +68,8 @@ class PaymentTransaction(models.Model):
                    ('online_direct', "Online direct payment"),
                    ('online_token', "Online payment by token"),
                    ('validation', "Validation of the payment method"),
-                   ('offline', "Offline payment by token")],
+                   ('offline', "Offline payment by token"),
+                   ('refund', "Refund")],
         readonly=True)
     payment_id = fields.Many2one(string="Payment", comodel_name='account.payment', readonly=True)
     invoice_ids = fields.Many2many(
@@ -400,6 +401,20 @@ class PaymentTransaction(models.Model):
             return callback_hash
         return None
 
+    def _create_refund_transaction(self, **kwargs):
+        self.ensure_one
+
+        tx = self.create({
+            'acquirer_id': self.acquirer_id.id,
+            'acquirer_reference': self.acquirer_reference,
+            'currency_id': self.currency_id.id,
+            'partner_id': self.partner_id.id,
+            'operation': 'refund',
+            **kwargs,
+        })
+
+        return tx
+
     def _get_processing_values(self):
         """ Return a dict of values used to process the transaction.
 
@@ -587,6 +602,10 @@ class PaymentTransaction(models.Model):
         target_state = 'error'
         txs_to_process = self._update_state(allowed_states, target_state, state_message)
         txs_to_process._log_received_message()
+
+    def _set_refund(self, state_message=None):
+        # TODO
+        self._set_done(state_message)
 
     def _update_state(self, allowed_states, target_state, state_message):
         """ Update the transactions' state to the target state if the current state allows it.
@@ -833,7 +852,7 @@ class PaymentTransaction(models.Model):
         self.ensure_one()
 
         payment_values = {
-            'amount': self.amount,
+            'amount': abs(self.amount),
             'payment_type': 'inbound' if self.amount > 0 else 'outbound',
             'currency_id': self.currency_id.id,
             'partner_id': self.partner_id.commercial_partner_id.id,
