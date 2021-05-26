@@ -122,6 +122,48 @@ class PaymentTransaction(models.Model):
         _logger.info("payment request response:\n%s", pprint.pformat(response_content))
         self._handle_feedback_data('odoo', response_content)
 
+    def _send_refund_request(self):
+        """ Override of payment to send a refund request to Odoo Payments.
+            The result will be sent through a notification.
+
+        Note: self.ensure_one()
+
+        :return: None
+        """
+        super()._send_refund_request()
+        if self.provider != 'odoo' or self.amount <= 0 or not self.refund_allowed:
+            return
+
+        payment_tx = self.env['payment.transaction'].search([
+            ('acquirer_reference', '=', self.acquirer_reference),
+            ('operation', '!=', 'refund')
+        ])
+        adyen_account_id = self.acquirer_id.odoo_adyen_account_id
+
+        converted_amount = payment_utils.to_minor_currency_units(
+            self.amount, self.currency_id, CURRENCY_DECIMALS.get(self.currency_id.name)
+        )
+        initial_amount = payment_utils.to_minor_currency_units(
+            payment_tx.amount, payment_tx.currency_id, CURRENCY_DECIMALS.get(payment_tx.currency_id.name)
+        )
+        data = {
+            'originalReference': self.acquirer_reference,
+            'modificationAmount': {
+                'currency': self.currency_id.name,
+                'value': converted_amount,
+            },
+            'initialAmount': {
+                'currency': payment_tx.currency_id.name,
+                'value': initial_amount,
+            },
+            'reference': self.reference,
+            'payout': adyen_account_id.account_code,
+            'adyen_uuid': adyen_account_id.adyen_uuid,
+            'signature': payment_tx.adyen_transaction_ids[0].signature,
+        }
+        response_content = adyen_account_id._adyen_rpc('v1/refund', data)
+        _logger.info("payment refund response:\n%s", pprint.pformat(response_content))
+
     @api.model
     def _get_tx_from_feedback_data(self, provider, data):
         """ Override of payment to find the transaction based on Adyen data.
@@ -187,6 +229,8 @@ class PaymentTransaction(models.Model):
             self._set_done()
         elif payment_state in RESULT_CODES_MAPPING['cancel']:
             self._set_canceled()
+        elif payment_state in RESULT_CODES_MAPPING['refund']:
+            self._set_refund()
         else:  # Classify unsupported payment state as `error` tx state
             _logger.info("received data with invalid payment state: %s", payment_state)
             self._set_error(
