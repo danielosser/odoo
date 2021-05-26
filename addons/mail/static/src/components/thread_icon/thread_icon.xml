@@ -22,16 +22,27 @@
                         />
                     </t>
                     <t t-elif="thread.correspondent.im_status === 'online'">
+<<<<<<< HEAD
                         <div class="o_ThreadIcon_online fa fa-circle" title="Online"/>
+=======
+                        <div class="o_ThreadIcon_online o_ThreadIcon_coloredStatus fa fa-circle text-success" title="Online"/>
+>>>>>>> 1ede5f99e50... [REF] mail, im_livechat, hr_holidays: adjust design, simplify scss
                     </t>
                     <t t-elif="thread.correspondent.im_status === 'offline'">
                         <div class="o_ThreadIcon_offline fa fa-circle-o" title="Offline"/>
                     </t>
                     <t t-elif="thread.correspondent.im_status === 'away'">
+<<<<<<< HEAD
                         <div class="o_ThreadIcon_away fa fa-circle" title="Away"/>
                     </t>
                     <t t-elif="thread.correspondent === env.messaging.partnerRoot">
                         <div class="o_ThreadIcon_online fa fa-heart" title="Bot"/>
+=======
+                        <div class="o_ThreadIcon_away o_ThreadIcon_coloredStatus fa fa-circle text-warning" title="Away"/>
+                    </t>
+                    <t t-elif="thread.correspondent === env.messaging.partnerRoot">
+                        <div class="o_ThreadIcon_online o_ThreadIcon_coloredStatus fa fa-heart text-primary" title="Bot"/>
+>>>>>>> 1ede5f99e50... [REF] mail, im_livechat, hr_holidays: adjust design, simplify scss
                     </t>
                     <t t-else="" name="noImStatusCondition">
                         <div class="o_ThreadIcon_noImStatus fa fa-question-circle" title="No IM status available"/>
@@ -42,7 +53,7 @@
                         <div class="o_ThreadIcon_mailboxInbox fa fa-inbox"/>
                     </t>
                     <t t-elif="thread === env.messaging.starred">
-                        <div class="o_ThreadIcon_mailboxStarred fa fa-star-o"/>
+                        <div class="o_ThreadIcon_mailboxStarred fa fa-star"/>
                     </t>
                     <t t-elif="thread === env.messaging.history">
                         <div class="o_ThreadIcon_mailboxHistory fa fa-history"/>

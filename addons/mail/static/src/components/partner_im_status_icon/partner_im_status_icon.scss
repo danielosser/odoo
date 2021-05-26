@@ -3,16 +3,17 @@
 // ------------------------------------------------------------------
 
 .o_PartnerImStatusIcon {
-    display: flex;
-    flex-flow: column;
-
     width: 1.2em;
     height: 1.2em;
     line-height: 1.3em;
+
+    &.o-has-open-chat {
+        cursor: pointer;
+    }
 }
 
 .o_PartnerImStatusIcon_outerBackground {
-    transform: scale(1.5);
+    transform: scale(1.6);
 }
 
 .o-background {
@@ -20,6 +21,7 @@
     margin-inline-end: map-get($spacers, 1);
     margin-top: 2px;
 }
+<<<<<<< HEAD
 
 // ------------------------------------------------------------------
 // Style
@@ -57,3 +59,5 @@
 
 
 
+=======
+>>>>>>> 1ede5f99e50... [REF] mail, im_livechat, hr_holidays: adjust design, simplify scss
