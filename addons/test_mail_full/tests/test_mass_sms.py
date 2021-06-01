@@ -403,3 +403,69 @@ class TestMassSMS(TestMassSMSCommon):
             mailing, recipients
         )
         self.assertEqual(mailing.canceled, 3)
+
+    def test_mass_sms_feedback_success(self):
+        mailing = self.env['mailing.mailing'].browse(self.mailing_sms.ids)
+        recipients = self._create_mailing_sms_test_records(model='mail.test.sms', count=5)
+
+        numbers = [recipient.phone_nbr for recipient in recipients]
+
+        mailing.write({
+            'mailing_model_id': self.env['ir.model']._get('mail.test.sms'),
+            'mailing_domain': [('id', 'in', recipients.ids)],
+        })
+
+        with self.mockSMSGateway():
+            mailing.action_send_sms(unlink_failed=False, unlink_sent=False)
+
+        numbers = [recipient.phone_nbr for recipient in recipients]
+
+        all_sms = self.env['sms.sms'].search([('number', 'in', numbers)])
+
+        all_sms.update_trace_status('delivered')
+        all_sms.update_status('delivered')
+        self.assertSMSTraces(
+            [{'number': '+32456000000', 'trace_status': 'sent'},
+             {'number': '+32456000101', 'trace_status': 'sent'},
+             {'number': '+32456000202', 'trace_status': 'sent'},
+             {'number': '+32456000303', 'trace_status': 'sent'},
+             {'number': '+32456000404', 'trace_status': 'sent'}],
+            mailing, recipients
+        )
+
+    def test_mass_sms_feedback_failure(self):
+
+        mailing = self.env['mailing.mailing'].browse(self.mailing_sms.ids)
+        recipients = self._create_mailing_sms_test_records(model='mail.test.sms', count=5)
+
+        for recipient in recipients:
+            recipient.phone_nbr = "+32" + recipient.phone_nbr[1:]
+
+        mailing.write({
+            'mailing_model_id': self.env['ir.model']._get('mail.test.sms'),
+            'mailing_domain': [('id', 'in', recipients.ids)],
+        })
+
+        with self.mockSMSGateway():
+            mailing.action_send_sms(unlink_failed=False, unlink_sent=False)
+
+        all_sms = self.env['sms.sms'].search([('number', 'in', [recipient.phone_nbr for recipient in recipients])], order="number ASC")
+        all_sms[0].update_trace_status('network_error')
+        all_sms[0].update_status('network_error')
+        all_sms[1].update_trace_status('delivered')
+        all_sms[1].update_status('delivered')
+        all_sms[2].update_trace_status('rejected')
+        all_sms[2].update_status('rejected')
+        all_sms[3].update_trace_status('delivered')
+        all_sms[3].update_status('delivered')
+        all_sms[4].update_trace_status('not_allowed')
+        all_sms[4].update_status('not_allowed')
+
+        all_sms = all_sms.exists()
+
+        self.assertSMSTraces(
+            [{'number': all_sms[0].number, 'trace_status': 'error', 'failure_type': 'sms_network_error'},
+             {'number': all_sms[1].number, 'trace_status': 'error', 'failure_type': 'sms_rejected'},
+             {'number': all_sms[2].number, 'trace_status': 'error', 'failure_type': 'sms_not_allowed'}],
+            mailing, all_sms, check_model=False
+        )

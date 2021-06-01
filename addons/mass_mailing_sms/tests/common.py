@@ -20,7 +20,7 @@ class MassSMSCase(SMSCase):
 
     def assertSMSTraces(self, recipients_info, mailing, records,
                         check_sms=True, sent_unlink=False,
-                        sms_links_info=None):
+                        sms_links_info=None, check_model=True):
         """ Check content of traces. Traces are fetched based on a given mailing
         and records. Their content is compared to recipients_info structure that
         holds expected information. Links content may be checked, notably to
@@ -59,14 +59,17 @@ class MassSMSCase(SMSCase):
             'cancel': 'canceled',
             'bounce': 'error',
         }
-        traces = self.env['mailing.trace'].search([
-            ('mass_mailing_id', 'in', mailing.ids),
-            ('res_id', 'in', records.ids)
-        ])
+        if check_model:
+            traces = self.env['mailing.trace'].search([
+                ('mass_mailing_id', 'in', mailing.ids),
+                ('res_id', 'in', records.ids)
+            ])
+            self.assertTrue(all(s.model == records._name for s in traces))
+            self.assertEqual(set(s.res_id for s in traces), set(records.ids))
+        else:
+            traces = self.env['mailing.trace'].search([('sms_sms_id_int', 'in', records.ids)])
 
-        self.assertTrue(all(s.model == records._name for s in traces))
         # self.assertTrue(all(s.utm_campaign_id == mailing.campaign_id for s in traces))
-        self.assertEqual(set(s.res_id for s in traces), set(records.ids))
 
         # check each trace
         if not sms_links_info:
@@ -79,9 +82,12 @@ class MassSMSCase(SMSCase):
             if number is None and partner:
                 number = partner._sms_get_recipients_info()[partner.id]['sanitized']
 
-            trace = traces.filtered(
-                lambda t: t.sms_number == number and t.trace_status == status and (t.res_id == record.id if record else True)
-            )
+            if check_model:
+                trace = traces.filtered(
+                    lambda t: t.sms_number == number and t.trace_status == status and (t.res_id == record.id if record else True)
+                )
+            else:
+                trace = traces.filtered(lambda t: t.sms_number == number)
             self.assertTrue(len(trace) == 1,
                             'SMS: found %s notification for number %s, (status: %s) (1 expected)' % (len(trace), number, status))
             self.assertTrue(bool(trace.sms_sms_id_int))

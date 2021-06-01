@@ -40,7 +40,10 @@ class SmsSms(models.Model):
                     traces.set_sent()
                 elif traces:
                     traces.set_failed(failure_type=self.IAP_TO_SMS_STATE[state])
-        return super(SmsSms, self)._postprocess_iap_sent_sms(
-            iap_results, failure_reason=failure_reason,
-            unlink_failed=unlink_failed, unlink_sent=unlink_sent
-        )
+        return super(SmsSms, self)._postprocess_iap_sent_sms(iap_results, failure_reason=failure_reason,
+                                                                unlink_failed=unlink_failed, unlink_sent=unlink_sent)
+
+    def update_trace_status(self, sms_status):
+        traces = self.env['mailing.trace'].sudo().search([('sms_sms_id_int', '=', self.id)])
+        if traces and sms_status != 'delivered':
+            traces.set_failed(failure_type="sms_" + sms_status)

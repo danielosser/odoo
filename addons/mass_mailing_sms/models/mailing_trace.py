@@ -37,6 +37,14 @@ class MailingTrace(models.Model):
         ('sms_blacklist', 'Blacklisted'),
         ('sms_duplicate', 'Duplicate'),
         ('sms_optout', 'Opted Out'),
+        #new provider feedback system values
+        ('sms_no_info', 'No information available'),
+        ('sms_not_sent', 'Not sent'),
+        ('sms_not_delivered', 'Not delivered'),
+        ('sms_not_allowed', 'Not allowed'),
+        ('sms_rejected', 'Rejected'),
+        ('sms_network_error', 'Network error'),
+        ('sms_expired', 'Expired')
     ])
 
     @api.model_create_multi

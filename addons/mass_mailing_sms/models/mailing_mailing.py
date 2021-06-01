@@ -241,13 +241,13 @@ class Mailing(models.Model):
             mass_sms.action_send_sms(res_ids=res_ids)
         return super(Mailing, self - mass_sms).action_send_mail(res_ids=res_ids)
 
-    def action_send_sms(self, res_ids=None):
+    def action_send_sms(self, res_ids=None, unlink_failed=False, unlink_sent=True):
         for mailing in self:
             if not res_ids:
                 res_ids = mailing._get_remaining_recipients()
             if res_ids:
                 composer = self.env['sms.composer'].with_context(active_id=False).create(mailing._send_sms_get_composer_values(res_ids))
-                composer._action_send_sms()
+                composer._action_send_sms(unlink_failed=unlink_failed, unlink_sent=unlink_sent)
 
             mailing.write({
                 'state': 'done',
