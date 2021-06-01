@@ -3,6 +3,7 @@
 
 import logging
 import threading
+import uuid
 
 from odoo import api, fields, models, tools, _
 
@@ -43,7 +44,14 @@ class SmsSms(models.Model):
         ('sms_blacklist', 'Blacklisted'),
         ('sms_duplicate', 'Duplicate'),
         ('sms_optout', 'Opted Out'),
+        #coming from provider feedback system
+        ('sms_not_delivered', 'Not Delivered'),
+        ('sms_not_allowed', 'Not allowed'),
+        ('sms_rejected', 'Rejected'),
+        ('sms_network_error', 'Network error'),
+        ('sms_expired', 'Expired'),
     ], copy=False)
+    request_uuid = fields.Char('request id', help="request id used by sms service", default=lambda l: uuid.uuid4().hex)
 
     def action_set_canceled(self):
         self.state = 'canceled'
@@ -85,6 +93,17 @@ class SmsSms(models.Model):
             if not self._context.get('sms_skip_msg_notification', False):
                 notifications.mail_message_id._notify_message_notification_update()
 
+    def action_set_sent(self):
+        notifications = self.env['mail.notification'].sudo().search([
+            ('sms_id', 'in', self.ids),
+            ('notification_status', '!=', 'sent'),
+        ])
+        if notifications:
+            notifications.write({'notification_status': 'sent', 'failure_type': False})
+            if not self._context.get('sms_skip_msg_notification', False):
+                notifications.mail_message_id._notify_message_notification_update()
+        self.unlink()
+
     def send(self, unlink_failed=False, unlink_sent=True, auto_commit=False, raise_exception=False):
         """ Main API method to send SMS.
 
@@ -125,6 +144,9 @@ class SmsSms(models.Model):
             }
         }
 
+    def update_status(self, status):
+        self.action_set_error("sms_" + status) if status != 'delivered' else self.action_set_sent()
+
     @api.model
     def _process_queue(self, ids=None):
         """ Send immediately queued messages, committing after each message is sent.
@@ -163,6 +185,8 @@ class SmsSms(models.Model):
             'res_id': record.id,
             'number': record.number,
             'content': record.body,
+            'request_id': record.request_uuid,
+            'webhook_url': record.get_base_url() + '/sms/status'
         } for record in self]
 
         try:
@@ -172,7 +196,7 @@ class SmsSms(models.Model):
             if raise_exception:
                 raise
             self._postprocess_iap_sent_sms(
-                [{'res_id': sms.id, 'state': 'server_error'} for sms in self],
+                [{'res_id': sms.id, 'state': 'server_error', 'request_uuid': 'error'} for sms in self],
                 unlink_failed=unlink_failed, unlink_sent=unlink_sent)
         else:
             _logger.info('Send batch %s SMS: %s: gave %s', len(self.ids), self.ids, iap_results)

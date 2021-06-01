@@ -202,7 +202,7 @@ class SendSMS(models.TransientModel):
             self.write({'mass_force_send': True})
         return self.action_send_sms()
 
-    def _action_send_sms(self):
+    def _action_send_sms(self, unlink_failed=False, unlink_sent=True):
         records = self._get_records()
         if self.composition_mode == 'numbers':
             return self._action_send_sms_numbers()
@@ -214,7 +214,7 @@ class SendSMS(models.TransientModel):
             else:
                 return self._action_send_sms_comment(records)
         else:
-            return self._action_send_sms_mass(records)
+            return self._action_send_sms_mass(records, unlink_failed=unlink_failed, unlink_sent=unlink_sent)
 
     def _action_send_sms_numbers(self):
         self.env['sms.api']._send_sms_batch([{
@@ -246,7 +246,7 @@ class SendSMS(models.TransientModel):
                 sms_numbers=self.sanitized_numbers.split(',') if self.sanitized_numbers else None)
         return messages
 
-    def _action_send_sms_mass(self, records=None):
+    def _action_send_sms_mass(self, records=None, unlink_failed=False, unlink_sent=True):
         records = records if records is not None else self._get_records()
 
         sms_record_values = self._prepare_mass_sms_values(records)
@@ -257,7 +257,7 @@ class SendSMS(models.TransientModel):
             records._message_log_batch(**log_values)
 
         if sms_all and self.mass_force_send:
-            sms_all.filtered(lambda sms: sms.state == 'outgoing').send(auto_commit=False, raise_exception=False)
+            sms_all.filtered(lambda sms: sms.state == 'outgoing').send(auto_commit=False, raise_exception=False, unlink_failed=unlink_failed, unlink_sent=unlink_sent)
             return self.env['sms.sms'].sudo().search([('id', 'in', sms_all.ids)])
         return sms_all
 

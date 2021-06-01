@@ -107,6 +107,25 @@ class TestSMSActions(TestSMSActionsCommon):
             {'partner': self.partner_2, 'number': self.notif_p2.sms_number, 'state': 'ready'}
         ], 'TEST BODY', self.msg, check_sms=False)    # do not check new sms as they already exist
 
+    def test_sms_feedback_success(self):
+        number = self.sms_p1.number
+        self.sms_p1.update_status('delivered')
+
+        notifications = self.env['mail.notification'].search([('sms_number', '=', number), ('notification_type', '=', 'sms')])
+
+        self.assertEqual(len(notifications), 1)
+        self.assertTrue(all(notification.state == 'sent') for notification in notifications)
+
+
+    def test_sms_feedback_error(self):
+        number = self.sms_p1.number
+        self.sms_p1.update_status('network_error')
+
+        notifications = self.env['mail.notification'].search([('sms_number', '=', number), ('notification_type', '=', 'sms')])
+
+        self.assertEqual(len(notifications), 1)
+        self.assertTrue(all(notification.failure_type == 'sms_network_error') for notification in notifications)
+
 
 @tagged('sms_management')
 class TestSMSWizards(TestSMSActionsCommon):

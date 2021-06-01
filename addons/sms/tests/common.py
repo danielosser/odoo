@@ -2,6 +2,7 @@
 
 from contextlib import contextmanager
 from unittest.mock import patch
+import uuid
 
 from odoo import exceptions, tools
 from odoo.tests import common
@@ -35,7 +36,7 @@ class MockSMS(common.BaseCase):
             if local_endpoint == '/iap/sms/2/send':
                 result = []
                 for to_send in params['messages']:
-                    res = {'res_id': to_send['res_id'], 'state': 'success', 'credit': 1}
+                    res = {'res_id': to_send['res_id'], 'state': 'success', 'credit': 1, 'request_uuid': uuid.uuid4().hex}
                     error = sim_error or (nbr_t_error and nbr_t_error.get(to_send['number']))
                     if error and error == 'credit':
                         res.update(credit=0, state='insufficient_credit')

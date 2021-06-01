@@ -28,9 +28,12 @@ class SmsApi(models.AbstractModel):
 
         :raises ? TDE FIXME
         """
+        url = self.get_base_url()
         params = {
             'numbers': numbers,
             'message': message,
+            'version': 2.0,
+            'webhook_url': url +'/sms/status'
         }
         return self._contact_iap('/iap/message_send', params)
 
@@ -52,6 +55,7 @@ class SmsApi(models.AbstractModel):
 
         :raises: normally none
         """
+
         params = {
             'messages': messages
         }
