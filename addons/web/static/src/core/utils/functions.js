@@ -10,10 +10,14 @@
  */
 export function memoize(func) {
     const cache = new Map();
-    return function memoized(...args) {
+    const memoized = function memoized(...args) {
         if (!cache.has(args[0])) {
             cache.set(args[0], func(...args));
         }
         return cache.get(...args);
     };
+    if (func.name) {
+        Object.defineProperty(memoized, "name", { value: func.name, configurable: true });
+    }
+    return memoized;
 }
