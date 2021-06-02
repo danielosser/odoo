@@ -86,6 +86,12 @@ class MockIAPReveal(MockIAPEnrich):
             self.assertEqual(payload['contact_number'], mine.contact_number)
         else:
             self.assertTrue('contact_number' not in payload)
-        self.assertEqual(payload['countries'], mine.mapped('country_ids.code'))
+        countries = []
+        for country in mine.country_ids:
+            countries.append({
+                'code': country.code,
+                'states': mine.state_ids.filtered(lambda state: state in country.state_ids).mapped('code'),
+            })
+        self.assertEqual(payload['countries'], countries)
         self.assertEqual(payload['lead_number'], mine.lead_number)
         self.assertEqual(payload['search_type'], mine.search_type)
