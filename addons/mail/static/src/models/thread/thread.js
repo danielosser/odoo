@@ -1417,6 +1417,18 @@ function factory(dependencies) {
                 baseCounter = 0;
                 countFromId = this.lastSeenByCurrentPartnerMessageId;
             }
+            // Message from mailing channel should not make a notification in
+            // Odoo for users with notification "Handled by Email".
+            // so it should not display a notification by incrementing the
+            // unread counter.
+            if (
+                this.mass_mailing &&
+                this.env.session.notification_type === 'email' &&
+                this.lastMessage
+            ) {
+                countFromId = this.lastMessage.id;
+            }
+
             // Include all the messages that are known locally but the server
             // didn't take into account.
             return this.orderedMessages.reduce((total, message) => {
@@ -1523,6 +1535,17 @@ function factory(dependencies) {
          */
         _computeOverdueActivities() {
             return [['replace', this.activities.filter(activity => activity.state === 'overdue')]];
+        }
+
+        _computeShouldBeSetAsSeen() {
+            if (
+                this.mass_mailing &&
+                this.env.session.notification_type === 'email' &&
+                this.lastMessage
+            ) {
+                return this.markAsSeen(this.lastMessage);
+            }
+            return;
         }
 
         /**
@@ -2269,6 +2292,15 @@ function factory(dependencies) {
          */
         serverMessageUnreadCounter: attr({
             default: 0,
+        }),
+        // Message from mailing channel should be mark as read
+        // for users with notification "Handled by Email".
+        shouldBeSetAsSeen: attr({
+            compute: '_computeShouldBeSetAsSeen',
+            dependencies: [
+                'lastMessage',
+                'mass_mailing',
+            ],
         }),
         /**
          * Determines the `mail.suggested_recipient_info` concerning `this`.

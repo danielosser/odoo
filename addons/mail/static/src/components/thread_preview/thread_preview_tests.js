@@ -40,6 +40,41 @@ QUnit.module('thread_preview_tests.js', {
     },
 });
 
+QUnit.test('Message from mailing channel should not make a notification', async function (assert) {
+    assert.expect(1);
+
+    this.data['mail.channel'].records.push({
+        id: 12,
+        mass_mailing: true,
+        message_unread_counter: 1,
+    });
+    this.data['mail.message'].records.push({
+        channel_ids: [12],
+        id: 1,
+        model: 'mail.channel',
+        res_id: 12,
+    });
+    await this.start({
+        hasChatWindow: true,
+        hasMessagingMenu: true,
+        env: {
+            session: {
+                notification_type: "email"
+            }
+        },
+    });
+    const thread = this.env.models['mail.thread'].findFromIdentifyingData({
+        id: 12,
+        model: 'mail.channel',
+    });
+    await this.createThreadPreviewComponent({ threadLocalId: thread.localId });
+    assert.containsNone(
+        document.body,
+        '.o_ThreadPreview_counter',
+        "should not have notification counter"
+    );
+});
+
 QUnit.test('mark as read', async function (assert) {
     assert.expect(8);
     this.data['mail.channel'].records.push({

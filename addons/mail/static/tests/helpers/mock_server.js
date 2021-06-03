@@ -401,6 +401,19 @@ MockServer.include({
         const starredCounter = this._getRecords('mail.message', [
             ['starred_partner_ids', 'in', this.currentPartnerId],
         ]).length;
+        let messages = undefined;
+        let lastMessageId;
+        if (channels.length) {
+            messages = this._getRecords('mail.message', [
+                ['channel_ids', 'in', [channels[0].id]],
+            ]);
+            lastMessageId = messages.reduce((lastMessageId, message) => {
+                if (!lastMessageId || message.id > lastMessageId) {
+                    return message.id;
+                }
+                return lastMessageId;
+            }, undefined);
+        }
 
         return {
             channel_slots: {
@@ -421,6 +434,7 @@ MockServer.include({
             public_partner: publicPartnerFormat,
             shortcodes,
             starred_counter: starredCounter,
+            lastMessage: lastMessageId,
         };
     },
     /**
