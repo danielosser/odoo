@@ -132,6 +132,18 @@ class DeliveryCarrier(models.Model):
         self.state_ids = [(6, 0, self.state_ids.filtered(lambda state: state.id in self.country_ids.mapped('state_ids').ids).ids)]
 
     # -------------------------- #
+    # ORM overrides              #
+    # -------------------------- #
+
+    def _neutralize(self):
+        super()._neutralize()
+        self.flush()
+        self.env.cr.execute("UPDATE delivery_carrier SET prod_environment='f', active='f';")
+        self.invalidate_cache(fnames=['prod_environment', 'active'])
+        if self.search(['|', ('active', '=', True), ('prod_environment', '=', True)]):
+            self._neutralize_warning("Not all delivery carriers were neutralized !")
+
+    # -------------------------- #
     # API for external providers #
     # -------------------------- #
 

@@ -319,3 +319,19 @@ class TestMailRender(common.MailCommon):
                 src, partner._name, partner.ids, engine=engine,
             )[partner.id]
             self.assertEqual(result, expected)
+
+    def test_mail_template_neutralize(self):
+        """ ensure mail templates can be neutralized """
+        fake_mail_server = self.env['ir.mail_server'].create({
+            'name': "fake test email server",
+            'smtp_host': "mail.example.com",
+            'smtp_port': 15626,
+        })
+        self.test_template_jinja.mail_server_id = fake_mail_server
+        self.env['mail.template']._neutralize()
+        self.assertFalse(self.test_template_jinja.mail_server_id)
+
+        # bonus test mail server neutralize too
+        self.assertTrue(fake_mail_server.active)
+        self.env['ir.mail_server']._neutralize()
+        self.assertFalse(fake_mail_server.active)

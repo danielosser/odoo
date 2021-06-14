@@ -1340,3 +1340,15 @@ class Website(models.Model):
 
     def _get_cached(self, field):
         return self._get_cached_values()[field]
+
+    # ----------------------------------------------------------
+    # ORM overrides
+    # ----------------------------------------------------------
+    def _neutralize(self):
+        super()._neutralize()
+        self.flush()
+        self.env.cr.execute("UPDATE website SET domain=NULL;")
+        self.invalidate_cache(fnames=['domain'])
+
+        if self.search([('domain', '!=', False)]):
+            self._neutralize_warning("Not all website domains were neutralized.")

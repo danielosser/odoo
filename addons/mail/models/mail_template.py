@@ -114,6 +114,19 @@ class MailTemplate(models.Model):
         return True
 
     # ------------------------------------------------------------
+    # ORM overrides
+    # ------------------------------------------------------------
+
+    def _neutralize(self):
+        super()._neutralize()
+        self.flush()
+        self.env.cr.execute("UPDATE mail_template SET mail_server_id=NULL;")
+        self.invalidate_cache(fnames=['mail_server_id'])
+
+        if self.search([('mail_server_id', '!=', False)]):
+            self._neutralize_warning("Not all mail server's were neutralized on mail templates!")
+
+    # ------------------------------------------------------------
     # MESSAGE/EMAIL VALUES GENERATION
     # ------------------------------------------------------------
 

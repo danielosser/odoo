@@ -456,6 +456,15 @@ class ir_cron(models.Model):
             cr.execute('NOTIFY cron_trigger')
         _logger.debug("cron workers notified")
 
+    def _neutralize(self):
+        super()._neutralize()
+        self.flush()
+        self.env.cr.execute("""
+            UPDATE ir_cron SET active=false
+            WHERE id NOT IN (SELECT res_id FROM ir_model_data WHERE model='ir.cron' AND name = 'autovacuum_job');
+        """)
+        self.invalidate_cache(fnames=['active'])
+
 
 class ir_cron_trigger(models.Model):
     _name = 'ir.cron.trigger'

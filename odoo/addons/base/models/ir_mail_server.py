@@ -524,3 +524,11 @@ class IrMailServer(models.Model):
         else:
             self.smtp_port = 25
         return result
+
+    def _neutralize(self):
+        super()._neutralize()
+        self.flush()
+        self.env.cr.execute("UPDATE ir_mail_server SET active=false;")
+        self.invalidate_cache(fnames=['active'])
+        if self.search([('active', '=', True)]):
+            self._neutralize_warning("Not all mail servers were deactivated !")
