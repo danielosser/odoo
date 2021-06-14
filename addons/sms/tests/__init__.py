@@ -3,3 +3,4 @@
 
 from . import common
 from . import test_sms_template
+from . import test_sms_neutralize
