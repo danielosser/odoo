@@ -750,6 +750,16 @@ class BaseModel(metaclass=MetaModel):
         cls._ondelete_methods = BaseModel._ondelete_methods
         cls._onchange_methods = BaseModel._onchange_methods
 
+    def _neutralize(self):
+        """ Neutralize this model's records.
+        This should prevent the database from connecting to external services.
+        """
+        return
+
+    def _neutralize_warning(self, message):
+        """ Neutralize warning helper """
+        _logger.warning("neutralize: %s", message)
+
     @property
     def _constraint_methods(self):
         """ Return a list of methods implementing Python constraints. """
