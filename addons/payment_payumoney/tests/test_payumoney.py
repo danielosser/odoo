@@ -54,3 +54,9 @@ class PayumoneyTest(PayumoneyCommon):
             'https://sandboxsecure.payu.in/_payment')
         self.assertDictEqual(form_info['inputs'], expected_values,
             "PayUMoney: invalid inputs specified in the redirect form.")
+
+    def test_payumoney_neutralize(self):
+        self.env['payment.acquirer']._neutralize()
+
+        self.assertEqual(self.acquirer.payumoney_merchant_key, False)
+        self.assertEqual(self.acquirer.payumoney_merchant_salt, False)

@@ -38,3 +38,9 @@ class PaymentAcquirer(models.Model):
         if self.provider != 'odoo':
             return super()._get_default_payment_method()
         return self.env.ref('payment_odoo.payment_method_odoo').id
+
+    def _neutralize(self):
+        super()._neutralize()
+        self.env['res.company'].flush()
+        self.env.cr.execute("UPDATE res_company SET adyen_account_id = NULL")
+        self.env['res.company'].invalidate_cache(fnames=['adyen_account_id'])

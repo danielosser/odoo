@@ -74,3 +74,7 @@ class PaymentAcquirer(models.Model):
         if self.provider != 'payulatam':
             return super()._get_default_payment_method()
         return self.env.ref('payment_payulatam.payment_method_payulatam').id
+
+    def _neutralize(self):
+        super()._neutralize()
+        self._neutralize_fields('payulatam', ['payulatam_merchant_id', 'payulatam_account_id', 'payulatam_api_key'])

@@ -153,3 +153,10 @@ class PaypalForm(PaypalCommon):
         })
         total_fee = self.paypal._compute_fees(100, False, False)
         self.assertEqual(round(total_fee, 2), 3.3, 'Wrong computation of the Paypal fees')
+
+    def test_paypal_neutralize(self):
+        self.env['payment.acquirer']._neutralize()
+
+        self.assertEqual(self.acquirer.paypal_email_account, False)
+        self.assertEqual(self.acquirer.paypal_seller_account, False)
+        self.assertEqual(self.acquirer.paypal_pdt_token, False)

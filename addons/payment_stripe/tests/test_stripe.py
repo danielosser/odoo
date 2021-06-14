@@ -27,3 +27,10 @@ class StripeTest(StripeCommon):
 
         self.assertEqual(processing_values['publishable_key'], self.stripe.stripe_publishable_key)
         self.assertEqual(processing_values['session_id'], dummy_session_id)
+
+    def test_stripe_neutralize(self):
+        self.env['payment.acquirer']._neutralize()
+
+        self.assertEqual(self.acquirer.stripe_secret_key, False)
+        self.assertEqual(self.acquirer.stripe_publishable_key, False)
+        self.assertEqual(self.acquirer.stripe_webhook_secret, False)

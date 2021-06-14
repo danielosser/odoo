@@ -12,7 +12,7 @@ from .common import AdyenCommon
 
 
 @tagged('post_install', '-at_install')
-class AdyenForm(AdyenCommon):
+class Adyen(AdyenCommon):
 
     def test_processing_values(self):
         tx = self.create_transaction(flow='direct')
@@ -41,3 +41,10 @@ class AdyenForm(AdyenCommon):
         token = self.create_token(active=False)
         with self.assertRaises(UserError):
             token._handle_reactivation_request()
+
+    def test_adyen_neutralize(self):
+        self.env['payment.acquirer']._neutralize()
+
+        self.assertEqual(self.acquirer.adyen_merchant_account, False)
+        self.assertEqual(self.acquirer.adyen_api_key, False)
+        self.assertEqual(self.acquirer.adyen_hmac_key, False)

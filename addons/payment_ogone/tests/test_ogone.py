@@ -96,3 +96,12 @@ class OgoneTest(OgoneCommon):
                 value,
                 f"received value {inputs[form_key]} for input {form_key} (expected {value})"
             )
+
+    def test_ogone_neutralize(self):
+        self.env['payment.acquirer']._neutralize()
+
+        self.assertEqual(self.acquirer.ogone_pspid, False)
+        self.assertEqual(self.acquirer.ogone_userid, False)
+        self.assertEqual(self.acquirer.ogone_password, False)
+        self.assertEqual(self.acquirer.ogone_shakey_in, False)
+        self.assertEqual(self.acquirer.ogone_shakey_out, False)

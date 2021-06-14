@@ -94,3 +94,9 @@ class BuckarooTest(BuckarooCommon):
 
         self.assertEqual(tx.state, 'error',
             'Buckaroo: unexpected status code should put tx in error state')
+
+    def test_buckaroo_neutralize(self):
+        self.env['payment.acquirer']._neutralize()
+
+        self.assertEqual(self.acquirer.buckaroo_website_key, False)
+        self.assertEqual(self.acquirer.buckaroo_secret_key, False)

@@ -191,3 +191,10 @@ class AlipayTest(AlipayCommon):
             'Alipay: wrong state after receiving a valid pending notification')
         self.assertEqual(tx.acquirer_reference, '2017112321001003690200384552',
             'Alipay: wrong txn_id after receiving a valid pending notification')
+
+    def test_alipay_neutralize(self):
+        self.env['payment.acquirer']._neutralize()
+
+        self.assertEqual(self.acquirer.alipay_merchant_partner_id, False)
+        self.assertEqual(self.acquirer.alipay_md5_signature_key, False)
+        self.assertEqual(self.acquirer.alipay_seller_email, False)

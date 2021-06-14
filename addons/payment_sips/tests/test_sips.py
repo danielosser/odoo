@@ -119,3 +119,9 @@ class SipsTest(SipsCommon):
 
         self.env['payment.transaction']._handle_feedback_data('sips', sips_post_data)
         self.assertEqual(tx2.state, 'cancel', 'Sips: erroneous validation did not put tx into error state')
+
+    def test_sips_neutralize(self):
+        self.env['payment.acquirer']._neutralize()
+
+        self.assertEqual(self.acquirer.sips_merchant_id, False)
+        self.assertEqual(self.acquirer.sips_secret, False)
