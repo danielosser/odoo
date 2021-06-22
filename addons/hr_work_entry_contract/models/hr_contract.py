@@ -19,7 +19,15 @@ class HrContract(models.Model):
         default=lambda self: datetime.now().replace(hour=0, minute=0, second=0, microsecond=0), copy=False)
     date_generated_to = fields.Datetime(string='Generated To', readonly=True, required=True,
         default=lambda self: datetime.now().replace(hour=0, minute=0, second=0, microsecond=0), copy=False)
+    last_generation_date = fields.Date(string='Last Generation Date', readonly=True)
+    work_entry_source = fields.Selection([('calendar', 'Working Schedule')], required=True, default='calendar', help='''
+        Defines the source for work entries generation
 
+        Working Schedule: Work entries will be generated from the working hours below.
+        Attendances: Work entries will be generated from the employee's attendances. (requires Attendance app)
+        Planning: Work entries will be generated from the employee's planning. (requires Planning app)
+    '''
+    )
 
     def _get_default_work_entry_type(self):
         return self.env.ref('hr_work_entry.work_entry_type_attendance', raise_if_not_found=False)
@@ -29,6 +37,10 @@ class HrContract(models.Model):
 
     def _get_leave_work_entry_type(self, leave):
         return leave.work_entry_type_id
+
+    # Is used to add more values, for example planning_slot_id
+    def _get_more_vals_attendance_interval(self, interval):
+        return []
 
     # Is used to add more values, for example leave_id (in hr_work_entry_holidays)
     def _get_more_vals_leave_interval(self, interval, leaves):
@@ -50,6 +62,15 @@ class HrContract(models.Model):
                 return self._get_leave_work_entry_type_dates(leave[2], interval_start, interval_stop, self.employee_id)
         return self.env.ref('hr_work_entry_contract.work_entry_type_leave')
 
+    def _get_attendance_intervals(self, start_dt, end_dt, tz):
+        # Method is multi but requires the same calendar on all records
+        if not self:
+            return {}
+        self.resource_calendar_id.ensure_one()
+        return self.resource_calendar_id._attendance_intervals_batch(
+            start_dt, end_dt, resources=self.employee_id.resource_id, tz=tz,
+        )
+
     def _get_contract_work_entries_values(self, date_start, date_stop):
         contract_vals = []
         bypassing_work_entry_type_codes = self._get_bypassing_work_entry_type_codes()
@@ -62,8 +83,8 @@ class HrContract(models.Model):
         for calendar, contracts in contract_per_calendar.items():
             tz = pytz.timezone(calendar.tz)
             resources = contracts.employee_id.resource_id
-            attendances_batch = calendar._attendance_intervals_batch(start_dt, end_dt, resources=resources, tz=tz)
-            leaves_batch = calendar._leave_intervals_batch(start_dt, end_dt, resources=resources, tz=tz)
+            attendances_batch = contracts._get_attendance_intervals(start_dt, end_dt, tz=tz)
+            leaves_batch = calendar._leave_intervals_batch(start_dt, end_dt, resources=resources, tz=tz, any_calendar=True)
 
             for contract in contracts:
                 employee = contract.employee_id
@@ -72,7 +93,14 @@ class HrContract(models.Model):
                 leaves = leaves_batch[resource.id]
 
                 real_attendances = attendances - leaves
-                real_leaves = attendances - real_attendances
+                if contract.has_static_work_entries() or not leaves:
+                    # Empty leaves means empty real_leaves
+                    real_leaves = attendances - real_attendances
+                else:
+                    # In the case of attendance based contracts use regular attendances to generate leave intervals
+                    static_attendances = calendar._attendance_intervals_batch(
+                        start_dt, end_dt, resources=resource, tz=tz)[resource.id]
+                    real_leaves = static_attendances & leaves
 
                 # A leave period can be linked to several resource.calendar.leave
                 split_leaves = []
@@ -86,18 +114,19 @@ class HrContract(models.Model):
                 # Attendances
                 default_work_entry_type = self._get_default_work_entry_type()
                 for interval in real_attendances:
-                    work_entry_type = interval[2].work_entry_type_id[:1] or default_work_entry_type
+                    work_entry_type = 'work_entry_type_id' in interval[2] and interval[2].work_entry_type_id[:1]\
+                        or default_work_entry_type
                     # All benefits generated here are using datetimes converted from the employee's timezone
-                    contract_vals += [{
-                        'name': "%s: %s" % (work_entry_type.name, employee.name),
-                        'date_start': interval[0].astimezone(pytz.utc).replace(tzinfo=None),
-                        'date_stop': interval[1].astimezone(pytz.utc).replace(tzinfo=None),
-                        'work_entry_type_id': work_entry_type.id,
-                        'employee_id': employee.id,
-                        'contract_id': contract.id,
-                        'company_id': contract.company_id.id,
-                        'state': 'draft',
-                    }]
+                    contract_vals += [dict([
+                        ('name', "%s: %s" % (work_entry_type.name, employee.name)),
+                        ('date_start', interval[0].astimezone(pytz.utc).replace(tzinfo=None)),
+                        ('date_stop', interval[1].astimezone(pytz.utc).replace(tzinfo=None)),
+                        ('work_entry_type_id', work_entry_type.id),
+                        ('employee_id', employee.id),
+                        ('contract_id', contract.id),
+                        ('company_id', contract.company_id.id),
+                        ('state', 'draft'),
+                    ] + contract._get_more_vals_attendance_interval(interval))]
 
                 for interval in real_leaves:
                     # Could happen when a leave is configured on the interface on a day for which the
@@ -147,10 +176,17 @@ class HrContract(models.Model):
 
         return contract_vals
 
+    def has_static_work_entries(self):
+        # Static work entries as in the same are to be generated each month
+        # Useful to differentiate attendance based contracts from regular ones
+        self.ensure_one()
+        return self.work_entry_source == 'calendar'
+
     def _generate_work_entries(self, date_start, date_stop, force=False):
         vals_list = []
         date_start = fields.Datetime.to_datetime(date_start)
         date_stop = datetime.combine(fields.Datetime.to_datetime(date_stop), datetime.max.time())
+        self.write({'last_generation_date': fields.Date.today()})
 
         intervals_to_generate = defaultdict(lambda: self.env['hr.contract'])
         for contract in self:
@@ -172,14 +208,19 @@ class HrContract(models.Model):
                     'date_generated_to': date_start,
                 })
             # For each contract, we found each interval we must generate
+            # In some cases we do not want to set the generated dates beforehand, since attendance based work entries
+            #  is more dynamic, we want to update the dates within the _get_work_entries_values function
+            is_static_work_entries = contract.has_static_work_entries()
             last_generated_from = min(contract.date_generated_from, contract_stop)
             if last_generated_from > date_start_work_entries:
-                contract.date_generated_from = date_start_work_entries
+                if is_static_work_entries:
+                    contract.date_generated_from = date_start_work_entries
                 intervals_to_generate[(date_start_work_entries, last_generated_from)] |= contract
 
             last_generated_to = max(contract.date_generated_to, contract_start)
             if last_generated_to < date_stop_work_entries:
-                contract.date_generated_to = date_stop_work_entries
+                if is_static_work_entries:
+                    contract.date_generated_to = date_stop_work_entries
                 intervals_to_generate[(last_generated_to, date_stop_work_entries)] |= contract
 
         for interval, contracts in intervals_to_generate.items():
@@ -242,6 +283,7 @@ class HrContract(models.Model):
                 date_to = min(self.date_end or date.max, self.date_generated_to.date())
                 if date_from != date_to:
                     contract._recompute_work_entries(date_from, date_to)
+        return result
 
     def _recompute_work_entries(self, date_from, date_to):
         self.ensure_one()
@@ -254,7 +296,7 @@ class HrContract(models.Model):
 
     def _get_fields_that_recompute_we(self):
         # Returns the fields that should recompute the work entries
-        return ['resource_calendar_id']
+        return ['resource_calendar_id', 'work_entry_source']
 
     @api.model
     def _cron_generate_missing_work_entries(self):
@@ -264,18 +306,20 @@ class HrContract(models.Model):
         stop = today + relativedelta(day=31)
         contracts = self.env['hr.employee']._get_all_contracts(
             start, stop, states=['open', 'close'])
-        # determine contracts to do (the ones without work entries this month)
-        work_entry_groups = self.env['hr.work.entry'].read_group([
-            ('date_start', '<=', stop),
-            ('date_stop', '>=', start),
-            ('contract_id', 'in', contracts.ids)
-            ], ['contract_id'], ['contract_id'])
-        contracts_done = self.browse(group['contract_id'][0] for group in work_entry_groups)
-        contracts_todo = contracts - contracts_done
+        # determine contracts to do (the ones whose generated dates have open periods this month)
+        contracts_todo = contracts.filtered(lambda c:\
+            (c.date_generated_from > start or c.date_generated_to < stop) and\
+            (not c.last_generation_date or c.last_generation_date < today))
         if not contracts_todo:
             return
         # generate a batch of work entries
         BATCH_SIZE = 100
+        # Since attendance based are more volatile for their work entries generation
+        # it can happen that the date_generated_from and date_generated_to fields are not
+        # pushed to start and stop
+        # It is more interesting for batching to process statically generated work entries first
+        # since we get benefits from having multiple contracts on the same calendar
+        contracts_todo = contracts_todo.sorted(key=lambda c: 1 if c.has_static_work_entries() else 100)
         contracts_todo[:BATCH_SIZE]._generate_work_entries(start, stop, False)
         # if necessary, retrigger the cron to generate more work entries
         if len(contracts_todo) > BATCH_SIZE:
