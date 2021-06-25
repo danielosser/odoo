@@ -528,8 +528,10 @@ class StockQuant(models.Model):
                                 SUM(reserved_quantity) as reserved_quantity,
                                 SUM(quantity) as quantity
                             FROM stock_quant
+                            WHERE id in (SELECT dups.id FROM
+                                (select id, count(id) OVER(PARTITION BY product_id, company_id, location_id, lot_id, package_id, owner_id, in_date)
+                                AS part_size from stock_quant) as dups where dups.part_size > 1)
                             GROUP BY product_id, company_id, location_id, lot_id, package_id, owner_id, in_date
-                            HAVING count(id) > 1
                         ),
                         _up AS (
                             UPDATE stock_quant q
@@ -543,6 +545,7 @@ class StockQuant(models.Model):
         try:
             with self.env.cr.savepoint():
                 self.env.cr.execute(query)
+                self.invalidate_cache()
         except Error as e:
             _logger.info('an error occured while merging quants: %s', e.pgerror)
 
