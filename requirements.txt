@@ -55,3 +55,6 @@ xlwt==1.3.*
 xlrd==1.1.0; python_version < '3.8'
 xlrd==1.2.0; python_version >= '3.8'
 pypiwin32 ; sys_platform == 'win32'
+
+# TODO ANVFE remove this along with payment_proxy_adyen module
+simplejson==3.17.2
