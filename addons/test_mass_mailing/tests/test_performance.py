@@ -50,12 +50,15 @@ class TestMassMailPerformance(TestMassMailPerformanceBase):
             'mailing_domain': [('id', 'in', self.mm_recs.ids)],
         })
 
-        # runbot needs +50 compared to local
-        with self.assertQueryCount(__system__=1665, marketing=1665):
+        # runbot needs +2 compared to local
+        with self.assertQueryCount(__system__=489, marketing=489):
             mailing.action_send_mail()
 
         self.assertEqual(mailing.sent, 50)
         self.assertEqual(mailing.delivered, 50)
+
+        mails = self.env['mail.mail'].sudo().search([('mailing_id', '=', mailing.id)])
+        self.assertFalse(mails, 'Should have auto-deleted the <mail.mail>')
 
 
 @tagged('mail_performance')
@@ -91,8 +94,11 @@ class TestMassMailBlPerformance(TestMassMailPerformanceBase):
         })
 
         # runbot needs +62 compared to local
-        with self.assertQueryCount(__system__=1943, marketing=1943):
+        with self.assertQueryCount(__system__=1106, marketing=1106):
             mailing.action_send_mail()
 
         self.assertEqual(mailing.sent, 50)
         self.assertEqual(mailing.delivered, 50)
+
+        mails = self.env['mail.mail'].sudo().search([('mailing_id', '=', mailing.id)])
+        self.assertFalse(mails, 'Should have auto-deleted the <mail.mail>')
