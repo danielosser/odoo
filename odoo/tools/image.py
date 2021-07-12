@@ -47,21 +47,16 @@ EXIF_TAG_ORIENTATION_TO_TRANSPOSE_METHODS = {  # Initial side on 1st row/col:
 IMAGE_MAX_RESOLUTION = 45e6
 
 
-class ImageProcess():
-
+class ImageProcess:
     def __init__(self, base64_source, verify_resolution=True):
         """Initialize the `base64_source` image for processing.
 
-        :param base64_source: the original image base64 encoded
+        :param str | bytes base64_source: the original image base64 encoded
             No processing will be done if the `base64_source` is falsy or if
             the image is SVG.
-        :type base64_source: string or bytes
-
-        :param verify_resolution: if True, make sure the original image size is not
+        :param bool verify_resolution: if True, make sure the original image size is not
             excessive before starting to process it. The max allowed resolution is
             defined by `IMAGE_MAX_RESOLUTION`.
-        :type verify_resolution: bool
-
         :return: self
         :rtype: ImageProcess
 
@@ -99,21 +94,17 @@ class ImageProcess():
         and the `output_format` is the same as the original format and the
         quality is not specified.
 
-        :param quality: quality setting to apply. Default to 0.
+        :param int quality: quality setting to apply. Default to 0.
             - for JPEG: 1 is worse, 95 is best. Values above 95 should be
                 avoided. Falsy values will fallback to 95, but only if the image
                 was changed, otherwise the original image is returned.
             - for PNG: set falsy to prevent conversion to a WEB palette.
             - for other formats: no effect.
-        :type quality: int
-
-        :param output_format: the output format. Can be PNG, JPEG, GIF, or ICO.
-            Default to the format of the original image. BMP is converted to
-            PNG, other formats than those mentioned above are converted to JPEG.
-        :type output_format: string
-
-        :return: image
-        :rtype: bytes or False
+        :param str output_format: Can be PNG, JPEG, GIF, or ICO.
+            Default to the format of the original image if a valid output format,
+            otherwise BMP is converted to PNG and the rest are converted to JPEG.
+        :return: image base64 encoded or False
+        :rtype: bytes | False
         """
         if not self.image:
             return self.image
@@ -200,12 +191,8 @@ class ImageProcess():
         It is currently not supported for GIF because we do not handle all the
         frames properly.
 
-        :param max_width: max width
         :type max_width: int
-
-        :param max_height: max height
         :type max_height: int
-
         :return: self to allow chaining
         :rtype: ImageProcess
         """
@@ -238,20 +225,12 @@ class ImageProcess():
         It is currently not supported for GIF because we do not handle all the
         frames properly.
 
-        :param max_width: max width
         :type max_width: int
-
-        :param max_height: max height
         :type max_height: int
-
-        :param center_x: the center of the crop between 0 (left) and 1 (right)
+        :param float center_x: the center of the crop between 0 (left) and 1 (right)
             Default to 0.5 (center).
-        :type center_x: float
-
-        :param center_y: the center of the crop between 0 (top) and 1 (bottom)
+        :param float center_y: the center of the crop between 0 (top) and 1 (bottom)
             Default to 0.5 (center).
-        :type center_y: float
-
         :return: self to allow chaining
         :rtype: ImageProcess
         """
@@ -408,9 +387,7 @@ def image_fix_orientation(image):
     However since this tag is not used in the code, it is acceptable to
     save the complexity of removing it.
 
-    :param image: the source image
-    :type image: PIL.Image
-
+    :param PIL.Image image: the source image
     :return: the resulting image, copy of the source, with orientation fixed
         or the source image if no operation was applied
     :rtype: PIL.Image
@@ -429,9 +406,7 @@ def image_fix_orientation(image):
 def base64_to_image(base64_source):
     """Return a PIL image from the given `base64_source`.
 
-    :param base64_source: the image base64 encoded
-    :type base64_source: string or bytes
-
+    :param str | bytes base64_source: the image base64 encoded
     :return: the PIL image
     :rtype: PIL.Image
 
@@ -463,11 +438,8 @@ def image_apply_opt(image, output_format, **params):
 def image_to_base64(image, output_format, **params):
     """Return a base64_image from the given PIL `image` using `params`.
 
-    :param image: the PIL image
     :type image: PIL.Image
-
-    :param params: params to expand when calling PIL.Image.save()
-    :type params: dict
+    :param dict params: params to expand when calling PIL.Image.save()
 
     :return: the image base64 encoded
     :rtype: bytes
@@ -495,17 +467,16 @@ def image_guess_size_from_field_name(field_name):
 
     If it can't be guessed, return (0, 0) instead.
 
-    :param field_name: the name of a field
-    :type field_name: string
+    :param str field_name: the name of a field
 
     :return: the guessed size
-    :rtype: tuple (width, height)
+    :rtype: (int, int)
     """
     suffix = '1024' if field_name == 'image' else field_name.split('_')[-1]
     try:
-        return (int(suffix), int(suffix))
+        return int(suffix), int(suffix)
     except ValueError:
-        return (0, 0)
+        return 0, 0
 
 
 def image_data_uri(base64_source):

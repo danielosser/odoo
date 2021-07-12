@@ -366,16 +366,17 @@ def html2plaintext(html, body_id=None, encoding='utf-8'):
 
     return html.strip()
 
-def plaintext2html(text, container_tag=False):
-    """ Convert plaintext into html. Content of the text is escaped to manage
-        html entities, using misc.html_escape().
-        - all \n,\r are replaced by <br />
-        - enclose content into <p>
-        - convert url into clickable link
-        - 2 or more consecutive <br /> are considered as paragraph breaks
+def plaintext2html(text, container_tag=None):
+    r""" Convert plaintext into html. Content of the text is escaped to manage
+        html entities, using :func:`misc.html_escape`.
 
-        :param string container_tag: container of the html; by default the
-            content is embedded into a <div>
+        - all ``\n``, ``\r`` are replaced by ``<br />``
+        - convert url into clickable link
+        - 2 or more consecutive ``<br />`` are considered as paragraph breaks
+
+        :param text: original plaintext content
+        :param str container_tag: name of the element to wrap around the
+                                  converted content
     """
     text = misc.html_escape(ustr(text))
 
@@ -403,8 +404,10 @@ def append_content_to_html(html, content, plaintext=True, preserve=False, contai
     """ Append extra content at the end of an HTML snippet, trying
         to locate the end of the HTML document (</body>, </html>, or
         EOF), and converting the provided content in html unless ``plaintext``
-        is False.
+        is ``False``.
+
         Content conversion can be done in two ways:
+
         - wrapping it into a pre (preserve=True)
         - use plaintext2html (preserve=False, using container_tag to wrap the
             whole content)
@@ -418,6 +421,8 @@ def append_content_to_html(html, content, plaintext=True, preserve=False, contai
             be wrapped in a <pre/> tag.
         :param bool preserve: if content is plaintext, wrap it into a <pre>
             instead of converting it into html
+        :param str container_tag:
+        :rtype: markupsafe.Markup
     """
     html = ustr(html)
     if plaintext and preserve:

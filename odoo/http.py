@@ -1701,13 +1701,8 @@ def set_header_field(headers, name, value):
 
     :param headers: the existing headers
     :type headers: list of tuples (name, value)
-
-    :param name: the header field name
-    :type name: string
-
+    :param str name: the header field name
     :param value: the value to set for the `name` header
-    :type value: string
-
     :return: the updated headers
     :rtype: list of tuples (name, value)
     """
