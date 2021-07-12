@@ -15,7 +15,6 @@ import itertools
 import os
 import pickle as pickle_
 import re
-import socket
 import subprocess
 import sys
 import threading
@@ -23,7 +22,6 @@ import time
 import traceback
 import types
 import unicodedata
-import zipfile
 from collections import OrderedDict
 from collections.abc import Iterable, Mapping, MutableMapping, MutableSet
 from contextlib import contextmanager
@@ -37,7 +35,6 @@ import babel.dates
 import markupsafe
 import passlib.utils
 import pytz
-import werkzeug.utils
 from lxml import etree
 
 import odoo
@@ -107,7 +104,7 @@ def exec_pg_environ():
     postgres user password in the PGPASSWORD environment variable or in a
     special .pgpass file.
 
-    See also http://www.postgresql.org/docs/8.4/static/libpq-envars.html
+    See also https://www.postgresql.org/docs/8.4/static/libpq-envars.html
     """
     env = os.environ.copy()
     if odoo.tools.config['db_host']:
@@ -1253,7 +1250,7 @@ def ignore(*exc):
 
 html_escape = markupsafe.escape
 
-def get_lang(env, lang_code=False):
+def get_lang(env, lang_code=None):
     """
     Retrieve the first lang object installed, by checking the parameter lang_code,
     the context and then the company. If no lang is installed from those variables,
@@ -1280,7 +1277,7 @@ def babel_locale_parse(lang_code):
         except:
             return babel.Locale.parse("en_US")
 
-def formatLang(env, value, digits=None, grouping=True, monetary=False, dp=False, currency_obj=False):
+def formatLang(env, value, digits=None, grouping=True, monetary=False, dp=False, currency_obj=None):
     """
         Assuming 'Account' decimal.precision=3:
             formatLang(value) -> digits=2 (default)
@@ -1290,7 +1287,7 @@ def formatLang(env, value, digits=None, grouping=True, monetary=False, dp=False,
     """
 
     if digits is None:
-        digits = DEFAULT_DIGITS = 2
+        digits = 2
         if dp:
             decimal_precision_obj = env['decimal.precision']
             digits = decimal_precision_obj.precision_get(dp)
@@ -1302,7 +1299,7 @@ def formatLang(env, value, digits=None, grouping=True, monetary=False, dp=False,
 
     lang_obj = get_lang(env)
 
-    res = lang_obj.format('%.' + str(digits) + 'f', value, grouping=grouping, monetary=monetary)
+    res = lang_obj.format(f'%.{digits}f', value, grouping=grouping, monetary=monetary)
 
     if currency_obj and currency_obj.symbol:
         if currency_obj.position == 'after':
@@ -1360,7 +1357,7 @@ def parse_date(env, value, lang_code=False):
     locale = babel_locale_parse(lang.code)
     try:
         return babel.dates.parse_date(value, locale=locale)
-    except:
+    except Exception:
         return value
 
 
@@ -1488,7 +1485,7 @@ def format_decimalized_amount(amount, currency=None):
     return "%s %s" % (formated_amount, currency.symbol or '')
 
 
-def format_amount(env, amount, currency, lang_code=False):
+def format_amount(env, amount, currency, lang_code=None):
     fmt = "%.{0}f".format(currency.decimal_places)
     lang = get_lang(env, lang_code)
 
