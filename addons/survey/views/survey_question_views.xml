@@ -147,7 +147,9 @@
                                     <tree editable="bottom">
                                         <field name="sequence" widget="handle"/>
                                         <field name="value" string="Choices"/>
-                                        <field name="value_image" options="{'accepted_file_extensions': 'image/*'}"
+                                        <field name="value_image_filename" string="Image Name"
+                                            attrs="{'column_invisible': ['|', ('parent.allow_value_image', '=', False), ('parent.question_type', '=', 'matrix')]}"/>
+                                        <field name="value_image" string="Image File" class="o_survey_value_image" filename="value_image_filename" options="{'accepted_file_extensions': 'image/*'}"
                                             attrs="{'column_invisible': ['|', ('parent.allow_value_image', '=', False), ('parent.question_type', '=', 'matrix')]}"/>
                                         <field name="is_correct" attrs="{'column_invisible': ['|', ('parent.scoring_type', '=', 'no_scoring'), ('parent.question_type', '=', 'matrix')]}"/>
                                         <field name="answer_score" attrs="{'column_invisible': ['|', ('parent.scoring_type', '=', 'no_scoring'), ('parent.question_type', '=', 'matrix')]}"/>

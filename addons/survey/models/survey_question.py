@@ -551,6 +551,7 @@ class SurveyQuestionAnswer(models.Model):
     sequence = fields.Integer('Label Sequence order', default=10)
     value = fields.Char('Suggested value', translate=True, required=True)
     value_image = fields.Image('Image', max_width=256, max_height=256)
+    value_image_filename = fields.Char('Image Name')
     is_correct = fields.Boolean('Is a correct answer')
     answer_score = fields.Float('Score for this choice', help="A positive score indicates a correct choice; a negative or null score indicates a wrong answer")
 

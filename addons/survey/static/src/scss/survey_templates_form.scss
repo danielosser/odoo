@@ -435,3 +435,39 @@ _::-webkit-full-page-media, _:future, :root .o_survey_wrap {
         }
     }
 }
+
+/**********************************************************
+            Image (Zoom widget) Specific Style
+ **********************************************************/
+
+.o_survey_image_zoom_lightbox {
+    .modal-dialog {
+        height: 100%;
+        max-width: 100%;
+        background-color: rgba(0,0,0,0.8);
+        padding-bottom: 0px;
+        padding-top: 0px;
+    }
+    .o_survey_slide {
+        display: flex;
+        align-items: center;
+        img {
+            width: 100%;
+            height: 100%;
+            margin: auto;
+            object-fit: contain;
+        }
+    }
+}
+
+.o_survey_question_choice_image img {
+    width: 95%;
+}
+
+// Avoid shifting (due to scroll bar) when opening the image zoom widget
+.modal-open {
+    .o_survey_wrapwrap {
+        overflow: hidden !important;
+    }
+ }
+ 

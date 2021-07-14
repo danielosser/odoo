@@ -9,6 +9,7 @@
         </xpath>
         <xpath expr="//div[@id='wrapwrap']" position="attributes">
             <attribute name="t-att-style" add="(('height: 100%; overflow: auto; background: url(' + '/survey/get_background_image/%s/%s' % (survey.access_token, answer.access_token) + ') no-repeat fixed center; box-shadow: inset 0 0 0 10000px rgba(255,255,255,.7); background-size: cover;') if survey and survey.background_image and answer else 'height: 100%; overflow: auto;')"/>
+            <attribute name="t-att-class" add="'o_survey_wrapwrap'" separator=" "/>
         </xpath>
         <xpath expr="//head/t[@t-call-assets][last()]" position="after">
             <t t-call-assets="survey.survey_assets" lazy_load="True"/>
@@ -384,14 +385,16 @@
 
     <template id="question_suggested_value_image" name="Image from the question suggested answer">
         <t t-if="question.allow_value_image and label.value_image">
-            <!-- Directly use field or route if the user doesn't have access rights -->
-            <div t-if="not env.user.has_group('survey.group_survey_user')"
-                class="d-flex my-3 justify-content-center">
-                <img t-att-src="'/survey/get_question_image/%s/%s/%s/%s' % (survey.access_token, answer.access_token, question.id, label.id)"/>
+            <div class="o_survey_question_choice_image">
+                <!-- Directly use field or route if the user doesn't have access rights -->
+                <div t-if="not env.user.has_group('survey.group_survey_user')"
+                    class="d-flex my-3 justify-content-center">
+                    <img t-att-src="'/survey/get_question_image/%s/%s/%s/%s' % (survey.access_token, answer.access_token, question.id, label.id)"/>
+                </div>
+                <div t-else=""  t-field="label.value_image"
+                    class="d-flex my-3 justify-content-center"
+                    t-options="{'widget': 'image', 'alt-field': 'name', 'itemprop': 'image'}"/>
             </div>
-            <div t-else=""  t-field="label.value_image"
-                class="d-flex my-3 justify-content-center"
-                t-options="{'widget': 'image', 'alt-field': 'name', 'itemprop': 'image'}"/>
         </t>
     </template>
 
