@@ -35,6 +35,10 @@ class SlidePartnerRelation(models.Model):
     completed = fields.Boolean('Completed')
     quiz_attempts_count = fields.Integer('Quiz attempts count', default=0)
 
+    _sql_constraints = [
+        ('check_vote', 'CHECK(vote IN (-1, 0, 1))', 'The vote must be 1, 0 or -1.'),
+    ]
+
     @api.model_create_multi
     def create(self, vals_list):
         res = super().create(vals_list)
@@ -242,7 +246,7 @@ class Slide(models.Model):
             self.update(default_stats)
             return
 
-        slide_data = dict.fromkeys(self.ids, default_stats)
+        slide_data = {slide.id: default_stats.copy() for slide in self}
         slide_partners = self.env['slide.slide.partner'].sudo().search([
             ('slide_id', 'in', self.ids)
         ])
@@ -576,13 +580,15 @@ class Slide(models.Model):
 
         for slide_partner in slide_partners:
             if upvote:
-                new_vote = 0 if slide_partner.vote == -1 else 1
-                if slide_partner.vote != 1:
-                    karma_to_add += channel.karma_gen_slide_vote
+                new_vote = 0 if slide_partner.vote == 1 else 1
             else:
-                new_vote = 0 if slide_partner.vote == 1 else -1
-                if slide_partner.vote != -1:
-                    karma_to_add -= channel.karma_gen_slide_vote
+                new_vote = 0 if slide_partner.vote == -1 else -1
+            # 2 if the disliked slide was liked by the user
+            # 1 if the slide was liked OR if the dislike was removed
+            # -1 if the slide was disliked OR if the like was removed
+            # -2 if the liked slide was disliked by the user
+            vote_diff = new_vote - slide_partner.vote
+            karma_to_add += channel.karma_gen_slide_vote * vote_diff
             slide_partner.vote = new_vote
 
         for new_slide in new_slides:

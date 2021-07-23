@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+import psycopg2
+
 from odoo.addons.website_slides.tests import common as slides_common
 from odoo.tests.common import users
+from odoo.tools import mute_logger
 
 
 class TestSlidesManagement(slides_common.SlidesCase):
@@ -88,6 +91,17 @@ class TestSlidesManagement(slides_common.SlidesCase):
                 for mail in created_mails)
         )
 
+    @mute_logger('odoo.sql_db')
+    @users('user_manager')
+    def test_vote_value(self):
+        # test vote value must be 1, 0 and -1.
+        with self.assertRaises(psycopg2.errors.CheckViolation), self.cr.savepoint():
+            self.env['slide.slide.partner'].create({
+                'slide_id': self.slide.id,
+                'channel_id': self.channel.id,
+                'partner_id': self.user_manager.partner_id.id,
+                'vote': 2,
+            })
 
 class TestSequencing(slides_common.SlidesCase):
 

@@ -78,18 +78,30 @@ class TestKarmaGain(common.SlidesCase):
 
         # Vote for a slide
         slide_user = self.slide.with_user(user)
+        # up-voting for the first time should add karma
         slide_user.action_like()
         computed_karma += self.channel.karma_gen_slide_vote
         self.assertEqual(user.karma, computed_karma)
-        slide_user.action_like()  # re-like something already liked should not add karma again
-        self.assertEqual(user.karma, computed_karma)
-        slide_user.action_dislike()
+
+        # toggling the up-vote should reduce karma
+        slide_user.action_like()
         computed_karma -= self.channel.karma_gen_slide_vote
         self.assertEqual(user.karma, computed_karma)
-        slide_user.action_dislike()
-        computed_karma -= self.channel.karma_gen_slide_vote
+
+        slide_user.action_like()
+        computed_karma += self.channel.karma_gen_slide_vote
         self.assertEqual(user.karma, computed_karma)
-        slide_user.action_dislike()  # dislike again something already disliked should not remove karma again
+
+        # down-voting the content that was already up-voted
+        # should reduce the karma two times
+        slide_user.action_dislike()
+        computed_karma -= self.channel.karma_gen_slide_vote * 2
+        self.assertEqual(user.karma, computed_karma)
+
+        # up-voting the content that was already down-voted
+        # should add the karma two times
+        slide_user.action_like()
+        computed_karma += self.channel.karma_gen_slide_vote * 2
         self.assertEqual(user.karma, computed_karma)
 
         # Leave the finished course

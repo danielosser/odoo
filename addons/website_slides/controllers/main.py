@@ -25,7 +25,7 @@ _logger = logging.getLogger(__name__)
 class WebsiteSlides(WebsiteProfile):
     _slides_per_page = 12
     _slides_per_aside = 20
-    _slides_per_category = 4
+    _slides_per_category = 3
     _channel_order_by_criterion = {
         'vote': 'total_votes desc',
         'view': 'total_views desc',
@@ -492,6 +492,7 @@ class WebsiteSlides(WebsiteProfile):
             'is_public_user': request.website.is_public_user(),
             # display upload modal
             'enable_slide_upload': 'enable_slide_upload' in kw,
+            'format_decimalized_number': tools.format_decimalized_number,
             ** self._slide_channel_prepare_review_values(channel),
         }
 
@@ -707,7 +708,8 @@ class WebsiteSlides(WebsiteProfile):
             'search_tag': request.env['slide.tag'].browse(int(kwargs.get('search_tag'))) if kwargs.get('search_tag') else None,
             'slide_types': dict(request.env['slide.slide']._fields['slide_type']._description_selection(request.env)) if kwargs.get('search_slide_type') else None,
             'search_slide_type': kwargs.get('search_slide_type'),
-            'search_uncategorized': kwargs.get('search_uncategorized')
+            'search_uncategorized': kwargs.get('search_uncategorized'),
+            'format_decimalized_number': tools.format_decimalized_number,
         })
 
         values['channel'] = slide.channel_id
@@ -796,12 +798,6 @@ class WebsiteSlides(WebsiteProfile):
     def slide_like(self, slide_id, upvote):
         if request.website.is_public_user():
             return {'error': 'public_user', 'error_signup_allowed': request.env['res.users'].sudo()._get_signup_invitation_scope() == 'b2c'}
-        slide_partners = request.env['slide.slide.partner'].sudo().search([
-            ('slide_id', '=', slide_id),
-            ('partner_id', '=', request.env.user.partner_id.id)
-        ])
-        if (upvote and slide_partners.vote == 1) or (not upvote and slide_partners.vote == -1):
-            return {'error': 'vote_done'}
         # check slide access
         fetch_res = self._fetch_slide(slide_id)
         if fetch_res.get('error'):
@@ -819,7 +815,12 @@ class WebsiteSlides(WebsiteProfile):
         else:
             slide.action_dislike()
         slide.invalidate_cache()
-        return slide.read(['likes', 'dislikes', 'user_vote'])[0]
+        # for large number of likes/dislikes, format them so they don't break the UI
+        return {
+            'user_vote': slide.user_vote,
+            'likes': tools.format_decimalized_number(slide.likes),
+            'dislikes': tools.format_decimalized_number(slide.dislikes),
+        }
 
     @http.route('/slides/slide/archive', type='json', auth='user', website=True)
     def slide_archive(self, slide_id):
