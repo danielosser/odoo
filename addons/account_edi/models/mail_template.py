@@ -24,7 +24,7 @@ class MailTemplate(models.Model):
 
                 # The EDI format will be embedded directly inside the PDF and then, don't need to be added to the
                 # wizard.
-                if doc.edi_format_id._is_embedding_to_invoice_pdf_needed():
+                if doc.edi_format_id._is_embedding_to_invoice_pdf_needed(record):
                     continue
 
                 attachment = doc.attachment_id
