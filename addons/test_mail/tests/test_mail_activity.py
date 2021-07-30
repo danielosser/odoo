@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from unittest.mock import patch
 from unittest.mock import DEFAULT
 
 import pytz
 
-from odoo import exceptions, tests
+from odoo import fields, exceptions, tests
 from odoo.addons.test_mail.tests.common import BaseFunctionalTest
 from odoo.addons.test_mail.tests.common import mail_new_test_user
 from odoo.addons.test_mail.models.test_mail_models import MailTestActivity
@@ -297,3 +297,65 @@ class TestActivityMixin(TestActivityCommon):
             user_id=self.user_admin.id,
             new_user_id=self.user_employee.id)
         self.assertEqual(rec.activity_ids[0].user_id, self.user_employee)
+
+
+
+@tests.tagged('mail_activity')
+class TestORM(TestActivityCommon):
+
+    def test_week_grouping(self):
+        """ The labels associated to each record in read_progress_bar should match
+        the ones from read_group, even in edge cases like en_US locale on sundays """
+        MailTestActivityCtx = self.env['mail.test.activity'].with_context({"lang": "en_US"})
+        groupby = "date:week"
+        sunday1 = '2021-05-02'
+        sunday2 = '2021-05-09'
+        sunday3 = '2021-05-16'
+
+        # Don't mistake fields date and date_deadline:
+        # * date is just a random value
+        # * date_deadline defines activity_state
+        self.env['mail.test.activity'].create({
+            'date': sunday1,
+            'name': "Yesterday, all my troubles seemed so far away"
+        }).activity_schedule(
+            'test_mail.mail_act_test_todo',
+            summary="Make another test super asap (yesterday)",
+            date_deadline=fields.Date.context_today(MailTestActivityCtx) - timedelta(days=7)
+        )
+        self.env['mail.test.activity'].create({'date': sunday2, 'name': "Things we said today"}).activity_schedule(
+            'test_mail.mail_act_test_todo',
+            summary="Make another test asap",
+            date_deadline=fields.Date.context_today(MailTestActivityCtx)
+        )
+        self.env['mail.test.activity'].create({'date': sunday3, 'name': "Tomorrow Never Knows"}).activity_schedule(
+            'test_mail.mail_act_test_todo',
+            summary="Make a test tomorrow",
+            date_deadline=fields.Date.context_today(MailTestActivityCtx) + timedelta(days=7)
+        )
+
+        # call read_group to compute group names
+        progress_bar = {
+            'field': 'activity_state',
+            'colors': {
+                "overdue": 'danger',
+                "today": 'warning',
+                "planned": 'success',
+            }
+        }
+        domain = [('date', "!=", False)]
+        groups = MailTestActivityCtx.read_group(domain, fields=['date'], groupby=[groupby])
+        progressbars = MailTestActivityCtx.read_progress_bar(domain, group_by=groupby, progress_bar=progress_bar)
+        self.assertEqual(len(groups), 3)
+        self.assertEqual(len(progressbars), 3)
+
+        # format the read_progress_bar result to get a dictionary under this format : {activity_state: group_name}
+        # original format (after read_progress_bar) is : {group_name: {activity_state: count}}
+        pg_groups = {
+            next(activity_state for activity_state, count in data.items() if count): group_name \
+                for group_name, data in progressbars.items()
+        }
+
+        self.assertEqual(groups[0][groupby], pg_groups["overdue"])
+        self.assertEqual(groups[1][groupby], pg_groups["today"])
+        self.assertEqual(groups[2][groupby], pg_groups["planned"])
