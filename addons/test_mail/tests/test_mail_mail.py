@@ -4,11 +4,12 @@
 import itertools
 
 from odoo.addons.test_mail.tests import common as mail_common
-from odoo.tests import common
+from odoo.tests import common, tagged
 from odoo.tools import mute_logger
 from odoo.addons.base.models.ir_mail_server import MailDeliveryException
 
 
+@tagged('mail_mail')
 class TestMail(common.SavepointCase, mail_common.MockEmails):
 
     @classmethod
@@ -25,6 +26,51 @@ class TestMail(common.SavepointCase, mail_common.MockEmails):
         })
 
     @mute_logger('odoo.addons.mail.models.mail_mail')
+    def test_mail_mail_values_unicode(self):
+        mail = self.env['mail.mail'].create({
+            'body_html': '<p>Test</p>',
+            'email_to': 'test.😊@example.com',
+            'partner_ids': [(4, self.user_employee.partner_id.id)]
+        })
+
+        self.assertRaises(MailDeliveryException, lambda: mail.send(raise_exception=True))
+
+    @mute_logger('odoo.addons.mail.models.mail_mail')
+    def test_mail_mail_values_email_format(self):
+        self._init_mock_build_email()
+        customer = self.env['res.partner'].create({
+            'name': 'Tony Customer',
+            'email': 'tony.customer@test.example.com',
+        })
+        mail = self.env['mail.mail'].create({
+            'body_html': '<p>Test</p>',
+            'email_to': 'test.email.1@test.example.com, test.email.2@test.example.com',
+            'recipient_ids': [(4, self.user_employee.partner_id.id), (4, customer.id)]
+        })
+        mail.send()
+        self.assertEqual(
+            set(['test.email.1@test.example.com', 'test.email.2@test.example.com',
+                 '"Ernest Employee" <e.e@example.com>',
+                 '"Tony Customer" <tony.customer@test.example.com>']),
+            set(_email for _mail in self._mails for _email in _mail['email_to'])
+        )
+
+        customer.write({'email': '"Formatted Emails" <tony.customer@test.example.com>'})
+        self._init_mock_build_email()
+        mail = self.env['mail.mail'].create({
+            'body_html': '<p>Test</p>',
+            'email_to': 'test.email.1@test.example.com, test.email.2@test.example.com',
+            'recipient_ids': [(4, self.user_employee.partner_id.id), (4, customer.id)]
+        })
+        mail.send()
+        self.assertEqual(
+            set(['test.email.1@test.example.com', 'test.email.2@test.example.com',
+                 '"Ernest Employee" <e.e@example.com>',
+                 '"Tony Customer" <tony.customer@test.example.com>']),
+            set(_email for _mail in self._mails for _email in _mail['email_to'])
+        )
+
+    @mute_logger('odoo.addons.mail.models.mail_mail')
     def test_mail_message_notify_from_mail_mail(self):
         # Due ot post-commit hooks, store send emails in every step
         self.email_to_list = []
@@ -39,13 +85,3 @@ class TestMail(common.SavepointCase, mail_common.MockEmails):
         self.email_to_list.extend(itertools.chain.from_iterable(sent_email['email_to'] for sent_email in self._mails if sent_email.get('email_to')))
         self.assertNotIn(u'Ernest Employee <e.e@example.com>', self.email_to_list)
         self.assertIn(u'test@example.com', self.email_to_list)
-
-    @mute_logger('odoo.addons.mail.models.mail_mail')
-    def test_mail_message_values_unicode(self):
-        mail = self.env['mail.mail'].create({
-            'body_html': '<p>Test</p>',
-            'email_to': 'test.😊@example.com',
-            'partner_ids': [(4, self.user_employee.partner_id.id)]
-        })
-
-        self.assertRaises(MailDeliveryException, lambda: mail.send(raise_exception=True))

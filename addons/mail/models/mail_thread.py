@@ -2183,7 +2183,7 @@ class MailThread(models.AbstractModel):
             author = self.env.user.partner_id
         if not author.email:
             raise exceptions.UserError(_("Unable to notify message, please configure the sender's email address."))
-        email_from = formataddr((author.name, author.email))
+        email_from = author.email_formatted
 
         msg_values = {
             'subject': subject,
@@ -2218,7 +2218,7 @@ class MailThread(models.AbstractModel):
             author = self.env.user.partner_id
         if not author.email:
             raise exceptions.UserError(_("Unable to log message, please configure the sender's email address."))
-        email_from = formataddr((author.name, author.email))
+        email_from = author.email_formatted
 
         message_values = {
             'subject': subject,

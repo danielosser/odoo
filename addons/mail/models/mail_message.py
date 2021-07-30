@@ -11,7 +11,7 @@ from openerp.http import request
 from odoo import _, api, fields, models, modules, SUPERUSER_ID, tools
 from odoo.exceptions import UserError, AccessError
 from odoo.osv import expression
-from odoo.tools import groupby, formataddr
+from odoo.tools import groupby
 from odoo.tools.misc import clean_context
 
 _logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class Message(models.Model):
     @api.model
     def _get_default_from(self):
         if self.env.user.email:
-            return formataddr((self.env.user.name, self.env.user.email))
+            return self.env.user.email_formatted
         raise UserError(_("Unable to post message, please configure the sender's email address."))
 
     @api.model
@@ -1244,7 +1244,7 @@ class Message(models.Model):
             if not msg.email_from:
                 continue
             if self.env.user.partner_id.email:
-                email_from = formataddr((self.env.user.partner_id.name, self.env.user.partner_id.email))
+                email_from = self.env.user.email_formatted
             else:
                 email_from = self.env.user.company_id.catchall
 
