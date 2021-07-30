@@ -398,7 +398,14 @@ class Partner(models.Model):
     def _compute_email_formatted(self):
         for partner in self:
             if partner.email:
-                partner.email_formatted = tools.formataddr((partner.name or u"False", partner.email or u"False"))
+                emails = tools.email_split(partner.email)
+                if not emails:
+                    email_normalized = partner.email.lower() if partner.email else False
+                else:
+                    email_normalized = tools.email_normalize(emails[0]) if emails else False
+                if not email_normalized:
+                    email_normalized = u"False"
+                partner.email_formatted = tools.formataddr((partner.name or u"False", email_normalized))
             else:
                 partner.email_formatted = ''
 
