@@ -409,11 +409,9 @@ def base64_to_image(base64_source):
 def image_to_base64(image, format, **params):
     """Return a base64_image from the given PIL `image` using `params`.
 
-    :param image: the PIL image
     :type image: PIL.Image
-
-    :param params: params to expand when calling PIL.Image.save()
-    :type params: dict
+    :param format:
+    :param dict params: params to expand when calling PIL.Image.save()
 
     :return: the image base64 encoded
     :rtype: bytes

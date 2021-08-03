@@ -167,6 +167,7 @@ def float_repr(value, precision_digits):
        :meth:`~.float_round`), but only to produce a suitable
        string representation for a float.
 
+        :param value:
         :param int precision_digits: number of fractional digits to
                                      include in the output
     """

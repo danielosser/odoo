@@ -874,6 +874,7 @@ class Channel(models.Model):
         """ Update the fold_state of the given session. In order to syncronize web browser
             tabs, the change will be broadcast to himself (the current user channel).
             Note: the user need to be logged
+            :param uuid:
             :param state : the new status of the session for the current user.
         """
         domain = [('partner_id', '=', self.env.user.partner_id.id), ('channel_id.uuid', '=', uuid)]
@@ -1082,9 +1083,11 @@ class Channel(models.Model):
     @api.model
     def create_group(self, partners_to, default_display_mode=False):
         """ Create a group channel.
-            :param partners_to : list of res.partner ids to add to the conversation
-            :returns: channel_info of the created channel
-            :rtype: dict
+
+        :param partners_to : list of res.partner ids to add to the conversation
+        :param bool default_display_mode:
+        :returns: channel_info of the created channel
+        :rtype: dict
         """
         channel = self.create({
             'channel_last_seen_partner_ids': [Command.create({'partner_id': partner_id}) for partner_id in partners_to],

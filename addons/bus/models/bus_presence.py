@@ -36,7 +36,10 @@ class BusPresence(models.Model):
     @api.model
     def update(self, inactivity_period, identity_field, identity_value):
         """ Updates the last_poll and last_presence of the current user
-            :param inactivity_period: duration in milliseconds
+
+        :param inactivity_period: duration in milliseconds
+        :param str identity_field:
+        :param identity_value:
         """
         # This method is called in method _poll() and cursor is closed right
         # after; see bus/controllers/main.py.

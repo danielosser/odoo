@@ -1041,8 +1041,7 @@ class BaseModel(metaclass=MetaModel):
         """ Export fields for selected objects
 
             :param fields_to_export: list of fields
-            :param raw_data: True to return value in native Python type
-            :rtype: dictionary with a *datas* matrix
+            :return: dictionary with a *datas* matrix
 
             This method is used when exporting data via client menu
         """
@@ -1062,11 +1061,10 @@ class BaseModel(metaclass=MetaModel):
         the same order they were extracted from the file. They can be passed
         directly to :meth:`~read`
 
-        :param fields: list of fields to import, at the same index as the corresponding data
-        :type fields: list(str)
+        :param list[str] fields: list of fields to import, at the same index as the corresponding data
         :param data: row-major matrix of data to import
-        :type data: list(list(str))
-        :returns: {ids: list(int)|False, messages: [Message][, lastrow: int]}
+        :type data: list[list[str]]
+        :returns: {ids: list[int]|False, messages: list[Message][, lastrow: int]}
         """
         self.flush()
 
@@ -1617,9 +1615,10 @@ class BaseModel(metaclass=MetaModel):
             the current model, and optionally its filters for the given action.
 
         :param views: list of [view_id, view_type]
-        :param options['toolbar']: True to include contextual actions when loading fields_views
-        :param options['load_filters']: True to return the model's filters
-        :param options['action_id']: id of the action to get the filters
+        :param dict options: Map of option names to values:
+            * ``toolbar`` set includes contextual actions when loading fields_views
+            * ``load_filters`` set returns the model's filters
+            * ``action_id`` the id of the action to get the filters
         :return: dictionary with fields_views, fields and optionally filters
         """
         options = options or {}
@@ -1838,7 +1837,7 @@ class BaseModel(metaclass=MetaModel):
         By default this is the value of the ``display_name`` field.
 
         :return: list of pairs ``(id, text_repr)`` for each records
-        :rtype: list(tuple)
+        :rtype: list[(int, str)]
         """
         result = []
         name = self._rec_name
@@ -1854,17 +1853,15 @@ class BaseModel(metaclass=MetaModel):
 
     @api.model
     def name_create(self, name):
-        """ name_create(name) -> record
-
-        Create a new record by calling :meth:`~.create` with only one value
+        """Create a new record by calling :meth:`~.create` with only one value
         provided: the display name of the new record.
 
         The new record will be initialized with any default values
         applicable to this model, or provided through the context. The usual
         behavior of :meth:`~.create` applies.
 
-        :param name: display name of the record to create
-        :rtype: tuple
+        :param str name: display name of the record to create
+        :rtype: tuple[int, str]
         :return: the :meth:`~.name_get` pair value of the created record
         """
         if self._rec_name:
@@ -1876,9 +1873,7 @@ class BaseModel(metaclass=MetaModel):
 
     @api.model
     def name_search(self, name='', args=None, operator='ilike', limit=100):
-        """ name_search(name='', args=None, operator='ilike', limit=100) -> records
-
-        Search for records that have a display name matching the given
+        """ Search for records that have a display name matching the given
         ``name`` pattern when compared with the given ``operator``, while also
         matching the optional search domain (``args``).
 
@@ -1896,7 +1891,7 @@ class BaseModel(metaclass=MetaModel):
         :param str operator: domain operator for matching ``name``, such as
                              ``'like'`` or ``'='``.
         :param int limit: optional max number of records to return
-        :rtype: list
+        :rtype: list[(int, str)]
         :return: list of pairs ``(id, text_repr)`` for all matching records.
         """
         ids = self._name_search(name, args, operator, limit=limit)
@@ -2205,6 +2200,7 @@ class BaseModel(metaclass=MetaModel):
         """
         Prepares the GROUP BY and ORDER BY terms for the read_group method. Adds the missing JOIN clause
         to the query if order should be computed against m2o field.
+
         :param orderby: the orderby definition in the form "%(field)s %(order)s"
         :param aggregated_fields: list of aggregated fields in the query
         :param annotated_groupbys: list of dictionaries returned by _read_group_process_groupby
@@ -3203,6 +3199,9 @@ Fields:
         :param fields: list of field names to return (default is all fields)
         :return: a list of dictionaries mapping field names to their values,
                  with one dictionary per record
+        :param load: magical flag indicating whether m2os should be returned
+                     as `name_get` pairs (the default), pass `None` to skip and
+                     return m2o values as plain ids.
         :raise AccessError: if user has no read rights on some of the given
                 records
         """
@@ -5004,8 +5003,8 @@ Fields:
             Defaults to no limit.
         :param order: Columns to sort result, see ``order`` parameter in :meth:`search`.
             Defaults to no sort.
-        :param read_kwargs: All read keywords arguments used to call read(..., **read_kwargs) method
-            E.g. you can use search_read(..., load='') in order to avoid computing name_get
+        :param read_kwargs: All read keywords arguments used to call ``read(..., **read_kwargs)`` method
+            E.g. you can use ``search_read(..., load='')`` in order to avoid computing :meth:`name_get`
         :return: List of dictionaries containing the asked fields.
         :rtype: list(dict).
         """
@@ -5600,9 +5599,9 @@ Fields:
         """ Process all the pending computations (on all models), and flush all
         the pending updates to the database.
 
-        :param fnames (list<str>): list of field names to flush.  If given,
+        :param list[str] fnames: list of field names to flush.  If given,
             limit the processing to the given fields of the current model.
-        :param records (Model): if given (together with ``fnames``), limit the
+        :param BaseModel records: if given (together with ``fnames``), limit the
             processing to the given records.
         """
         def process(model, id_vals):

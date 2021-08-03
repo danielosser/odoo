@@ -186,9 +186,11 @@ def iap_charge(env, key, account_token, credit, dbuuid=False, description=None, 
     amount before executing the body, then captures it if there
     is no error, or cancels it if the body generates an exception.
 
+    :param env:
     :param str key: service identifier
     :param str account_token: user identifier
     :param int credit: cost of the body's operation
+    :param dbuuid:
     :param description: a description of the purpose of the charge,
                         the user will be able to see it in their
                         dashboard

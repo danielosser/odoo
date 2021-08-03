@@ -524,6 +524,7 @@ def relative_path_to_module_path(url, path_rel):
     """
     Convert the relative path into a module path, which is more generic and fancy.
 
+    :param url:
     :param path_rel: a relative path to the current url.
     :return: module path (@module/...)
     """

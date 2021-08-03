@@ -34,6 +34,7 @@ class WebsiteEventMeetController(EventCommunityController):
         """Display the meeting rooms of the event on the frontend side.
 
         :param event: event for which we display the meeting rooms
+        :param page: 
         :param lang: lang id used to perform a search
         """
         return request.render(

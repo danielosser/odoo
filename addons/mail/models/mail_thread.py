@@ -457,16 +457,15 @@ class MailThread(models.AbstractModel):
     # WRAPPERS AND TOOLS
     # ------------------------------------------------------
 
-    def message_change_thread(self, new_thread, new_parent_message=False):
-        """
-        Transfer the list of the mail thread messages from an model to another
-
-        :param id : the old res_id of the mail.message
-        :param new_res_id : the new res_id of the mail.message
-        :param new_model : the name of the new model of the mail.message
+    def message_change_thread(self, new_thread, new_parent_message=None):
+        """ Transfer the messages from the current thread to an other.
 
         Example :   my_lead.message_change_thread(my_project_task)
                     will transfer the context of the thread of my_lead to my_project_task
+
+        :param new_thread:
+        :param new_parent_message: if provided, will be the new ``parent_id``
+                                   for all transferred message
         """
         self.ensure_one()
         # get the subtype of the comment Message
@@ -859,7 +858,7 @@ class MailThread(models.AbstractModel):
         :param string model: the fallback model to use if the message does not match
             any of the currently configured mail aliases (may be None if a matching
             alias is supposed to be present)
-        :type dict custom_values: optional dictionary of default field values
+        :param dict custom_values: optional dictionary of default field values
             to pass to ``message_new`` if a new record needs to be created.
             Ignored if the thread record already exists, and also if a matching
             mail.alias was found (aliases define their own defaults)
@@ -1085,7 +1084,7 @@ class MailThread(models.AbstractModel):
                (may be None if a matching alias is supposed to be present)
            :param message: source of the RFC2822 message
            :type message: string or xmlrpclib.Binary
-           :type dict custom_values: optional dictionary of field values
+           :param dict custom_values: optional dictionary of field values
                 to pass to ``message_new`` if a new record needs to be created.
                 Ignored if the thread record already exists, and also if a
                 matching mail.alias was found (aliases define their own defaults)
@@ -1650,7 +1649,7 @@ class MailThread(models.AbstractModel):
         :param list attachments: list of attachment tuples in the form ``(name,content)``, #todo xdo update that
                                  where content is NOT base64 encoded
         :param list attachment_ids: a list of attachment ids, not in tomany command form
-        :param dict message_data: model: the model of the attachments parent record,
+        :param dict message_values: model: the model of the attachments parent record,
           res_id: the id of the attachments parent record
         """
         return_values = {}
@@ -1759,24 +1758,32 @@ class MailThread(models.AbstractModel):
                      **kwargs):
         """ Post a new message in an existing thread, returning the new
             mail.message ID.
+
+            Extra keyword arguments will be used to create the new mail.message
+            record.
+
             :param str body: body of the message, usually raw HTML that will
                 be sanitized
             :param str subject: subject of the message
             :param str message_type: see mail_message.message_type field. Can be anything but
                 user_notification, reserved for message_notify
+            :param str email_from:
+            :param models.Model author_id:
             :param int parent_id: handle thread formation
+            :param str subtype_xmlid:
             :param int subtype_id: subtype_id of the message, used mainly use for
                 followers notification mechanism;
             :param list(int) partner_ids: partner_ids to notify in addition to partners
                 computed based on subtype / followers matching;
-            :param list(tuple(str,str), tuple(str,str, dict) or int) attachments : list of attachment tuples in the form
+            :param attachments : list of attachment tuples in the form
                 ``(name,content)`` or ``(name,content, info)``, where content is NOT base64 encoded
-            :param list id attachment_ids: list of existing attachement to link to this message
+            :type attachments: list[tuple[str, str], tuple[str, str, dict]]
+            :param list[int] attachment_ids: list of existing attachement to link to this message
                 -Should only be setted by chatter
                 -Attachement object attached to mail.compose.message(0) will be attached
                     to the related document.
-            Extra keyword arguments will be used as default column values for the
-            new mail.message record.
+            :param bool add_sign:
+            :param str record_name:
             :return int: ID of newly created mail.message
         """
         self.ensure_one()  # should always be posted on a record, use message_notify if no record
@@ -1938,8 +1945,11 @@ class MailThread(models.AbstractModel):
 
     def message_post_with_template(self, template_id, email_layout_xmlid=None, auto_commit=False, **kwargs):
         """ Helper method to send a mail with a template
+
             :param template_id : the id of the template to render to create the body of the message
-            :param **kwargs : parameter to create a mail.compose.message woaerd (which inherit from mail.message)
+            :param str email_layout_xmlid:
+            :param bool auto_commit:
+            :param kwargs : parameter to create a mail.compose.message wizard (which inherit from mail.message)
         """
         # Get composition mode, or force it according to the number of record in self
         if not kwargs.get('composition_mode'):

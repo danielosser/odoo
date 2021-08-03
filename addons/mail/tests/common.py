@@ -363,8 +363,6 @@ class MockEmail(common.BaseCase):
         :param email_values: if given, should be a dictionary of keys / values
           allowing to check sent email additional values (if any).
           See ``assertSentEmail``;
-
-        :param check_mail_mail: deprecated, use ``assertSentEmail`` if False
         """
         for email_to in emails:
             found_mail = self._find_mail_mail_wemail(email_to, status, mail_message=mail_message, author=author)
@@ -684,7 +682,6 @@ class MailCase(MockEmail):
           }, {...}]
 
         PARAMETERS
-        :param unlink_sent: to know whether to compute
         """
         partners = self.env['res.partner'].sudo().concat(*list(p['partner'] for i in recipients_info for p in i['notif'] if p.get('partner')))
         base_domain = [('res_partner_id', 'in', partners.ids)]
@@ -795,7 +792,6 @@ class MailCase(MockEmail):
         """ Check bus notifications content. Mandatory and basic check is about
         channels being notified. Content check is optional.
 
-        EXPECTED
         :param channels: list of expected bus channels, like [
           (self.cr.dbname, 'mail.channel', self.channel_1.id),
           (self.cr.dbname, 'res.partner', self.partner_employee_2.id)
@@ -810,6 +806,8 @@ class MailCase(MockEmail):
                 ...
               }}
             }, {...}]
+        :param bool check_unique: whether to check that there is exactly one
+                                  notification per channel (the default)
         """
         bus_notifs = self.env['bus.bus'].sudo().search([('channel', 'in', [json_dump(channel) for channel in channels])])
         if check_unique:
@@ -831,11 +829,13 @@ class MailCase(MockEmail):
     def assertNotified(self, message, recipients_info, is_complete=False):
         """ Lightweight check for notifications (mail.notification).
 
+        :param message:
         :param recipients_info: list notified recipients: [
           {'partner': res.partner record (may be empty),
            'type': notification_type to check,
            'is_read': is_read to check,
           }, {...}]
+        :param is_complete:
         """
         notifications = self._new_notifs.filtered(lambda notif: notif in message.notification_ids)
         if is_complete:

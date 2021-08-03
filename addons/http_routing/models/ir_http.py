@@ -138,6 +138,7 @@ def url_lang(path_or_uri, lang_code=None):
         If there is only one language installed, the lang will not be handled
         unless forced with `lang` parameter.
 
+        :param path_or_uri:
         :param lang_code: Must be the lang `code`. It could also be something
                           else, such as `'[lang]'` (used for url_return).
     '''

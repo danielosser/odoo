@@ -182,9 +182,10 @@ class ReceptionReport(models.AbstractModel):
 
     def action_assign(self, move_ids, qtys, in_ids):
         """ Assign picking move(s) [i.e. link] to other moves (i.e. make them MTO)
-        :param move_id ids: the ids of the moves to make MTO
-        :param qtys list: the quantities that are being assigned to the move_ids (in same order as move_ids)
-        :param in_ids ids: the ids of the moves that are to be assigned to move_ids
+
+        :param list[int] move_ids: the ids of the moves to make MTO
+        :param list qtys: the quantities that are being assigned to the move_ids (in same order as move_ids)
+        :param list[int] in_ids: the ids of the moves that are to be assigned to move_ids
         """
         outs = self.env['stock.move'].browse(move_ids)
         # Split outs with only part of demand assigned to prevent reservation problems later on.
@@ -247,9 +248,10 @@ class ReceptionReport(models.AbstractModel):
 
     def action_unassign(self, move_id, qty, in_ids):
         """ Unassign moves [i.e. unlink] from a move (i.e. make non-MTO)
-        :param move_id id: the id of the move to make non-MTO
-        :param qty float: the total quantity that is being unassigned from move_id
-        :param in_ids ids: the ids of the moves that are to be unassigned from move_id
+
+        :param int move_id: the id of the move to make non-MTO
+        :param float qty: the total quantity that is being unassigned from move_id
+        :param list[int] in_ids: the ids of the moves that are to be unassigned from move_id
         """
         out = self.env['stock.move'].browse(move_id)
         ins = self.env['stock.move'].browse(in_ids)

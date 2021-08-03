@@ -34,12 +34,13 @@ class AccountMove(models.Model):
             """Search all the accounts of a certain type and group for a company.
 
             This method is cached, only one search is done per tuple(company_id, type, group).
-            :param company_id (int): the company to search accounts for.
-            :param type (str): the type to filter on. If not set, do not filter. Valid values are:
-                               payable, receivable, liquidity, other, False.
-            :param group (str): the group to filter on. If not set, do not filter. Valid values are:
-                                asset, liability, equity, off_balance, False.
-            :return (Model<account.account>): the recordset of accounts found.
+            :param int company_id: the company to search accounts for.
+            :param str type: the type to filter on. If not set, do not filter. Valid values are:
+                             payable, receivable, liquidity, other, False.
+            :param str group: the group to filter on. If not set, do not filter. Valid values are:
+                              asset, liability, equity, off_balance, False.
+            :return: the recordset of accounts found.
+            :rtype: Model[account.account]
             """
             domain = [('company_id', '=', company_id)]
             if type:
@@ -53,10 +54,11 @@ class AccountMove(models.Model):
             """Search all the journal of a certain type for a company.
 
             This method is cached, only one search is done per tuple(company_id, journal_type).
-            :param company_id (int): the company to search journals for.
-            :param journal_type (str): the journal type to filter on.
+            :param int company_id: the company to search journals for.
+            :param str journal_type: the journal type to filter on.
                                        Valid values are sale, purchase, cash, bank and general.
-            :return (list<int>): the ids of the journals of a company and a certain type
+            :return: the ids of the journals of a company and a certain type
+            :rtype: list<int>
             """
             return self.env['account.journal'].search([
                 ('company_id', '=', company_id),
@@ -68,8 +70,9 @@ class AccountMove(models.Model):
             """Search all the partners that a company has access to.
 
             This method is cached, only one search is done per company_id.
-            :param company_id (int): the company to search partners for.
-            :return (list<int>): the ids of partner the company has access to.
+            :param int company_id: the company to search partners for.
+            :return: the ids of partner the company has access to.
+            :rtype: list<int>
             """
             return self.env['res.partner'].search([
                 '|', ('company_id', '=', company_id), ('company_id', '=', False),
@@ -79,9 +82,10 @@ class AccountMove(models.Model):
         def get_invoice_date(values, **kwargs):
             """Get the invoice date date.
 
-            :param values (dict): the values already selected for the record.
-            :return (datetime.date, bool): the accounting date if it is an invoice (or similar) document
-                                           or False otherwise.
+            :param dict values: the values already selected for the record.
+            :return: the accounting date if it is an invoice (or similar) document
+                     or False otherwise.
+            :rtype: datetime.date, bool
             """
             if values['move_type'] in self.get_invoice_types(include_receipts=True):
                 return values['date']
@@ -92,8 +96,9 @@ class AccountMove(models.Model):
 
             Generate lines depending on the move_type, company_id and currency_id.
             :param random: seeded random number generator.
-            :param values (dict): the values already selected for the record.
-            :return list: list of ORM create commands for the field line_ids
+            :param dict values: the values already selected for the record.
+            :return: list of ORM create commands for the field line_ids
+            :rtype: list
             """
             def get_line(account, label, balance=None, balance_sign=False, exclude_from_invoice_tab=False):
                 company_currency = account.company_id.currency_id
@@ -158,8 +163,9 @@ class AccountMove(models.Model):
             """Get a random journal depending on the company and the move_type.
 
             :param random: seeded random number generator.
-            :param values (dict): the values already selected for the record.
-            :return (int): the id of the journal randomly selected
+            :param dict values: the values already selected for the record.
+            :return: the id of the journal randomly selected
+            :rtype: int
             """
             move_type = values['move_type']
             company_id = values['company_id']
@@ -180,9 +186,10 @@ class AccountMove(models.Model):
             It means 1/5 is both customer/supplier
             -> Same proportions as in account.payment
             :param random: seeded random number generator.
-            :param values (dict): the values already selected for the record.
-            :return (int, bool): the id of the partner randomly selected if it is an invoice document
-                                 False if it is a Journal Entry.
+            :param dict values: the values already selected for the record.
+            :return: the id of the partner randomly selected if it is an invoice document
+                     False if it is a Journal Entry.
+            :rtype: int | bool
             """
             move_type = values['move_type']
             company_id = values['company_id']

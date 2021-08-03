@@ -1290,8 +1290,8 @@ class Lead(models.Model):
             updated with values from other opportunities to merge.
 
         :param user_id : the id of the saleperson. If not given, will be determined by `_merge_data`.
-        :param team : the id of the Sales Team. If not given, will be determined by `_merge_data`.
-
+        :param team_id: the id of the Sales Team. If not given, will be determined by `_merge_data`.
+        :param auto_unlink:
         :return crm.lead record resulting of th merge
         """
         return self._merge_opportunity(user_id=user_id, team_id=team_id, auto_unlink=auto_unlink)

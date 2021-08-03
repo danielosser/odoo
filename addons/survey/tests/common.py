@@ -40,6 +40,8 @@ class SurveyCase(common.TransactionCase):
     def assertAnswerLines(self, page, answer, answer_data):
         """ Check answer lines.
 
+          :param page:
+          :param answer:
           :param dict answer_data:
             key = question ID
             value = {'value': [user input]}

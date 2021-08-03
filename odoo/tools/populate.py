@@ -1,7 +1,7 @@
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
+
 from dateutil.relativedelta import relativedelta
-from odoo.tools import pycompat
 
 
 def Random(seed):
@@ -143,6 +143,7 @@ def randint(a, b, seed=None):
 
     :param int a: minimal random value
     :param int b: maximal random value
+    :param seed:
     :returns: function of the form (iterator, field_name, model_name) -> values
     :rtype: function (iterator, str, str) -> dict
     """
@@ -163,12 +164,16 @@ def randdatetime(*, base_date=None, relative_before=None, relative_after=None, s
     to a random datetime between relative_before and relative_after, relatively to
     base_date
 
-    :param base_date (datetime): override the default base date if needed.
-    :param relative_after (relativedelta, timedelta): range up which we can go after the
+    :param datetime base_date: override the default base date if needed.
+    :param relative_after: range up which we can go after the
          base date. If not set, defaults to 0, i.e. only in the past of reference.
-    :param relative_before (relativedelta, timedelta): range up which we can go before the
+    :type relative_after: relativedelta | timedelta
+    :param relative_before: range up which we can go before the
          base date. If not set, defaults to 0, i.e. only in the future of reference.
-    :return (generator): iterator for random dates inside the defined range
+    :type relative_before: relativedelta | timedelta
+    :param seed:
+    :return: iterator for random dates inside the defined range
+    :rtype: generator
     """
     base_date = base_date or datetime(2020, 1, 1)
     seconds_before = relative_before and ((base_date + relative_before) - base_date).total_seconds() or 0

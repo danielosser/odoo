@@ -593,15 +593,15 @@ class IrActionsServer(models.Model):
         otherwise if there are multiple records the runner will be called once
         for each
 
-        :param dict context: context should contain following keys
+        The context should contain following keys
 
-                             - active_id: id of the current object (single mode)
-                             - active_model: current model that should equal the action's model
+        - active_id: id of the current object (single mode)
+        - active_model: current model that should equal the action's model
 
-                             The following keys are optional:
+        The following keys are optional:
 
-                             - active_ids: ids of the current records (mass mode). If active_ids
-                               and active_id are present, active_ids is given precedence.
+        - active_ids: ids of the current records (mass mode). If active_ids
+          and active_id are present, active_ids is given precedence.
 
         :return: an action_id to be executed, or False is finished correctly without
                  return action

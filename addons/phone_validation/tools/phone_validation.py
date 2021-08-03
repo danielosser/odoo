@@ -40,6 +40,7 @@ try:
             'NATIONAL' = 2
             'RFC3966' = 3
         :type force_format: str
+        :param bool raise_exception:
         :rtype: str
         """
         try:

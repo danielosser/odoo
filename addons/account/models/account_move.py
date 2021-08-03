@@ -402,8 +402,8 @@ class AccountMove(models.Model):
         last date of the first open period.
 
         :param invoice_date (datetime.date): The invoice date
-        :param has_tax (bool): Iff any taxes are involved in the lines of the invoice
-        :return (datetime.date):
+        :param bool has_tax: Iff any taxes are involved in the lines of the invoice
+        :rtype: datetime.date
         """
         tax_lock_date = self.company_id.tax_lock_date
         today = fields.Date.today()
@@ -2838,7 +2838,7 @@ class AccountMove(models.Model):
         If the journal is locked with a hash table, it will be impossible to change
         some fields afterwards.
 
-        :param soft (bool): if True, future documents are not immediately posted,
+        :param bool soft: if True, future documents are not immediately posted,
             but are set to be auto posted automatically at the set accounting date.
             Nothing will be performed on those documents before the accounting date.
         :return Model<account.move>: the documents that have been posted
@@ -2955,8 +2955,9 @@ class AccountMove(models.Model):
 
     def _auto_compute_invoice_reference(self):
         ''' Hook to be overridden to set custom conditions for auto-computed invoice references.
-            :return True if the move should get a auto-computed reference else False
-            :rtype bool
+
+        :return: True if the move should get a auto-computed reference else False
+        :rtype: bool
         '''
         self.ensure_one()
         return self.move_type == 'out_invoice' and not self.payment_reference
@@ -5308,9 +5309,9 @@ class AccountMoveLine(models.Model):
 
     def _prepare_analytic_line(self):
         """ Prepare the values used to create() an account.analytic.line upon validation of an account.move.line having
-            an analytic account. This method is intended to be extended in other modules.
-            :return list of values to create analytic.line
-            :rtype list
+        an analytic account. This method is intended to be extended in other modules.
+
+        :return: list of values to create analytic.line
         """
         result = []
         for move_line in self:

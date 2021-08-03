@@ -175,6 +175,7 @@ node_pattern = re.compile(r"<[^>]*>(.*)</[^<]*>", re.DOTALL | re.MULTILINE | re.
 def translate_xml_node(node, callback, parse, serialize):
     """ Return the translation of the given XML/HTML node.
 
+        :param node:
         :param callback: callback(text) returns translated text or None
         :param parse: parse(text) returns a node (text is unicode)
         :param serialize: serialize(node) returns unicode text
@@ -1170,6 +1171,7 @@ def trans_load_data(cr, fileobj, fileformat, lang,
                     verbose=True, create_empty_translation=False, overwrite=False):
     """Populates the ir_translation table.
 
+    :param cr:
     :param fileobj: buffer open to a translation file
     :param fileformat: format of the `fielobj` file, one of 'po' or 'csv'
     :param lang: language code of the translations contained in `fileobj`
@@ -1274,6 +1276,7 @@ def load_language(cr, lang):
     """ Loads a translation terms for a language.
     Used mainly to automate language loading at db initialization.
 
+    :param cr:
     :param lang: language ISO code with optional _underscore_ and l10n flavor (ex: 'fr', 'fr_BE', but not 'fr-BE')
     :type lang: str
     """

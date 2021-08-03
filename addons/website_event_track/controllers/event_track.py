@@ -374,6 +374,7 @@ class EventTrackController(http.Controller):
         if it already exists. Exception made if un-favoriting and no track_visitor
         record found (should not happen unless manually done).
 
+        :param track_id:
         :param boolean set_reminder_on:
           If True, set as a favorite, otherwise un-favorite track;
           If the track is a Key Track (wishlisted_by_default):

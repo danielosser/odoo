@@ -138,6 +138,7 @@ def guess_mimetype(bin_data, default='application/octet-stream'):
     to but significantly more limited than libmagic
 
     :param str bin_data: binary data to try and guess a mime type for
+    :param str default:
     :returns: matched mimetype or ``application/octet-stream`` if none matched
     """
     # by default, guess the type using the magic number of file hex signature (like magic, but more limited)

@@ -253,8 +253,8 @@ class Team(models.Model):
           its equivalent on team model) targets 30 work days. We make a ratio
           between expected number of work days and maximum assignment for those
           30 days to know lead count to assign.
-
-        :return action: a client notification giving some insights on assign
+        :param log:
+        :returns: a client notification giving some insights on assign
           process;
         """
         teams_data, members_data = self._action_assign_leads(work_days=work_days)

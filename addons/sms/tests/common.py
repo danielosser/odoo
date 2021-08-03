@@ -144,6 +144,7 @@ class SMSCase(MockSMS):
           if not given;
         :param number: optional number, used to find a ``sms.sms``, notably if
           partner is not given;
+        :param status:
         :param failure_type: check failure type if SMS is not sent or outgoing;
         :param content: if given, should be contained in sms body;
         :param fields_values: optional values allowing to check directly some
@@ -192,6 +193,10 @@ class SMSCase(MockSMS):
             'state': ready / sent / exception / canceled (sent by default),
             'failure_type': optional: sms_number_missing / sms_number_format / sms_credit / sms_server
             }, { ... }]
+          :param content:
+          :param messages:
+          :param check_sms:
+          :param sent_unlink:
         """
         partners = self.env['res.partner'].concat(*list(p['partner'] for p in recipients_info if p.get('partner')))
         numbers = [p['number'] for p in recipients_info if p.get('number')]

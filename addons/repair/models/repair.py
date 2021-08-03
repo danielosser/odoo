@@ -260,8 +260,6 @@ class Repair(models.Model):
     def action_repair_confirm(self):
         """ Repair order state is set to 'To be invoiced' when invoice method
         is 'Before repair' else state becomes 'Confirmed'.
-        @param *arg: Arguments
-        @return: True
         """
         if self.filtered(lambda repair: repair.state != 'draft'):
             raise UserError(_("Only draft repairs can be confirmed."))
@@ -675,9 +673,6 @@ class RepairLine(models.Model):
     def onchange_operation_type(self):
         """ On change of operation type it sets source location, destination location
         and to invoice field.
-        @param product: Changed operation type.
-        @param guarantee_limit: Guarantee limit of current record.
-        @return: Dictionary of values.
         """
         if not self.type:
             self.location_id = False

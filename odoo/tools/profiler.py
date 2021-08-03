@@ -165,7 +165,7 @@ class PeriodicCollector(Collector):
     """
     Record execution frames asynchronously at most every `interval` seconds.
 
-    :param interval (float): time to wait in seconds between two samples.
+    :param float interval: time to wait in seconds between two samples.
     """
     name = 'traces_async'
 

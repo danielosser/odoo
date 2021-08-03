@@ -203,6 +203,7 @@ def make_conditional(response, last_modified=None, etag=None, max_age=0):
     :type response: werkzeug.wrappers.Response
     :param datetime.datetime last_modified: last modification date of the response content
     :param str etag: some sort of checksum of the content (deep etag)
+    :param int max_age:
     :return: the response object provided
     :rtype: werkzeug.wrappers.Response
     """
@@ -1343,8 +1344,8 @@ class DataSet(http.Controller):
         The re-sequencing starts at the first model of ``ids``, the sequence
         number is incremented by one after each record and starts at ``offset``
 
-        :param ids: identifiers of the records to resequence, in the new sequence order
-        :type ids: list(id)
+        :param model:
+        :param list[id] ids: identifiers of the records to resequence, in the new sequence order
         :param str field: field used for sequence specification, defaults to
                           "sequence"
         :param int offset: sequence number for first record in ``ids``, allows
@@ -1948,8 +1949,11 @@ class ReportController(http.Controller):
                 ('QR', o.name, 200, 200)"/>
 
         :param type: Accepted types: 'Codabar', 'Code11', 'Code128', 'EAN13', 'EAN8', 'Extended39',
-        'Extended93', 'FIM', 'I2of5', 'MSI', 'POSTNET', 'QR', 'Standard39', 'Standard93',
-        'UPCA', 'USPS_4State'
+                    'Extended93', 'FIM', 'I2of5', 'MSI', 'POSTNET', 'QR', 'Standard39', 'Standard93',
+                    'UPCA', 'USPS_4State'
+        :param value:
+        :param width:
+        :param height:
         :param humanreadable: Accepted values: 0 (default) or 1. 1 will insert the readable value
         at the bottom of the output image
         :param quiet: Accepted values: 0 (default) or 1. 1 will display white
@@ -1971,10 +1975,10 @@ class ReportController(http.Controller):
         """This function is used by 'action_manager_report.js' in order to trigger the download of
         a pdf/controller report.
 
-        :param data: a javascript array JSON.stringified containg report internal url ([0]) and
-        type [1]
+        :param data: a JSON-serialized array containg report internal url ([0]) and
+                     type [1]
+        :param context:
         :returns: Response with an attachment header
-
         """
         requestcontent = json.loads(data)
         url, type = requestcontent[0], requestcontent[1]

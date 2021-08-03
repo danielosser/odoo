@@ -30,8 +30,9 @@ class AccountPayment(models.Model):
             """Search all the partners that a company has access to.
 
             This method is cached, only one search is done per company_id.
-            :param company_id (int): the company to search partners for.
-            :return (list<int>): the ids of partner the company has access to.
+            :param int company_id: the company to search partners for.
+            :return: the ids of partner the company has access to.
+            :rtype: list[int]
             """
             return self.env['res.partner'].search([
                 '|', ('company_id', '=', company_id), ('company_id', '=', False),
@@ -43,8 +44,9 @@ class AccountPayment(models.Model):
             """Search all the journal of a certain type for a company.
 
             This method is cached, only one search is done per company_id.
-            :param company_id (int): the company to search journals for.
-            :return (list<int>): the ids of the bank and cash journals of a company
+            :param int company_id: the company to search journals for.
+            :return: the ids of the bank and cash journals of a company
+            :rtype: list[int]
             """
             return self.env['account.journal'].search([
                 ('company_id', '=', company_id),
@@ -56,9 +58,10 @@ class AccountPayment(models.Model):
             """Search all the payment methods of a certain type.
 
             This method is cached, only one search is done per type.
-            :param payment_type (str): the type of payment method. Valid values are customer and supplier.
-            :param journal (int): the journal of the payment method.
-            :return list<int>: list of ids of payment methods of the selected type
+            :param str payment_type: the type of payment method. Valid values are customer and supplier.
+            :param int journal: the journal of the payment method.
+            :return: list of ids of payment methods of the selected type
+            :rtype: list[int]
             """
             need_bank_account = self._get_method_codes_needing_bank_account()
             other_blacklist = ['sdd']
@@ -76,8 +79,9 @@ class AccountPayment(models.Model):
             It means 1/5 is both customer/supplier
             -> Same proportions as in account.move
             :param random: seeded random number generator.
-            :param values (dict): the values already selected for the record.
-            :return (int): the id of the partner randomly selected.
+            :param dict values: the values already selected for the record.
+            :return: the id of the partner randomly selected.
+            :rtype: int
             """
             partner_type = values['partner_type']
             company_id = values['company_id']
@@ -91,8 +95,9 @@ class AccountPayment(models.Model):
             """Get a random bank or cash journal depending on the company.
 
             :param random: seeded random number generator.
-            :param values (dict): the values already selected for the record.
-            :return (int): the id of the journal randomly selected
+            :param dict values: the values already selected for the record.
+            :return: the id of the journal randomly selected
+            :rtype: int
             """
             return random.choice(search_journal_ids(values['company_id']))
 
@@ -100,7 +105,7 @@ class AccountPayment(models.Model):
             """Get the payment method depending on the payment type.
 
             :param random: seeded random number generator.
-            :param values (dict): the values already selected for the record.
+            :param dict values: the values already selected for the record.
             """
             return random.choice(search_payment_method_line_ids(values['payment_type'], values['journal_id']))
 

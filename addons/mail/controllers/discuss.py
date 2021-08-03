@@ -432,6 +432,8 @@ class DiscussController(http.Controller):
     @http.route('/mail/rtc/channel/cancel_call_invitation', methods=['POST'], type="json", auth="public")
     def channel_call_cancel_invitation(self, channel_id, partner_ids=None, guest_ids=None):
         """ Sends invitations to join the RTC call to all connected members of the thread who are not already invited.
+
+            :param channel_id:
             :param list partner_ids: list of the partner ids to invite
             :param list guest_ids: list of the guest ids to invite
 

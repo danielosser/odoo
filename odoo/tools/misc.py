@@ -665,22 +665,6 @@ def split_every(n, iterable, piece_maker=tuple):
         yield piece
         piece = piece_maker(islice(iterator, n))
 
-def get_and_group_by_field(cr, uid, obj, ids, field, context=None):
-    """ Read the values of ``field´´ for the given ``ids´´ and group ids by value.
-
-       :param string field: name of the field we want to read and group by
-       :return: mapping of field values to the list of ids that have it
-       :rtype: dict
-    """
-    res = {}
-    for record in obj.read(cr, uid, ids, [field], context=context):
-        key = record[field]
-        res.setdefault(key[0] if isinstance(key, tuple) else key, []).append(record['id'])
-    return res
-
-def get_and_group_by_company(cr, uid, obj, ids, context=None):
-    return get_and_group_by_field(cr, uid, obj, ids, field='company_id', context=context)
-
 # port of python 2.6's attrgetter with support for dotted notation
 def resolve_attr(obj, attr):
     for name in attr.split("."):
@@ -1217,6 +1201,8 @@ def get_lang(env, lang_code=False):
     Retrieve the first lang object installed, by checking the parameter lang_code,
     the context and then the company. If no lang is installed from those variables,
     fallback on the first lang installed in the system.
+
+    :param env:
     :param str lang_code: the locale (i.e. en_US)
     :return res.lang: the first lang found that is installed on the system.
     """
@@ -1326,10 +1312,11 @@ def parse_date(env, value, lang_code=False):
 def format_datetime(env, value, tz=False, dt_format='medium', lang_code=False):
     """ Formats the datetime in a given format.
 
-        :param {str, datetime} value: naive datetime to format either in string or in datetime
-        :param {str} tz: name of the timezone  in which the given datetime should be localized
-        :param {str} dt_format: one of “full”, “long”, “medium”, or “short”, or a custom date/time pattern compatible with `babel` lib
-        :param {str} lang_code: ISO code of the language to use to render the given datetime
+    :param env:
+    :param str | datetime value: naive datetime to format either in string or in datetime
+    :param str tz: name of the timezone  in which the given datetime should be localized
+    :param str dt_format: one of “full”, “long”, “medium”, or “short”, or a custom date/time pattern compatible with `babel` lib
+    :param str lang_code: ISO code of the language to use to render the given datetime
     """
     if not value:
         return ''
@@ -1366,13 +1353,13 @@ def format_datetime(env, value, tz=False, dt_format='medium', lang_code=False):
 def format_time(env, value, tz=False, time_format='medium', lang_code=False):
     """ Format the given time (hour, minute and second) with the current user preference (language, format, ...)
 
-        :param value: the time to format
-        :type value: `datetime.time` instance. Could be timezoned to display tzinfo according to format (e.i.: 'full' format)
-        :param tz: name of the timezone  in which the given datetime should be localized
-        :param time_format: one of “full”, “long”, “medium”, or “short”, or a custom time pattern
-        :param lang_code: ISO
-
-        :rtype str
+    :param env:
+    :param value: the time to format
+    :type value: `datetime.time` instance. Could be timezoned to display tzinfo according to format (e.i.: 'full' format)
+    :param tz: name of the timezone  in which the given datetime should be localized
+    :param time_format: one of “full”, “long”, “medium”, or “short”, or a custom time pattern
+    :param lang_code: ISO
+    :rtype str
     """
     if not value:
         return ''

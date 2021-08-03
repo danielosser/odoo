@@ -679,8 +679,8 @@ class PosConfig(models.Model):
         """Extend this method to customize the existing pos.config of the company during the installation
         of a localisation.
 
-        :param self pos.config: pos.config records present in the company during the installation of localisation.
-        :param company res.company: the single company where the pos.config defaults will be setup.
+        :param self: pos.config records present in the company during the installation of localisation.
+        :param company: the single company where the pos.config defaults will be setup.
         """
         self.assign_payment_journals(company)
         self.generate_pos_journal(company)

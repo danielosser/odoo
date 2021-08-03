@@ -181,9 +181,9 @@ class AccountChartTemplate(models.Model):
         """ Installs this chart of accounts for the current company if not chart
         of accounts had been created for it yet.
 
-        :param company (Model<res.company>): the company we try to load the chart template on.
+        :param Model[res.company] company: the company we try to load the chart template on.
             If not provided, it is retrieved from the context.
-        :param install_demo (bool): whether or not we should load demo data right after loading the
+        :param bool install_demo: whether or not we should load demo data right after loading the
             chart template.
         """
         # do not use `request.env` here, it can cause deadlocks
@@ -455,7 +455,8 @@ class AccountChartTemplate(models.Model):
         This method is used for creating journals.
 
         :param acc_template_ref: Account templates reference.
-        :param company_id: company to generate journals for.
+        :param company: company to generate journals for.
+        :param list[dict] journals_dict:
         :returns: True
         """
         JournalObj = self.env['account.journal']
@@ -483,7 +484,7 @@ class AccountChartTemplate(models.Model):
                     {'name': _('Miscellaneous Operations'), 'type': 'general', 'code': _('MISC'), 'favorite': True, 'sequence': 7},
                     {'name': _('Exchange Difference'), 'type': 'general', 'code': _('EXCH'), 'favorite': False, 'sequence': 9},
                     {'name': _('Cash Basis Taxes'), 'type': 'general', 'code': _('CABA'), 'favorite': False, 'sequence': 10}]
-        if journals_dict != None:
+        if journals_dict is not None:
             journals.extend(journals_dict)
 
         self.ensure_one()
@@ -507,7 +508,7 @@ class AccountChartTemplate(models.Model):
         This method used for creating properties.
 
         :param acc_template_ref: Mapping between ids of account templates and real accounts created from them
-        :param company_id: company to generate properties for.
+        :param company: company to generate properties for.
         :returns: True
         """
         self.ensure_one()
@@ -723,7 +724,7 @@ class AccountChartTemplate(models.Model):
         :param tax_template_ref: Taxes templates reference for write taxes_id in account_account.
         :param acc_template_ref: dictionary containing the mapping between the account templates and generated accounts (will be populated)
         :param code_digits: number of digits to use for account code.
-        :param company_id: company to generate accounts for.
+        :param company: company to generate accounts for.
         :returns: return acc_template_ref for reference purpose.
         :rtype: dict
         """
@@ -734,8 +735,8 @@ class AccountChartTemplate(models.Model):
         for account_template in acc_template:
             code_main = account_template.code and len(account_template.code) or 0
             code_acc = account_template.code or ''
-            if code_main > 0 and code_main <= code_digits:
-                code_acc = str(code_acc) + (str('0'*(code_digits-code_main)))
+            if 0 < code_main <= code_digits:
+                code_acc = str(code_acc) + ('0'*(code_digits-code_main))
             vals = self._get_account_vals(company, account_template, code_acc, tax_template_ref)
             template_vals.append((account_template, vals))
         accounts = self._create_records_with_xmlid('account.account', template_vals, company)
@@ -758,7 +759,7 @@ class AccountChartTemplate(models.Model):
                 'company_id': company.id,
             }
             template_vals.append((group_template, vals))
-        groups = self._create_records_with_xmlid('account.group', template_vals, company)
+        self._create_records_with_xmlid('account.group', template_vals, company)
 
     def _prepare_reconcile_model_vals(self, company, account_reconcile_model, acc_template_ref, tax_template_ref):
         """ This method generates a dictionary of all the values for the account.reconcile.model that will be created.
@@ -807,7 +808,7 @@ class AccountChartTemplate(models.Model):
 
         :param tax_template_ref: Taxes templates reference for write taxes_id in account_account.
         :param acc_template_ref: dictionary with the mapping between the account templates and the real accounts.
-        :param company_id: company to create models for
+        :param company: company to create models for
         :returns: return new_account_reconcile_model for reference purpose.
         :rtype: dict
         """
@@ -853,9 +854,9 @@ class AccountChartTemplate(models.Model):
         """ This method generates Fiscal Position, Fiscal Position Accounts
         and Fiscal Position Taxes from templates.
 
-        :param taxes_ids: Taxes templates reference for generating account.fiscal.position.tax.
+        :param tax_template_ref: Taxes templates reference for generating account.fiscal.position.tax.
         :param acc_template_ref: Account templates reference for generating account.fiscal.position.account.
-        :param company_id: the company to generate fiscal position data for
+        :param company: the company to generate fiscal position data for
         :returns: True
         """
         self.ensure_one()

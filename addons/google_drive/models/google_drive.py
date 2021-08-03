@@ -148,7 +148,7 @@ class GoogleDrive(models.Model):
         different than the default values). If no config is associated with the `res_model`, then a blank text document
         with a default name is created.
           :param res_model: the object for which the google doc is created
-          :param ids: the list of ids of the objects for which the google doc is created. This list is supposed to have
+          :param list[int] res_id: records for which the google doc is created. This list is supposed to have
             a length of 1 element only (batch processing is not supported in the code, though nothing really prevent it)
           :return: the config id and config name
         '''

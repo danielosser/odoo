@@ -127,14 +127,13 @@ class MailMail(models.Model):
            message is sent - this is not transactional and should
            not be called during another transaction!
 
+           If a ``filters`` key is present in context, this value will be used
+           as an additional filter to further restrict the outgoing messages to
+           send (by default all 'outgoing' messages are sent).
+
            :param list ids: optional list of emails ids to send. If passed
                             no search is performed, and these ids are used
                             instead.
-           :param dict context: if a 'filters' key is present in context,
-                                this value will be used as an additional
-                                filter to further restrict the outgoing
-                                messages to send (by default all 'outgoing'
-                                messages are sent).
         """
         filters = ['&',
                    ('state', '=', 'outgoing'),

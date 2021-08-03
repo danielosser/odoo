@@ -575,7 +575,6 @@ class MailComposer(models.TransientModel):
         _message_get_default_recipients. This allows to ensure a mass mailing has
         always some recipients specified.
 
-        :param browse wizard: current mail.compose.message browse record
         :param list res_ids: list of record ids
 
         :return dict results: for each res_id, the generated template values for

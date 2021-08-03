@@ -147,7 +147,10 @@ class Website(Home):
 
     @http.route('/website/lang/<lang>', type='http', auth="public", website=True, multilang=False)
     def change_lang(self, lang, r='/', **kwargs):
-        """ :param lang: supposed to be value of `url_code` field """
+        """
+        :param r:
+        :param lang: supposed to be value of `url_code` field
+        """
         if lang == 'default':
             lang = request.website.default_lang_id.url_code
             r = '/%s%s' % (lang, r or '/')

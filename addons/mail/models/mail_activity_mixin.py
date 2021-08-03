@@ -386,8 +386,12 @@ class MailActivityMixin(models.AbstractModel):
         It is useful to avoid having various "env.ref" in the code and allow
         to let the mixin handle access rights.
 
+        :param str act_type_xmlid:
         :param date_deadline: the day the activity must be scheduled on
-        the timezone of the user must be considered to set the correct deadline
+                              the timezone of the user must be considered to
+                              set the correct deadline
+        :param str summary:
+        :param str note:
         """
         if self.env.context.get('mail_activity_automation_skip'):
             return False

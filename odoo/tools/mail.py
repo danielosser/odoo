@@ -375,6 +375,7 @@ def plaintext2html(text, container_tag=False):
         - convert url into clickable link
         - 2 or more consecutive <br /> are considered as paragraph breaks
 
+        :param text:
         :param string container_tag: container of the html; by default the
             content is embedded into a <div>
     """
@@ -419,6 +420,7 @@ def append_content_to_html(html, content, plaintext=True, preserve=False, contai
             be wrapped in a <pre/> tag.
         :param bool preserve: if content is plaintext, wrap it into a <pre>
             instead of converting it into html
+        :param str container_tag:
     """
     html = ustr(html)
     if plaintext and preserve:

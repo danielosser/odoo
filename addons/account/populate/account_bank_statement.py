@@ -58,8 +58,9 @@ class AccountBankStatementLine(models.Model):
             """Search all the partners that a company has access to.
 
             This method is cached, only one search is done per company_id.
-            :param company_id (int): the company to search partners for.
-            :return (list<int>): the ids of partner the company has access to.
+            :param int company_id: the company to search partners for.
+            :return: the ids of partner the company has access to.
+            :rtype: list[int]
             """
             return self.env['res.partner'].search([
                 '|', ('company_id', '=', company_id), ('company_id', '=', False),
@@ -71,8 +72,9 @@ class AccountBankStatementLine(models.Model):
 
             There is also a chance of having no partner set.
             :param random: seeded random number generator.
-            :param values (dict): the values already selected for the record.
-            :return (int): an id of a partner accessible by the company of the statement.
+            :param dict values: the values already selected for the record.
+            :return: an id of a partner accessible by the company of the statement.
+            :rtype: int
             """
             company_id = self.env['account.bank.statement'].browse(values['statement_id']).company_id.id
             partner = search_partner_ids(company_id)
@@ -83,8 +85,9 @@ class AccountBankStatementLine(models.Model):
 
             This date can but up to 31 days before the statement linked to this line.
             :param random: seeded random number generator.
-            :param values (dict): the values already selected for the record.
-            :return (datetime.date): a date up to 31 days before the date of the statement.
+            :param dict values: the values already selected for the record.
+            :return: a date up to 31 days before the date of the statement.
+            :rtype: datetime.date
             """
             statement_date = self.env['account.bank.statement'].browse(values['statement_id']).date
             return statement_date + relativedelta(days=random.randint(-31, 0))
@@ -94,7 +97,8 @@ class AccountBankStatementLine(models.Model):
 
             It is impossible to get a null amount. Because it would not be a valid statement line.
             :param random: seeded random number generator.
-            :return (float): a number between -1000 and 1000.
+            :return: a number between -1000 and 1000.
+            :rtype: float
             """
             return random.uniform(-1000, 1000) or 1
 
@@ -103,9 +107,10 @@ class AccountBankStatementLine(models.Model):
 
             The currency has to be empty if it is the same as the currency of the statement's journal's.
             :param random: seeded random number generator.
-            :param values (dict): the values already selected for the record.
-            :return (int, bool): the id of an active currency or False if it is the same currency as
-                                 the statement's journal's currency.
+            :param dict values: the values already selected for the record.
+            :return: the id of an active currency or False if it is the same currency as
+                     the statement's journal's currency.
+            :rtype: (int, bool)
             """
             journal = self.env['account.bank.statement'].browse(values['statement_id']).journal_id
             currency = random.choice(self.env['res.currency'].search([('active', '=', True)]).ids)

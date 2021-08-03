@@ -18,6 +18,7 @@ MAX_VISIBILITY_RANKING = 3
 def start_end_date_for_period(period, default_start_date=False, default_end_date=False):
     """Return the start and end date for a goal period based on today
 
+    :param str period:
     :param str default_start_date: string date in DEFAULT_SERVER_DATE_FORMAT format
     :param str default_end_date: string date in DEFAULT_SERVER_DATE_FORMAT format
 

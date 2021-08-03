@@ -21,7 +21,7 @@ class PosController(http.Controller):
         /pos/ui and /pos/web both can be used to acces the POS. On the SaaS,
         /pos/ui uses HTTPS while /pos/web uses HTTP.
 
-        :param debug: The debug mode to load the session in.
+        :param str debug: The debug mode to load the session in.
         :type debug: str.
         :param config_id: id of the config that has to be loaded.
         :type config_id: str.

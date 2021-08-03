@@ -175,8 +175,7 @@ class KeyboardUSBDriver(Driver):
         """Save the layout to a file on the box to read it when restarting it.
         We need that in order to keep the selected layout after a reboot.
 
-        Args:
-            new_layout (dict): A dict containing two keys:
+        :param dict layout: A dict containing two keys:
                 - layout (str): The layout code
                 - variant (str): An optional key to represent the variant of the
                                  selected layout

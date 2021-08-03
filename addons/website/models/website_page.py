@@ -176,7 +176,10 @@ class Page(models.Model):
     @api.model
     def clone_page(self, page_id, page_name=None, clone_menu=True):
         """ Clone a page, given its identifier
-            :param page_id : website.page identifier
+
+        :param page_id : website.page identifier
+        :param str page_name:
+        :param bool clone_menu:
         """
         page = self.browse(int(page_id))
         copy_param = dict(name=page_name or page.name, website_id=self.env['website'].get_current_website().id)

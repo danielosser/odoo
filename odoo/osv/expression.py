@@ -241,6 +241,7 @@ def combine(operator, unit, zero, domains):
 
        It is guaranteed to return a normalized domain.
 
+       :param operator:
        :param unit: the identity element of the domains "set" with regard to the operation
                     performed by ``operator``, i.e the domain component ``i`` which, when
                     combined with any domain ``x`` via ``operator``, yields ``x``.
@@ -495,12 +496,15 @@ class expression(object):
 
         def to_ids(value, comodel, leaf):
             """ Normalize a single id or name, or a list of those, into a list of ids
-                :param {int,long,basestring,list,tuple} value:
-                    if int, long -> return [value]
-                    if basestring, convert it into a list of basestrings, then
-                    if list of basestring ->
+
+                :param int|str|list|tuple} value:
+                    if int -> return [value]
+                    if str, wrap in a list, then
+                    if list[str] ->
                         perform a name_search on comodel for each name
                         return the list of related ids
+                :param comodel:
+                :param leaf:
             """
             names = []
             if isinstance(value, str):

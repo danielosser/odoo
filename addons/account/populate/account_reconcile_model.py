@@ -55,12 +55,13 @@ class AccountReconcileModelLine(models.Model):
             """Search all the accounts of a certain type and group for a company.
 
             This method is cached, only one search is done per tuple(company_id, type, group).
-            :param company_id (int): the company to search accounts for.
-            :param type (str): the type to filter on. If not set, do not filter. Valid values are:
+            :param int company_id: the company to search accounts for.
+            :param str type: the type to filter on. If not set, do not filter. Valid values are:
                                payable, receivable, liquidity, other, False.
-            :param group (str): the group to filter on. If not set, do not filter. Valid values are:
+            :param str group: the group to filter on. If not set, do not filter. Valid values are:
                                 asset, liability, equity, off_balance, False.
-            :return (Model<account.account>): the recordset of accounts found.
+            :return: the recordset of accounts found.
+            :rtype: Model
             """
             domain = [('company_id', '=', company_id)]
             if type:
@@ -70,11 +71,11 @@ class AccountReconcileModelLine(models.Model):
             return self.env['account.account'].search(domain)
 
         def get_amount(random, values, **kwargs):
-            """Get an amount dending on the amount_type.
+            """Get an amount depending on the amount_type.
 
             :param random: seeded random number generator.
-            :param values (dict): the values already selected for the record.
-            :return (int, str):
+            :param dict values: the values already selected for the record.
+            :return:
                 If amount_type is fixed, a random number between 1 and 1000
                 If amount type is percentage, a random number between 1 and 100
                 Else, amount_type is regex, a random regex out of 2
@@ -90,8 +91,8 @@ class AccountReconcileModelLine(models.Model):
             """Get a random account depending on the company.
 
             :param random: seeded random number generator.
-            :param values (dict): the values already selected for the record.
-            :return (int): the id of the account randomly selected
+            :param dict values: the values already selected for the record.
+            :return: the id of the account randomly selected
             """
             company_id = self.env['account.reconcile.model'].browse(values['model_id']).company_id.id
             return random.choice(search_account_ids(company_id).ids)

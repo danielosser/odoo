@@ -398,7 +398,10 @@ class TestPoSCommon(ValuationReconciliationTestCommon):
         The above values should be set when `self.open_new_session` is called.
 
         :param list(tuple) product_quantity_pairs: pair of `ordered product` and `quantity`
+        :param customer:
+        :param is_invoiced:
         :param list(tuple) payments: pair of `payment_method` and `amount`
+        :param uid:
         """
         default_fiscal_position = self.config.default_fiscal_position_id
         fiscal_position = customer.property_account_position_id if customer else default_fiscal_position

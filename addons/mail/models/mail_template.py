@@ -160,8 +160,9 @@ class MailTemplate(models.Model):
         """Generates an email from the template for given the given model based on
         records given by res_ids.
 
-        :param res_id: id of the record to use for rendering the template (model
-                       is taken from template definition)
+        :param res_ids: id of the record to use for rendering the template (model
+                        is taken from template definition)
+        :param fields:
         :returns: a dict containing all relevant fields for creating a new
                   mail.mail entry, with one extra key ``attachments``, in the
                   format [(report_name, data)] where data is base64 encoded.
@@ -243,6 +244,7 @@ class MailTemplate(models.Model):
         :param int res_id: id of the record to render the template
         :param bool force_send: send email immediately; otherwise use the mail
             queue (recommended);
+        :param bool raise_exception:
         :param dict email_values: update generated mail with those values to further
             customize the mail;
         :param str notif_layout: optional notification layout to encapsulate the

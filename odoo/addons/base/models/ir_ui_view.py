@@ -718,7 +718,7 @@ actual arch.
 
         :param str message: message to raise or log, augmented with contextual
                             view information
-        :param node: the lxml element where the error is located (if any)
+        :param etree._Element node: the lxml element where the error is located (if any)
         :param BaseException from_exception:
             when raising an exception, chain it to the provided one (default:
             disable chaining)

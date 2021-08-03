@@ -125,6 +125,8 @@ class ResPartner(models.Model):
 
     def signup_prepare(self, signup_type="signup", expiration=False):
         """ generate a new token for the partners with the given validity, if necessary
+
+            :param signup_type:
             :param expiration: the expiration datetime of the token (string, optional)
         """
         for partner in self:
@@ -157,12 +159,14 @@ class ResPartner(models.Model):
     @api.model
     def signup_retrieve_info(self, token):
         """ retrieve the user info about the token
-            :return: a dictionary with the user information:
-                - 'db': the name of the database
-                - 'token': the token, if token is valid
-                - 'name': the name of the partner, if token is valid
-                - 'login': the user login, if the user already exists
-                - 'email': the partner email, if the user does not exist
+
+        :return: a dictionary with the user information:
+
+            - 'db': the name of the database
+            - 'token': the token, if token is valid
+            - 'name': the name of the partner, if token is valid
+            - 'login': the user login, if the user already exists
+            - 'email': the partner email, if the user does not exist
         """
         partner = self._signup_retrieve_partner(token, raise_exception=True)
         res = {'db': self.env.cr.dbname}

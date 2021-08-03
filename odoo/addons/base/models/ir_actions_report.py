@@ -198,7 +198,6 @@ class IrActionsReport(models.Model):
         '''Retrieve an attachment for a specific record.
 
         :param record: The record owning of the attachment.
-        :param attachment_name: The optional name of the attachment.
         :return: A recordset of length <=1 or None
         '''
         attachment_name = safe_eval(self.attachment, {'object': record, 'time': time}) if self.attachment else ''
@@ -887,7 +886,8 @@ class IrActionsReport(models.Model):
         """Return an action of type ir.actions.report.
 
         :param docids: id/ids/browse record of the records to print (if not used, pass an empty list)
-        :param report_name: Name of the template to generate an action for
+        :param data:
+        :param config:
         """
         context = self.env.context
         if docids:

@@ -407,9 +407,7 @@ class ProcurementGroup(models.Model):
         type of documents).
 
         :param procurements: the description of the procurement
-        :type list: list of `~odoo.addons.stock.models.stock_rule.ProcurementGroup.Procurement`
         :param raise_user_error: will raise either an UserError or a ProcurementException
-        :type raise_user_error: boolan, optional
         :raises UserError: if `raise_user_error` is True and a procurement isn't fulfillable
         :raises ProcurementException: if `raise_user_error` is False and a procurement isn't fulfillable
         """

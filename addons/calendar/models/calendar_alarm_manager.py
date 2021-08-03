@@ -110,10 +110,9 @@ class AlarmManager(models.AbstractModel):
             :param event: Event browse record
             :param event_maxdelta: biggest duration from alarms for this event
             :param in_the_next_X_seconds: looking in the future (in seconds)
+            :param alarm_type:
             :param after: if not False: will return alert if after this date (date as string - todo: change in master)
             :param missing: if not False: will return alert even if we are too late
-            :param notif: Looking for type notification
-            :param mail: looking for type email
         """
         result = []
         # TODO: remove event_maxdelta and if using it
