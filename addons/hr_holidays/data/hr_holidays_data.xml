@@ -52,4 +52,46 @@
             <field name="responsible_id" ref="base.user_admin"/>
         </record>
     </data>
+    <data>
+        <record id="icon_1" model="ir.attachment">
+            <field name="name">icon1.svg</field>
+            <field name="res_model">hr.leave.type</field>
+            <field name="res_field">icon</field>
+            <field name="public" eval="True"/>
+            <field name="type">url</field>
+            <field name="url">/hr_holidays/static/src/img/icons/icon1.svg</field>
+        </record>
+        <record id="icon_2" model="ir.attachment">
+            <field name="name">icon2.svg</field>
+            <field name="res_model">hr.leave.type</field>
+            <field name="res_field">icon</field>
+            <field name="public" eval="True"/>
+            <field name="type">url</field>
+            <field name="url">/hr_holidays/static/src/img/icons/icon2.svg</field>
+        </record>
+        <record id="icon_3" model="ir.attachment">
+            <field name="name">icon3.svg</field>
+            <field name="res_model">hr.leave.type</field>
+            <field name="res_field">icon</field>
+            <field name="public" eval="True"/>
+            <field name="type">url</field>
+            <field name="url">/hr_holidays/static/src/img/icons/icon3.svg</field>
+        </record>
+        <record id="icon_4" model="ir.attachment">
+            <field name="name">icon4.svg</field>
+            <field name="res_model">hr.leave.type</field>
+            <field name="res_field">icon</field>
+            <field name="public" eval="True"/>
+            <field name="type">url</field>
+            <field name="url">/hr_holidays/static/src/img/icons/icon4.svg</field>
+        </record>
+        <record id="icon_5" model="ir.attachment">
+            <field name="name">icon5.svg</field>
+            <field name="res_model">hr.leave.type</field>
+            <field name="res_field">icon</field>
+            <field name="public" eval="True"/>
+            <field name="type">url</field>
+            <field name="url">/hr_holidays/static/src/img/icons/icon5.svg</field>
+        </record>
+    </data>
 </odoo>

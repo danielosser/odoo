@@ -107,6 +107,8 @@ class HolidaysType(models.Model):
     allocation_notif_subtype_id = fields.Many2one('mail.message.subtype', string='Allocation Notification Subtype', default=lambda self: self.env.ref('hr_holidays.mt_leave_allocation', raise_if_not_found=False))
     support_document = fields.Boolean(string='Supporting Document')
 
+    icon = fields.Many2one('ir.attachment', domain=[('res_model', '=', 'hr.leave.type'), ('res_field', '=', 'icon')])
+
     @api.constrains('validity_start', 'validity_stop')
     def _check_validity_dates(self):
         for leave_type in self:

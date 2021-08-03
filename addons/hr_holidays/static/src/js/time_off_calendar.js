@@ -13,6 +13,38 @@ odoo.define('hr_holidays.dashboard.view_custo', function(require) {
     var _t = core._t;
     var QWeb = core.qweb;
 
+    var FieldRadio = require("web.relational_fields").FieldRadio;
+    var registry = require('web.field_registry');
+    var qweb = QWeb;
+
+    var FieldRadioImage = FieldRadio.extend({
+        _render: function () {
+            console.log("coucou");
+            var self = this;
+            var currentValue;
+            if (this.field.type === 'many2one') {
+                currentValue = this.value && this.value.data.id;
+            } else {
+                currentValue = this.value;
+            }
+            this.$el.empty();
+            this.$el.attr('role', 'radiogroup')
+                .attr('aria-label', this.string);
+            _.each(this.values, function (value, index) {
+                self.$el.append(qweb.render('FieldRadioIcon.button', {
+                    checked: value[0] === currentValue,
+                    id: self.unique_id + '_' + value[0],
+                    index: index,
+                    name: self.unique_id,
+                    value: value,
+                    disabled: self.hasReadonlyModifier,
+                }));
+            });
+        },
+    });
+
+    registry.add("radio_image", FieldRadioImage);
+
     var TimeOffCalendarPopover = CalendarPopover.extend({
         template: 'hr_holidays.calendar.popover',
 
