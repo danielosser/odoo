@@ -385,7 +385,7 @@ class AccountJournal(models.Model):
 
     def _update_mail_alias(self, vals):
         self.ensure_one()
-        alias_values = self._get_alias_values(type=vals.get('type') or self.type, alias_name=vals.get('alias_name'))
+        alias_values = self._get_alias_values(type=vals.get('type') or self.type, alias_name=vals.get('alias_name') or self.alias_name)
         if self.alias_id:
             self.alias_id.sudo().write(alias_values)
         else:
@@ -419,7 +419,7 @@ class AccountJournal(models.Model):
                     bank_account = self.env['res.partner.bank'].browse(vals['bank_account_id'])
                     if bank_account.partner_id != company.partner_id:
                         raise UserError(_("The partners of the journal's company and the related bank account mismatch."))
-            if 'alias_name' in vals:
+            if 'alias_name' in vals  or vals.get('type') in ('purchase', 'sale') or (journal.type in ('purchase', 'sale') and not 'alias_id' in vals):
                 journal._update_mail_alias(vals)
             if 'restrict_mode_hash_table' in vals and not vals.get('restrict_mode_hash_table'):
                 journal_entry = self.env['account.move'].search([('journal_id', '=', self.id), ('state', '=', 'posted'), ('secure_sequence_number', '!=', 0)], limit=1)
@@ -538,7 +538,7 @@ class AccountJournal(models.Model):
 
         journal = super(AccountJournal, self.with_context(mail_create_nolog=True)).create(vals)
 
-        if 'alias_name' in vals:
+        if 'alias_name' in vals or ('type' in vals and vals['type'] in ('purchase', 'sale')):
             journal._update_mail_alias(vals)
 
         # Create the bank_account_id if necessary
