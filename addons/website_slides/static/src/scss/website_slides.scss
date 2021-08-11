@@ -486,10 +486,15 @@ $truncate-limits: 2, 3, 10;
                 &.active {
                     box-shadow:inset 2px 0 theme-color('primary');
                 }
-
-                &:hover .o_wslides_lesson_link_name {
-                    color: $headings-color;
-                }
+            }
+            .o_wslides_button_complete {
+                margin-left: 5px;
+            }
+            button.o_wslides_button_complete i {
+                color: $gray-600;
+            }
+            div.o_wslides_button_complete i {
+                color: $gray-400;
             }
         }
     }
@@ -509,8 +514,18 @@ $truncate-limits: 2, 3, 10;
             }
         }
     }
+
+    .o_wslides_undone_button.disabled,
+    .o_wslides_done_button.disabled {
+        // Show title attribute on disabled link
+        color: white!important;
+        pointer-events: auto;
+    }
 }
 
+.o_wslides_lesson_header_container {
+    height: 80px;
+}
 
 // Modals
 // **************************************************
