@@ -167,11 +167,17 @@ class AccountFiscalPosition(models.Model):
         # This can be easily overridden to apply more complex fiscal rules
         PartnerObj = self.env['res.partner']
         partner = PartnerObj.browse(partner_id)
+        delivery = PartnerObj.browse(delivery_id)
 
-        # if no delivery use invoicing
-        if delivery_id:
-            delivery = PartnerObj.browse(delivery_id)
-        else:
+        company = self.env.company
+        eu_country_codes = self.env.ref('base.europe').country_ids.mapped('code')
+        has_vat = bool(company.vat) and bool(partner.vat)
+        if has_vat:
+            intra_eu = company.vat[:2] in eu_country_codes and partner.vat[:2] in eu_country_codes
+            vat_exclusion = company.vat[:2] == partner.vat[:2]
+
+        # If company and delivery have the same vat prefix, use invoicing
+        if not delivery or (has_vat and intra_eu and vat_exclusion):
             delivery = partner
 
         # partner manually set fiscal position always win
