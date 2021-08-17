@@ -81,13 +81,6 @@ export function appendTo(parent, node) {
     }
 }
 
-function makeGroupTitleRow(node) {
-    const titleDiv = this.document.createElement("div");
-    titleDiv.classList.add("o_horizontal_separator");
-    titleDiv.textContent = node.getAttribute("string");
-    return titleDiv;
-}
-
 function copyAttributes(node, compiled) {
     if (node.tagName === "button") {
         return;

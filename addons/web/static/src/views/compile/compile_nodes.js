@@ -1,6 +1,13 @@
 /* @odoo-module */
 import { appendTo, addLegacyNodeInfo } from "./compile_lib";
 
+function makeGroupTitleRow(node) {
+    const titleDiv = this.document.createElement("div");
+    titleDiv.classList.add("o_horizontal_separator");
+    titleDiv.textContent = node.getAttribute("string");
+    return titleDiv;
+}
+
 export function compileGroup({ document, compileNode, outerGroupCol }, { node, params }) {
     const group = document.createElement("div");
     group.setAttribute("class", "o_group");
