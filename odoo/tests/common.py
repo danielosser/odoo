@@ -1042,15 +1042,16 @@ class ChromeBrowser():
                 message += '\n' + stack
 
             log_type = params['type']
+            self._logger.getChild('browser').log(
+                self._TO_LEVEL.get(log_type, logging.INFO),
+                "%s", message  # might still have %<x> characters
+            )
+
             if raise_log_error and log_type == 'error':
                 self.take_screenshot()
                 self._save_screencast()
                 raise ChromeBrowserException(message)
 
-            self._logger.getChild('browser').log(
-                self._TO_LEVEL.get(log_type, logging.INFO),
-                "%s", message # might still have %<x> characters
-            )
             res['success'] = 'test successful' in message
 
         if res.get('method') == 'Runtime.exceptionThrown':
