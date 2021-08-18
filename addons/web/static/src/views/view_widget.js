@@ -14,8 +14,9 @@ export class ViewWidget extends owl.Component {
             this.renderId++;
         });
         const widgetName = this.props.widgetName;
-        const Widget = registry.category("widget").get(widgetName, null);
+        const Widget = registry.category("view_widgets").get(widgetName, null);
         if (!Widget) {
+            this.isLegacyOwl = true;
             this.env = owl.Component.env;
         }
         this.Widget = Widget || widgetRegistryOwl.get(widgetName) || widgetRegistry.get(widgetName);
@@ -23,7 +24,11 @@ export class ViewWidget extends owl.Component {
     }
 
     get widgetProps() {
-        return this.props.widgetProps;
+        if (!this.isLegacyOwl) {
+            return this.props;
+        } else {
+            throw new Error("To implement ....");
+        }
     }
 
     get widgetArgs() {
