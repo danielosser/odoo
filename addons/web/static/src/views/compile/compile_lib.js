@@ -63,7 +63,7 @@ function getAllModifiers(node) {
     return parsed;
 }
 
-function getModifier(node, modifierName) {
+export function getModifier(node, modifierName) {
     let mod = node.getAttribute(modifierName);
     if (mod === null) {
         const modifiers = getAllModifiers(node);

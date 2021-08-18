@@ -9,6 +9,8 @@ function makeGroupTitleRow(node) {
 }
 
 export function compileGroup({ document, compileNode, outerGroupCol }, { node, params }) {
+    outerGroupCol = outerGroupCol || 2;
+
     const group = document.createElement("div");
     group.setAttribute("class", "o_group");
 
