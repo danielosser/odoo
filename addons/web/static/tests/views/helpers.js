@@ -49,7 +49,7 @@ export async function makeView(params) {
             models: serverData.models,
         });
         props.arch = fvg.arch;
-        props.fields = fvg.fields;
+        props.fields = Object.assign({}, props.fields, fvg.fields);
         props.searchViewArch = props.searchViewArch || "<search/>";
         props.searchViewFields = props.searchViewFields || Object.assign({}, props.fields);
     }
