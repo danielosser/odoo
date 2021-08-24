@@ -16,6 +16,7 @@
         'web.assets_frontend': [
             'bus/static/src/js/services/bus_service.js',
             'bus/static/src/js/websocket_bus.js',
+            'bus/static/src/js/services/websocket_errors.js',
         ],
         'web.qunit_suite_tests': [
             'bus/static/tests/*.js',

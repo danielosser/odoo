@@ -10,6 +10,7 @@ import { calendarNotificationService } from "@calendar/js/services/calendar_noti
 import { click, nextTick, patchWithCleanup } from "@web/../tests/helpers/utils";
 import { browser } from "@web/core/browser/browser";
 import { registry } from "@web/core/registry";
+import { patchWebsocketWithCleanup } from "@web/../tests/helpers/mock_websocket";
 
 const LocalStorageService = AbstractStorageService.extend({
     storage: new RamStorage(),
@@ -29,6 +30,28 @@ QUnit.module("Calendar Notification", (hooks) => {
             setTimeout: (fn) => fn(),
             clearTimeout: () => {},
         });
+
+        const calendarAlarmNotification = [{
+            message: {
+                type: "calendar.alarm",
+                payload: [{
+                    alarm_id: 1,
+                    event_id: 2,
+                    title: "Meeting",
+                    message: "Very old meeting message",
+                    timer: 20 * 60,
+                    notify_at: "1978-04-14 12:45:00",
+                }],
+            }
+        }];
+
+        patchWebsocketWithCleanup({
+            onopen: function () {
+                this.dispatchEvent(new MessageEvent('message', {
+                    data: JSON.stringify(calendarAlarmNotification),
+                }));
+            }
+        });
     });
 
     QUnit.test(
@@ -36,30 +59,7 @@ QUnit.module("Calendar Notification", (hooks) => {
         async (assert) => {
             assert.expect(5);
 
-            let pollNumber = 0;
             const mockRPC = (route, args) => {
-                if (route === "/longpolling/poll") {
-                    if (pollNumber > 0) {
-                        return new Promise(() => {}); // let it hang to avoid further calls
-                    }
-                    pollNumber++;
-                    return Promise.resolve([
-                        {
-                            id: "prout",
-                            message: {
-                                type: "calendar.alarm",
-                                payload: [{
-                                    alarm_id: 1,
-                                    event_id: 2,
-                                    title: "Meeting",
-                                    message: "Very old meeting message",
-                                    timer: 20 * 60,
-                                    notify_at: "1978-04-14 12:45:00",
-                                }],
-                            },
-                        },
-                    ]);
-                }
                 if (route === "/calendar/notify") {
                     return Promise.resolve([]);
                 }
@@ -94,30 +94,7 @@ QUnit.module("Calendar Notification", (hooks) => {
         async (assert) => {
             assert.expect(5);
 
-            let pollNumber = 0;
             const mockRPC = (route, args) => {
-                if (route === "/longpolling/poll") {
-                    if (pollNumber > 0) {
-                        return new Promise(() => {}); // let it hang to avoid further calls
-                    }
-                    pollNumber++;
-                    return Promise.resolve([
-                        {
-                            id: "prout",
-                            message: {
-                                type: "calendar.alarm",
-                                payload: [{
-                                    alarm_id: 1,
-                                    event_id: 2,
-                                    title: "Meeting",
-                                    message: "Very old meeting message",
-                                    timer: 20 * 60,
-                                    notify_at: "1978-04-14 12:45:00",
-                                }],
-                            },
-                        },
-                    ]);
-                }
                 if (route === "/calendar/notify") {
                     return Promise.resolve([]);
                 }
@@ -164,30 +141,7 @@ QUnit.module("Calendar Notification", (hooks) => {
         async (assert) => {
             assert.expect(4);
 
-            let pollNumber = 0;
             const mockRPC = (route, args) => {
-                if (route === "/longpolling/poll") {
-                    if (pollNumber > 0) {
-                        return new Promise(() => {}); // let it hang to avoid further calls
-                    }
-                    pollNumber++;
-                    return Promise.resolve([
-                        {
-                            message: {
-                                id: "prout",
-                                type: "calendar.alarm",
-                                payload: [{
-                                    alarm_id: 1,
-                                    event_id: 2,
-                                    title: "Meeting",
-                                    message: "Very old meeting message",
-                                    timer: 20 * 60,
-                                    notify_at: "1978-04-14 12:45:00",
-                                }],
-                            },
-                        },
-                    ]);
-                }
                 if (route === "/calendar/notify") {
                     return Promise.resolve([]);
                 }

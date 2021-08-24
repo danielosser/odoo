@@ -89,6 +89,7 @@
             # Framework JS
             'bus/static/src/js/*.js',
             'bus/static/src/js/services/bus_service.js',
+            'bus/static/src/js/services/websocket_errors.js',
             'web/static/lib/luxon/luxon.js',
             'web/static/src/core/**/*',
             # FIXME: debug menu currently depends on webclient, once it doesn't we don't need to remove the contents of the debug folder
