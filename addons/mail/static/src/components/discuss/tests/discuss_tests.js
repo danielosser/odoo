@@ -3649,7 +3649,6 @@ QUnit.test('receive new chat message: out of odoo focus (notification, channel)'
                 _poll() {}, // Do nothing
                 _registerWindowUnload() {}, // Do nothing
                 isOdooFocused: () => false,
-                updateOption() {},
             }),
         },
     });
@@ -3691,7 +3690,6 @@ QUnit.test('receive new chat message: out of odoo focus (notification, chat)', a
                 _poll() {}, // Do nothing
                 _registerWindowUnload() {}, // Do nothing
                 isOdooFocused: () => false,
-                updateOption() {},
             }),
         },
     });
@@ -3746,7 +3744,6 @@ QUnit.test('receive new chat messages: out of odoo focus (tab title)', async fun
                 _poll() {}, // Do nothing
                 _registerWindowUnload() {}, // Do nothing
                 isOdooFocused: () => false,
-                updateOption() {},
             }),
         },
     });

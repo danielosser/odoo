@@ -619,7 +619,6 @@ async function start(param0 = {}) {
             isOdooFocused() {
                 return true;
             },
-            updateOption() {},
         }),
         chat_window: ChatWindowService.extend({
             _getParentNode() {

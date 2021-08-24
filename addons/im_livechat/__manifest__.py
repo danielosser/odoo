@@ -88,6 +88,8 @@ Help your customers with this chat, and analyse their feedback.
             'web/static/src/core/browser/feature_detection.js',
             'web/static/src/core/dialog/dialog.js',
             'web/static/src/core/errors/error_dialogs.js',
+            'web/static/src/core/errors/error_service.js',
+            'web/static/src/core/errors/error_utils.js',
             'web/static/src/core/effects/**/*.js',
             'web/static/src/core/hotkeys/hotkey_service.js',
             'web/static/src/core/hotkeys/hotkey_hook.js',
@@ -152,6 +154,7 @@ Help your customers with this chat, and analyse their feedback.
             # Bus, Mail, Livechat
             'bus/static/src/js/services/bus_service.js',
             'bus/static/src/js/websocket_bus.js',
+            'bus/static/src/js/services/websocket_errors.js',
             'mail/static/src/js/utils.js',
             'im_livechat/static/src/legacy/public_livechat.js',
 

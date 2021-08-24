@@ -7,6 +7,7 @@ import * as AbstractStorageService from "web.AbstractStorageService";
 
 import { createWebClient } from "@web/../tests/webclient/helpers";
 import { assetsWatchdogService } from "@bus/js/services/assets_watchdog_service";
+import { patchWebsocketWithCleanup } from "@web/../tests/helpers/mock_websocket";
 import { click, nextTick, patchWithCleanup } from "@web/../tests/helpers/utils";
 import { browser } from "@web/core/browser/browser";
 import { registry } from "@web/core/registry";
@@ -37,28 +38,26 @@ QUnit.module("Bus Assets WatchDog", (hooks) => {
     QUnit.test("can listen on bus and displays notifications in DOM", async (assert) => {
         assert.expect(4);
 
-        let pollNumber = 0;
-        const mockRPC = async (route, args) => {
-            if (route === "/longpolling/poll") {
-                if (pollNumber > 0) {
-                    return new Promise(() => {}); // let it hang to avoid further calls
-                }
-                pollNumber++;
-                return [{
-                    message: {
-                        type: 'bundle_changed',
-                        payload: {
-                            name: 'web.assets_backend',
-                            version: 'newHash',
-                        },
-                    },
-                }];
+        const bundleChangedNotification = [{
+            message: {
+                type: 'bundle_changed',
+                payload: {
+                    name: 'web.assets_backend',
+                    version: 'newHash',
+                },
             }
-        };
+        }];
+
+        patchWebsocketWithCleanup({
+            onopen: function () {
+                this.dispatchEvent(new MessageEvent('message', {
+                    data: JSON.stringify(bundleChangedNotification),
+                }));
+            },
+        });
 
         const webClient = await createWebClient({
             legacyParams: { serviceRegistry: legacyServicesRegistry },
-            mockRPC,
         });
 
         await nextTick();

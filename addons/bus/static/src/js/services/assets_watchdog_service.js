@@ -21,7 +21,7 @@ export const assetsWatchdogService = {
             });
 
             legacyEnv.services.bus_service.onNotification(this, onNotification);
-            legacyEnv.services.bus_service.startPolling();
+            legacyEnv.services.bus_service.startBus();
         });
 
         /**

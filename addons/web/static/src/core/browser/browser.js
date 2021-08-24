@@ -30,6 +30,7 @@ export const browser = Object.assign({}, owl.browser, {
     history: window.history,
     navigator: navigator,
     open: window.open.bind(window),
+    WebSocket: window.WebSocket,
     XMLHttpRequest: window.XMLHttpRequest,
     localStorage,
     sessionStorage,
