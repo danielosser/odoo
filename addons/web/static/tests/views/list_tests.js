@@ -247,6 +247,27 @@ QUnit.module('Views', {
         list.destroy();
     });
 
+    QUnit.test('list with no_open="1"', async function (assert) {
+        assert.expect(1);
+
+        const list = await createView({
+            View: ListView,
+            model: 'foo',
+            data: this.data,
+            viewOptions: { hasActionMenus: true },
+            arch: '<tree no_open="1"><field name="foo"/></tree>',
+        });
+
+        testUtils.mock.intercept(list, "open_record", function () {
+            assert.ok("list view should trigger 'open_record' event");
+        });
+
+        await testUtils.dom.click(list.$('.o_data_cell:first'));
+        assert.verifySteps([]);
+
+        list.destroy();
+    });
+
     QUnit.test('export feature in list for users not in base.group_allow_export', async function (assert) {
         assert.expect(5);
 
