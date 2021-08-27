@@ -663,6 +663,7 @@ blockquote {
         // Background & Text
         $-bg-color: o-color($-bg);
         @include o-bg-color($-bg-color, o-color($-text), $important: false, $yiq-min-opacity-threshold: 0);
+        background-image: o-website-value('o-cc#{$index}-bg-gradient');
 
         #{$o-color-extras-nesting-selector} {
             // Headings
@@ -704,9 +705,18 @@ blockquote {
             $-btn-primary-border-color: if($-btn-primary-border, o-color($-btn-primary-border), $-btn-primary-color);
             .btn-fill-primary {
                 @include button-variant($-btn-primary-color, $-btn-primary-border-color);
+                @if o-website-value('o-cc#{$index}-btn-primary-gradient') {
+                    background-image: o-website-value('o-cc#{$index}-btn-primary-gradient');
+                    &:hover {
+                        filter: invert(0.2);
+                    }
+                } @else {
+                    background-image: none;
+                }
             }
             .btn-outline-primary {
                 @include button-outline-variant($-btn-primary-border-color);
+                background-image: o-website-value('o-cc#{$index}-btn-primary-gradient');
             }
 
             // Secondary
@@ -714,9 +724,18 @@ blockquote {
             $-btn-secondary-border-color: if($-btn-secondary-border, o-color($-btn-secondary-border), $-btn-secondary-color);
             .btn-fill-secondary {
                 @include button-variant($-btn-secondary-color, $-btn-secondary-border-color);
+                @if o-website-value('o-cc#{$index}-btn-secondary-gradient') {
+                    background-image: o-website-value('o-cc#{$index}-btn-secondary-gradient');
+                    &:hover {
+                        filter: invert(0.2);
+                    }
+                } @else {
+                    background-image: none;
+                }
             }
             .btn-outline-secondary {
                 @include button-outline-variant($-btn-secondary-border-color);
+                background-image: o-website-value('o-cc#{$index}-btn-secondary-gradient');
             }
 
             // 'Active' states. Note: this only emulates very common components

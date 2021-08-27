@@ -307,7 +307,7 @@ function _backgroundImagePartsToCss(parts) {
     if (parts.gradient) {
         css += (css ? ', ' : '') + parts.gradient;
     }
-    return css || 'none';
+    return css || '';
 }
 /**
  * @param {string} [value]
