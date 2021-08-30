@@ -1,0 +1,72 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Element}
+        [Element/name]
+            iconContainer
+        [Element/model]
+            ActivityComponent
+        [web.Element/class]
+            {if}
+                @record
+                .{ActivityComponent/activity}
+                .{Activity/state}
+                .{=}
+                    planned
+            .{then}
+                bg-success
+            {if}
+                @record
+                .{ActivityComponent/activity}
+                .{Activity/state}
+                .{=}
+                    today
+            .{then}
+                bg-warning
+            {if}
+                @record
+                .{ActivityComponent/activity}
+                .{Activity/state}
+                .{=}
+                    overdue
+            .{then}
+                bg-danger
+        [web.Element/style]
+            {scss/include}
+                {scss/o-position-absolute}
+                    [$top]
+                        auto
+                    [$left]
+                        auto
+                    [$bottom]
+                        -5
+                        px
+                    [$right]
+                        -5
+                        px
+            [web.scss/display]
+                flex
+            [web.scss/align-items]
+                center
+            [web.scss/justify-content]
+                center
+            [web.scss/width]
+                25
+                px
+            [web.scss/height]
+                25
+                px
+            [web.scss/border-width]
+                2
+                px
+            [web.scss/color]
+                {scss/$white}
+            [web.scss/border-color]
+                {scss/$white}
+            [web.scss/border-radius]
+                100%
+            [web.scss/border-style]
+                solid
+`;

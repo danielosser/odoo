@@ -1,0 +1,64 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Element}
+        [Element/name]
+            deadlineDateText
+        [Element/model]
+            ActivityComponent
+        [web.Element/tag]
+            span
+        [web.Element/textContent]
+            :momentDeadlineDate
+                {Record/insert}
+                    [Record/traits]
+                        web.Moment
+                    {String/autoToDate}
+                        @record
+                        .{ActivityComponent/activity}
+                        .{Activity/dateDeadline}
+            :datetimeFormat
+                {Locale/getLangDateFormat}
+            {web.Moment/format}
+                @momentDeadlineDate
+                @datetimeFormat
+        [web.Element/style]
+            {if}
+                @record
+                .{ActivityComponent/activity}
+                .{Activity/state}
+                .{=}
+                    default
+            .{then}
+                [web.scss/color]
+                    {scss/$o-mail-activity-default-color}
+            {if}
+                @record
+                .{ActivityComponent/activity}
+                .{Activity/state}
+                .{=}
+                    overdue
+            .{then}
+                [web.scss/color]
+                    {scss/$o-mail-activity-overdue-color}
+            {if}
+                @record
+                .{ActivityComponent/activity}
+                .{Activity/state}
+                .{=}
+                    planned
+            .{then}
+                [web.scss/color]
+                    {scss/$o-mail-activity-planned-color}
+            {if}
+                @record
+                .{ActivityComponent/activity}
+                .{Activity/state}
+                .{=}
+                    today
+            .{then}
+                [web.scss/color]
+                    {scss/$o-mail-activity-today-color}
+`;

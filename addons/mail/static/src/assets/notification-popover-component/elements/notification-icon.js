@@ -1,0 +1,62 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Element}
+        [Element/name]
+            notificationIcon
+        [Element/model]
+            NotificationPopoverComponent
+        [web.Element/tag]
+            i
+        [web.Element/class]
+            {switch}
+                @record
+                .{NotificationPopoverComponent/notification}
+                .{Notification/status}
+            .{case}
+                [sent]
+                    fa
+                    fa-check
+                [bounce]
+                    fa
+                    fa-exclamation
+                [exception]
+                    fa
+                    fa-exclamation
+                [ready]
+                    fa
+                    fa-send-o
+                [canceled]
+                    fa
+                    fa-trash-o
+        [web.Element/title]
+            {switch}
+                @record
+                .{NotificationPopoverComponent/notification}
+                .{Notification/status}
+            .{case}
+                [sent]
+                    {Locale/text}
+                        Sent
+                [bounce]
+                    {Locale/text}
+                        Bounced
+                [exception]
+                    {Locale/text}
+                        Error
+                [ready]
+                    {Locale/text}
+                        Ready
+                [canceled]
+                    {Locale/text}
+                        Canceled
+        [web.Element/role]
+            img
+        [web.Element/style]
+            [web.scss/margin-inline-end]
+                {scss/map-get}
+                    {scss/$spacers}
+                    2
+`;

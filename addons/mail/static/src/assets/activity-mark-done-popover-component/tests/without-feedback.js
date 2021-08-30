@@ -1,0 +1,127 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Test}
+        [Test/name]
+            without feedback
+        [Test/model]
+            ActivityMarkDonePopoverComponent
+        [Test/assertions]
+            7
+        [Test/scenario]
+            :testEnv
+                {Record/insert}
+                    [Record/traits]
+                        Env
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    Server
+                [Server/data]
+                    @record
+                    .{Test/data}
+                [Server/mockRPC]
+                    {func}
+                        [in]
+                            route
+                            args
+                            original
+                        [out]
+                            {if}
+                                @route
+                                .{=}
+                                    /web/dataset/call_kw/mail.activity/action_feedback
+                            .{then}
+                                {Test/step}
+                                    action_feedback
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        args
+                                    .{Collection/length}
+                                    .{=}
+                                        1
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        args
+                                    .{Collection/first}
+                                    .{Collection/length}
+                                    .{=}
+                                        1
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        args
+                                    .{Collection/first}
+                                    .{Collection/first}
+                                    .{=}
+                                        12
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        kwargs
+                                    .{Dict/get}
+                                        attachment_ids
+                                    .{Collection/length}
+                                    .{=}
+                                        0
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        kwargs
+                                    .{Dict/get}
+                                        feedback
+                                    .{isFalsy}
+                                {break}
+                            {if}
+                                @route
+                                .{=}
+                                    /web/dataset/call_kw/mail.activity/unlink
+                            .{then}
+                                {Dev/comment}
+                                    'unlink' on non-existing record raises a
+                                    server crash
+                                {Error/raise}
+                                    'unlink' RPC on activity must not be called (already unlinked from mark as done)
+                            @original
+            :activity
+                @testEnv
+                .{Record/insert}
+                    [Record/traits]
+                        Activity
+                    [Activity/canWrite]
+                        true
+                    [Activity/category]
+                        not_upload_file
+                    [Activity/id]
+                        12
+                    [Activity/thread]
+                        @testEnv
+                        .{Record/insert}
+                            [Record/traits]
+                                Thread
+                            [Thread/id]
+                                42
+                            [Thread/model]
+                                res.partner
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    ActivityMarkDonePopoverComponent
+                [ActivityMarkDonePopoverComponent/activity]
+                    @activity
+            @testEnv
+            .{UI/click}
+                @activity
+                .{Activity/activityMarkDonePopoverComponents}
+                .{Collection/first}
+                .{ActivityMarkDonePopoverComponent/doneButton}
+            {Test/verifySteps}
+                []
+                    action_feedback
+                []
+                    Mark done and schedule next button should call the right rpc
+`;

@@ -1,0 +1,61 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Element}
+        [Element/name]
+            itemNewInput
+        [Element/model]
+            DiscussSidebarCategoryComponent
+        [Field/target]
+            AutocompleteInputComponent
+        [Element/props]
+            {if}
+                @record
+                .{DiscussSidebarCategoryComponent/category}
+                .{=}
+                    {Discuss/categoryChannel}
+            .{then}
+                [AutocompleteInputComponent/customClass]
+                    o-DiscussSidebarCategoryComponent-newChannelAutocompleteSuggestions
+            [AutocompleteInputComponent/isFocusOnMount]
+                true
+            [AutocompleteInputComponent/isHtml]
+                {if}
+                    @record
+                    .{DiscussSidebarCategoryComponent/category}
+                    .{=}
+                        {Discuss/categoryChannel}
+                .{then}
+                    true
+                .{else}
+                    false
+            [AutocompleteInputComponent/placeholder]
+                @record
+                .{DiscussSidebarCategoryComponent/category}
+                .{DiscussSidebarCategory/newItemPlaceholderText}
+            [AutocompleteInputComponent/select]
+                @record
+                .{DiscussSidebarCategoryComponent/category}
+                .{DiscussSidebarCategory/onAddItemAucompleteSelect}
+            [AutocompleteInputComponent/source]
+                @record
+                .{DiscussSidebarCategoryComponent/category}
+                .{DiscussSidebarCategory/onAddItemAutocompleteSource}
+        [Element/t-on-o-hide]
+            {DiscussSidebarCategory/onHideAddingItem}
+                @record
+                .{DiscussSidebarCategoryComponent/category}
+        [web.Element/style]
+            [web.scss/flex]
+                1
+                1
+                auto
+            [web.scss/margin-left]
+                {scss/$o-mail-discuss-sidebar-category-item-avatar-left-margin}
+            [web.scss/margin-right]
+                {scss/$o-mail-discuss-sidebar-scrollbar-width}
+            [web.scss/outline]
+                none
+`;

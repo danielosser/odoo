@@ -1,0 +1,169 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Test}
+        [Test/name]
+            click on edit
+        [Test/model]
+            ActivityComponent
+        [Test/assertions]
+            9
+        [Test/scenario]
+            :bus
+                {Record/insert}
+                    [Record/traits]
+                        Bus
+            {Bus/on}
+                [0]
+                    @bus
+                [1]
+                    do-action
+                [2]
+                    null
+                [3]
+                    {func}
+                        [in]
+                            payload
+                        [out]
+                            {Test/step}
+                                do_action
+                            {Test/assert}
+                                []
+                                    @payload
+                                    .{Dict/get}
+                                        action
+                                    .{Dict/get}
+                                        context
+                                    .{Dict/get}
+                                        default_res_id
+                                    .{=}
+                                        42
+                                []
+                                    Action should have the activity res id as default res id in context
+                            {Test/assert}
+                                []
+                                    @payload
+                                    .{Dict/get}
+                                        action
+                                    .{Dict/get}
+                                        context
+                                    .{Dict/get}
+                                        default_res_model
+                                    .{=}
+                                        res.partner
+                                []
+                                    Action should have the activity res model as default res model in context
+                            {Test/assert}
+                                []
+                                    @payload
+                                    .{Dict/get}
+                                        action
+                                    .{Dict/get}
+                                        type
+                                    .{=}
+                                        ir.actions.act_window
+                                []
+                                    Action should be of type "ir.actions.act_window"
+                            {Test/assert}
+                                []
+                                    @payload
+                                    .{Dict/get}
+                                        action
+                                    .{Dict/get}
+                                        res_model
+                                    .{=}
+                                        mail.activity
+                                []
+                                    Action should have "mail.activity" as res_model
+                            {Test/assert}
+                                []
+                                    @payload
+                                    .{Dict/get}
+                                        action
+                                    .{Dict/get}
+                                        res_id
+                                    .{=}
+                                        12
+                                []
+                                    Action should have activity id as res_id
+            :testEnv
+                {Record/insert}
+                    [Record/traits]
+                        Env
+                    [Env/owlEnv]
+                        [bus]
+                            @bus
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    Server
+                [Server/data]
+                    @record
+                    .{Test/data}
+            :activity
+                @testEnv
+                .{Record/insert}
+                    [Record/traits]
+                        Activity
+                    [Activity/canWrite]
+                        true
+                    [Activity/id]
+                        12
+                    [Activity/mailTemplates]
+                        @testEnv
+                        .{Field/add}
+                            @testEnv
+                            .{Record/insert}
+                                [Record/traits]
+                                    MailTemplate
+                                [MailTemplate/id]
+                                    1
+                                [MailTemplate/name]
+                                    Dummy mail template
+                    [Activity/thread]
+                        @testEnv
+                        .{Record/insert}
+                            [Record/traits]
+                                Thread
+                            [Thread/id]
+                                42
+                            [Thread/model]
+                                res.partner
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    ActivityComponent
+                [ActivityComponent/activity]
+                    @activity
+            {Test/assert}
+                []
+                    @activity
+                    .{Activity/activityComponents}
+                    .{Collection/length}
+                    .{=}
+                        1
+                []
+                    should have activity component
+            {Test/assert}
+                []
+                    @activity
+                    .{Activity/activityComponents}
+                    .{Collection/first}
+                    .{ActivityComponent/editButton}
+                []
+                    should have activity edit button
+
+            @testEnv
+            .{UI/click}
+                @activity
+                .{Activity/activityComponents}
+                .{Collection/first}
+                .{ActivityComponent/editButton}
+            {Test/verifySteps}
+                []
+                    do_action
+                []
+                    should have called 'schedule activity' action correctly
+`;

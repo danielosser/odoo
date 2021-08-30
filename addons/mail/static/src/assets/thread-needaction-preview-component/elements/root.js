@@ -1,0 +1,69 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Element}
+        [Element/name]
+            root
+        [Element/model]
+            ThreadNeedactionPreviewComponent
+        [Model/traits]
+            Hoverable
+            NotificationListItemComponent/root
+        [Element/onClick]
+            {if}
+                @record
+                .{ThreadNeedactionPreviewComponent/markAsRead}
+                .{&}
+                    @record
+                    .{ThreadNeedactionPreviewComponent/markAsRead}
+                    .{web.Element/contains}
+                        @ev
+                        .{web.Event/target}
+            .{then}
+                {Dev/comment}
+                    handled in _onClickMarkAsRead
+                {break}
+            {Thread/open}
+                record
+                .{ThreadNeedactionPreviewComponent/thread}
+            {if}
+                {Device/isMobile}
+                .{isFalsy}
+            .{then}
+                {MessagingMenu/close}
+        [web.Element/data-thread-local-id]
+            {if}
+                @record
+                .{ThreadNeedactionPreviewComponent/thread}
+            .{then}
+                @record
+                .{ThreadNeedactionPreviewComponent/thread}
+                .{Record/id}
+        [web.Element/style]
+            {if}
+                @field
+                .{web.Element/isHover}
+            .{then}
+                [web.scss/background-color]
+                    {scss/rgba}
+                        {scss/$o-brand-primary}
+                        0.2
+                {web.scss/selector}
+                    [0]
+                        .o-ThreadNeedactionPreviewComponent-markAsRead
+                    [1]
+                        [web.scss/opacity]
+                            1
+                {web.scss/selector}
+                    [0]
+                        .o-ThreadNeedactionPreviewComponent-partnerImStatusIcon
+                    [1]
+                        {web.scss/include}
+                            {scss/o-mail-notification-list-item-hover-partner-im-status-icon-style}
+            [web.scss/background-color]
+                {scss/rgba}
+                    {scss/$o-brand-primary}
+                    0.1
+`;

@@ -1,0 +1,70 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Element}
+        [Element/name]
+            gridTile
+        [Element/model]
+            RtcCallViewerComponent
+        [Model/traits]
+           RtcCallViewerComponent/participantCard
+        [Element/t-foreach]
+            @record
+            .{RtcCallViewerComponent/rtcCallViewer}
+            .{RtcCallViewer/tileParticipantCards}
+        [Element/t-as]
+            participantCard
+        [Element/t-key]
+            grid_tile_
+            .{+}
+                @template
+                .{Template/participantCard}
+                .{Record/id}
+        [Element/isPresent]
+            @record
+            .{RtcCallViewerComponent/rtcCallViewer}
+            .{RtcCallViewer/filterVideoGrid}
+            .{isFalsy}
+            .{|}
+                @template
+                .{Template/participantCard}
+                .{RtcCallParticipantCard/rtcSession}
+                .{&}
+                    @template
+                    .{Template/participantCard}
+                    .{RtcCallParticipantCard/rtcSession}
+                    .{RtcSession/videoStream}
+        [Field/target]
+            RtcCallParticipantCardComponent
+        [Element/props]
+            [RtcCallParticipantCardComponent/callParticipantCard]
+                @template
+                .{Template/participantCard}
+        [web.Element/style]
+            [web.scss/width]
+                100%
+            [web.scss/aspect-ratio]
+                16/9
+            [web.scss/width]
+                @record
+                .{RtcCallViewerComponent/tileWidth}
+                .{+}
+                    px
+            [web.scss/height]
+                @record
+                .{RtcCallViewerComponent/tileHeight}
+                .{+}
+                    px
+            [web.scss/min-width]
+                @record
+                .{RtcCallViewerComponent/tileWidth}
+                .{+}
+                    px
+            [web.scss/min-height]
+                @record
+                .{RtcCallViewerComponent/tileHeight}
+                .{+}
+                    px
+`;

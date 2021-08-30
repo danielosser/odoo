@@ -1,0 +1,138 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Action}
+        [Action/name]
+            MessageListComponent/_onScrollThrottled
+        [Action/params]
+            record
+                [type]
+                    MessageListComponent
+        [Action/behavior]
+            {if}
+                {MessageListComponent/_getScrollableElement}
+                    @record
+                .{isFalsy}
+            .{then}
+                {Dev/comment}
+                    could be unmounted in the meantime
+                    (due to throttled behavior)
+                {break}
+            :scrollTop
+                {MessageListComponent/_getScrollableElement}
+                    @record
+                .{web.Element/scrollTop}
+            {Env/messagingBus}
+            .{Bus/trigger}
+                [0]
+                    o-component-message-list-scrolled
+                [1]
+                    [orderedMessages]
+                        @record
+                        .{MessageListComponent/threadView}
+                        .{ThreadView/threadCache}
+                        .{ThreadCache/orderedMessages}
+                    [scrollTop]
+                        @scrollTop
+                    [thread]
+                        @record
+                        .{MessageListComponent/threadView}
+                        .{ThreadView/thread}
+                    [threadViewer]
+                        @record
+                        .{MessageListComponent/threadView}
+                        .{ThreadView/threadViewer}
+            {if}
+                @record
+                .{MessageListComponent/_isLastScrollProgrammatic}
+                .{&}
+                    @record
+                    .{MessageListComponent/threadView}
+            .{then}
+                {Dev/comment}
+                    Margin to compensate for inaccurate scrolling to
+                    bottom and height flicker due height change of
+                    composer area.
+                :margin
+                    30
+                {Dev/comment}
+                    Automatically scroll to new received messages only
+                    when the list is currently fully scrolled.
+                :hasAutoScrollOnMessageReceived
+                    {if}
+                        @record
+                        .{MessageListComponent/order}
+                        .{=}
+                            asc
+                    .{then}
+                        @scrollTop
+                        .{>=}
+                            {MessageListComponent/_getScrollableElement}
+                                @record
+                            .{web.Element/scrollHeight}
+                            .{-}
+                                {MessageListComponent/_getScrollableElement}
+                                    @record
+                                .{web.Element/clientHeight}
+                            .{-}
+                                @margin
+                    .{else}
+                        @scrollTop
+                        .{<=}
+                            @margin
+                {Record/update}
+                    [0]
+                        @record
+                        .{MessageListComponent/threadView}
+                    [1]
+                        [ThreadView/hasAutoScrollOnMessageReceived]
+                            @hasAutoScrollOnMessageReceived
+            {if}
+                @record
+                .{MessageListComponent/threadView}
+            .{then}
+                {ThreadViewer/saveThreadCacheScrollHeightAsInitial}
+                    [0]
+                        @record
+                        .{MessageListComponent/threadView}
+                        .{ThreadView/threadViewer}
+                    [1]
+                        {MessageListComponent/_getScrollableElement}
+                            @record
+                        .{web.Element/scrollHeight}
+                    [2]
+                        @record
+                        .{MessageListComponent/threadView}
+                        .{ThreadView/threadCache}
+                {ThreadViewer/saveThreadCacheScrollPositionsAsInitial}
+                    [0]
+                        @record
+                        .{MessageListComponent/threadView}
+                        .{ThreadView/threadViewer}
+                    [1]
+                        @scrollTop
+                    [2]
+                        @record
+                        .{MessageListComponent/threadView}
+                        .{ThreadView/threadCache}
+            {if}
+                @record
+                .{MessageListComponent/_isLastScrollProgrammatic}
+                .{isFalsy}
+                .{&}
+                    {MessageListComponent/_isLoadMoreVisible}
+                        @record
+            .{then}
+                {MessageListComponent/_loadMore}
+                    @record
+            {MessageListComponent/_checkMostRecentMessageIsVisible}
+                @record
+            {Record/update}
+                [0]
+                    @record
+                [1]
+                    [MessageListComponent/_isLastScrollProgrammatic]
+                        false
+`;

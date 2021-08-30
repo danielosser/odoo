@@ -1,0 +1,71 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Action}
+        [Action/name]
+            FileUploaderComponent/_onAttachmentUploaded
+        [Action/params]
+            attachmentData
+            composer
+                [type]
+                    Composer
+            record
+                [type]
+                    FileUploaderComponent
+            thread
+                [type]
+                    Thread
+        [Action/behavior]
+            {if}
+                @attachmentData
+                .{Dict/get}
+                    error
+                .{|}
+                    @attachment
+                    .{Dict/get}
+                        id
+                    .{isFalsy}
+            .{then}
+                @env
+                .{Env/owlEnv}
+                .{Dict/get}
+                    services
+                .{Dict/get}
+                    notification
+                .{Dict/get}
+                    notify
+                .{Function/call}
+                    [type]
+                        danger
+                    [message]
+                        @attachmentData
+                        .{Dict/get}
+                            error
+            .{else}
+                :attachment
+                    {Record/insert}
+                        [Record/traits]
+                            Attachment
+                        [Attachment/composer]
+                            @composer
+                            .{&}
+                                @composer
+                        [Attachment/originThread]
+                            {if}
+                                @composer
+                                .{isFalsy}
+                                .{&}
+                                    @thread
+                            .{then}
+                                @thread
+                        @attachmentData
+                {Dev/comment}
+                    FIXME Could be changed by spying attachments count (task-2252858)
+                {Component/trigger}
+                    [0]
+                        @record
+                    [1]
+                        o-attachments-changed
+`;

@@ -1,0 +1,190 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Test}
+        [Test/name]
+            drop attachments
+        [Test/model]
+            AttachmentBoxComponent
+        [Test/assertions]]
+            5
+        [Test/scenario]
+            :testEnv
+                {Record/insert}
+                    [Record/traits]
+                        Env
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    res.partner
+                [res.partner/id]
+                    100
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    Server
+                [Server/data]
+                    @record
+                    .{Test/data}
+            :thread
+                @testEnv
+                .{Record/insert}
+                    [Record/traits]
+                        Thread
+                    [Thread/id]
+                        100
+                    [Thread/model]
+                        res.partner
+            :chatter
+                @testEnv
+                .{Record/insert}
+                    [Record/traits]
+                        Chatter
+                    [Chatter/id]
+                        1
+                    [Chatter/isAttachmentBoxVisibleInitially]
+                        true
+                    [Chatter/threadId]
+                        @thread
+                        .{Thread/id}
+                    [Chatter/threadModel]
+                        @thread
+                        .{Thread/model}
+            @testEnv
+            .{Thread/fetchAttachments}
+                @thread
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    AttachmentBoxComponent
+                [AttachmentBoxComponent/attachmentBoxView]
+                    @chatter
+                    .{Chatter/attachmentBoxView}
+            :files
+                {Record/insert}
+                    [Record/traits]
+                        web.File
+                    [web.File/content]
+                        hello, world
+                    [web.File/contentType]
+                        text/plain
+                    [web.File/name]
+                        text.txt
+            {Test/assert}
+                []
+                    @thread
+                    .{Thread/attachmentBoxComponents}
+                    .{Collection/length}
+                    .{=}
+                        1
+                []
+                    should have an attachment box
+
+            @testEnv
+            .{Component/afterNextRender}
+                {func}
+                    @testEnv
+                    .{UI/dragenterFiles}
+                        [0]
+                            @thread
+                            .{Thread/attachmentBoxComponents}
+                            .{Collection/first}
+                        [1]
+                            @files
+            {Test/assert}
+                []
+                    @thread
+                    .{Thread/attachmentBoxComponents}
+                    .{Collection/first}
+                    .{AttachmentBoxComponent/dropZone}
+                []
+                    should have a drop zone
+            {Test/assert}
+                []
+                    @thread
+                    .{Thread/attachments}
+                    .{Collection/first}
+                    .{Attachment/attachmentComponents}
+                    .{Collection/length}
+                    .{=}
+                        0
+                []
+                    should have no attachment before files are dropped
+
+            @testEnv
+            .{Component/afterNextRender}
+                {func}
+                    @testEnv
+                    .{UI/dropFiles}
+                        [0]
+                            @thread
+                            .{Thread/attachmentBoxComponents}
+                            .{Collection/first}
+                            .{AttachmentBoxComponent/dropZone}
+                        [1]
+                            @files
+            {Test/assert}
+                []
+                    @thread
+                    .{Thread/attachments}
+                    .{Collection/first}
+                    .{Attachment/attachmentComponents}
+                    .{Collection/length}
+                    .{=}
+                        1
+                []
+                    should have 1 attachment in the box after files dropped
+
+            @testEnv
+            .{Component/afterNextRender}
+                {func}
+                    @testEnv
+                    .{UI/dragenterFiles}
+                        @thread
+                        .{Thread/attachmentBoxComponents}
+                        .{Collection/first}
+            :file1
+                {Record/insert}
+                    [Record/traits]
+                        web.File
+                    [web.File/content]
+                        hello, world
+                    [web.File/contentType]
+                        text/plain
+                    [web.File/name]
+                        text2.txt
+            :file2
+                {Record/insert}
+                    [Record/traits]
+                        web.File
+                    [web.File/content]
+                        hello, world
+                    [web.File/contentType]
+                        text/plain
+                    [web.File/name]
+                        text3.txt
+            @testEnv
+            .{Component/afterNextRender}
+                {func}
+                    @testEnv
+                    .{UI/dropFiles}
+                        [0]
+                            @thread
+                            .{Thread/attachmentBoxComponents}
+                            .{Collection/first}
+                            .{AttachmentBoxComponent/dropZone}
+                        [1]
+                            @file1
+                            @file2
+            {Test/assert}
+                []
+                    @thread
+                    .{Thread/attachments}
+                    .{Collection/length}
+                    .{=}
+                        3
+                []
+                    should have 3 attachments in the box after files dropped
+`;

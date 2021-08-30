@@ -1,0 +1,60 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Action}
+        [Action/name]
+            Rtc/_onKeydown
+        [Action/params]
+            ev
+                [type]
+                    KeyboardEvent
+        [Action/behavior]
+            {if}
+                {Rtc/channel}
+                .{isFalsy}
+            .{then}
+                {break}
+            {if}
+                {Env/userSetting}
+                .{UserSetting/rtcConfigurationMenu}
+                .{RtcConfigurationMenu/isRegisteringKey}
+            .{then}
+                {break}
+            {if}
+                {Env/userSetting}
+                .{UserSetting/usePushToTalk}
+                .{isFalsy}
+                .{|}
+                    {UserSetting/isPushToTalkKey}
+                        [0]
+                            {Env/userSetting}
+                        [1]
+                            @ev
+                    .{isFalsy}
+            .{then}
+                {break}
+            {if}
+                {Rtc/_pushToTalkTimeoutId}
+            .{then}
+                {web.Browser/clearTimeout}
+                    {Rtc/_pushToTalkTimeoutId}
+            {if}
+                {Rtc/currentRtcSession}
+                .{RtcSession/isTalking}
+                .{isFalsy}
+                .{&}
+                    {Rtc/currentRtcSession}
+                    .{RtcSession/isMuted}
+                    .{isFalsy}
+            .{then}
+                {SoundEffect/play}
+                    [0]
+                        {SoundEffects/pushToTalk}
+                    [1]
+                        [volume]
+                            0.3
+            {Rtc/_setSoundBroadcast}
+                true
+`;

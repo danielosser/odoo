@@ -1,0 +1,157 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Test}
+        [Test/name]
+            basic rendering of tracking value (float type)
+        [Test/model]
+            MessageViewComponent
+        [Test/assertions]
+            8
+        [Test/scenario]
+            :testEnv
+                {Record/insert}
+                    [Record/traits]
+                        Env
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    Server
+                [Server/data]
+                    @record
+                    .{Test/data}
+            :message
+                @testEnv
+                .{Record/insert}
+                    [Record/traits]
+                        Message
+                    [Message/id]
+                        11
+                    [Message/trackingValues]
+                        [0]
+                            [changed_field]
+                                Total
+                            [field_type]
+                                float
+                            [id]
+                                6
+                            [new_value]
+                                45.67
+                            [old_value]
+                                12.3
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    MessageViewComponent
+                [MessageViewComponent/message]
+                    @message
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @message
+                    .{Message/messageComponents}
+                    .{Collection/first}
+                    .{MessageViewComponent/trackingValue}
+                    .{Collection/length}
+                    .{=}
+                        1
+                [2]
+                    should display a tracking value
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @message
+                    .{Message/messageComponents}
+                    .{Collection/first}
+                    .{MessageViewComponent/trackingValueFieldName}
+                    .{Collection/length}
+                    .{=}
+                        1
+                [2]
+                    should display the name of the tracked field
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @message
+                    .{Message/messageComponents}
+                    .{Collection/first}
+                    .{MessageViewComponent/trackingValueFieldName}
+                    .{Collection/first}
+                    .{web.Element/textContent}
+                    .{=}
+                        Total:
+                [2]
+                    should display the correct tracked field name (Total)
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @message
+                    .{Message/messageComponents}
+                    .{Collection/first}
+                    .{MessageViewComponent/trackingValueOldValue}
+                    .{Collection/length}
+                    .{=}
+                        1
+                [2]
+                    should display the old value
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @message
+                    .{Message/messageComponents}
+                    .{Collection/first}
+                    .{MessageViewComponent/trackingValueOldValue}
+                    .{Collection/first}
+                    .{web.Element/textContent}
+                    .{=}
+                        12.30
+                [2]
+                    should display the correct old value (12.30)
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @message
+                    .{Message/messageComponents}
+                    .{Collection/first}
+                    .{MessageViewComponent/trackingValueSeparator}
+                    .{Collection/length}
+                    .{=}
+                        1
+                [2]
+                    should display the separator
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @message
+                    .{Message/messageComponents}
+                    .{Collection/first}
+                    .{MessageViewComponent/trackingValueNewValue}
+                    .{Collection/length}
+                    .{=}
+                        1
+                [2]
+                    should display the new value
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @message
+                    .{Message/messageComponents}
+                    .{Collection/first}
+                    .{MessageViewComponent/trackingValueNewValue}
+                    .{Collection/first}
+                    .{web.Element/textContent}
+                    .{=}
+                        45.67
+                [2]
+                    should display the correct new value (45.67)
+`;

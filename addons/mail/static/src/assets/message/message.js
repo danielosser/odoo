@@ -1,0 +1,65 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Model}
+        [Model/name]
+            Message
+        [Model/fields]
+            attachments
+            author
+            authorName
+            body
+            canBeDeleted
+            canStarBeToggled
+            date
+            dateDay
+            dateFromNow
+            emailFrom
+            failureNotifications
+            guestAuthor
+            hasReactionIcon
+            id
+            isBodyEqualSubtypeDescription
+            isCurrentUserOrGuestAuthor
+            isCurrentPartnerMentioned
+            isDiscussion
+            isEmpty
+            isHighlighted
+            isHistory
+            isNeedaction
+            isNote
+            isNotification
+            isStarred
+            isTemporary
+            isTransient
+            messageReactionGroups
+            messageSeenIndicators
+            messageViews
+            notifications
+            originThread
+            parentMessage
+            prettyBody
+            subject
+            subtypeDescription
+            subtypeId
+            threads
+            trackingValues
+            type
+        [Model/id]
+            Message/id
+        [Model/actions]
+            Message/addReaction
+            Message/convertData
+            Message/markAllAsRead
+            Message/markAsRead
+            Message/markMessagesAsRead
+            Message/openResendAction
+            Message/performRpcMessageFetch
+            Message/refreshDateFromNow
+            Message/removeReaction
+            Message/toggleStar
+            Message/unstarAll
+            Message/updateContent
+`;

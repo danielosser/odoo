@@ -1,0 +1,79 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Test}
+        [Test/name]
+            clear: should set x2many field the default value
+        [Test/model]
+            RecordFieldCommand
+        [Test/assertions]
+            1
+        [Test/scenario]
+            :testEnv
+                {Record/insert}
+                    [Record/traits]
+                        Env
+            :contact
+                @testEnv
+                .{TestContact}
+                    [TestContact/hobbies]
+                        {Record/insert}
+                            [Record/traits]
+                                Collection
+                            [0]
+                                @testEnv
+                                .{Record/insert}
+                                    [Record/traits]
+                                        TestHobby
+                                    [TestHobby/description]
+                                        basketball
+                            [1]
+                                @testEnv
+                                .{Record/insert}
+                                    [Record/traits]
+                                        TestHobby
+                                    [TestHobby/description]
+                                        running
+                            [2]
+                                @testEnv
+                                .{Record/insert}
+                                    [Record/traits]
+                                        TestHobby
+                                    [TestHobby/description]
+                                        photographing
+                    [TestContact/id]
+                        10
+            @testEnv
+            .{Record/update}
+                [0]
+                    @contact
+                [1]
+                    [TestContact/hobbies]
+                        @testEnv
+                        .{Record/empty}
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @contact
+                    .{TestContact/hobbies}
+                    .{Collection/map}
+                        {func}
+                            [in]
+                                h
+                            [out]
+                                @h
+                                .{TestHobby/description}
+                    .{=}
+                        {Record/insert}
+                            [Record/traits]
+                                Collection
+                            [0]
+                                hiking
+                            [1]
+                                fishing
+                [2]
+                    clear: should set x2many field the default value
+`;

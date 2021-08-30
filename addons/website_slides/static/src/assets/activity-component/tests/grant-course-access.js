@@ -1,0 +1,147 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Test}
+        [Test/name]
+            grant course access
+        [Test/feature]
+            website_slides
+        [Test/model]
+            ActivityComponent
+        [Test/assertions]
+            8
+        [Test/scenario]
+            :testEnv
+                {Record/insert}
+                    [Record/traits]
+                        Env
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    Server
+                [Server/data]
+                    @record
+                    .{Test/data}
+                [Server/mockRPC]
+                    {func}
+                        [in]
+                            route
+                            args
+                            original
+                        [out]
+                            {if}
+                                @args
+                                .{Dict/get}
+                                    method
+                                .{=}
+                                    action_grant_access
+                            .{then}
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        args
+                                    .{Dict/get}
+                                        length
+                                    .{=}
+                                        1
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        args
+                                    .{Collection/first}
+                                    .{Collection/length}
+                                    .{=}
+                                        1
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        args
+                                    .{Collection/first}
+                                    .{Collection/first}
+                                    .{=}
+                                        100
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        kwargs
+                                    .{Dict/get}
+                                        partner_id
+                                    .{=}
+                                        5
+                                {Test/step}
+                                    access_grant
+                            @original
+            :activity
+                @testEnv
+                .{Record/insert}
+                    [Record/traits]
+                        Activity
+                    [Activity/canWrite]
+                        true
+                    [Activity/id]
+                        100
+                    [Activity/requestingPartner]
+                        @testEnv
+                        .{Record/insert}
+                            [Record/traits]
+                                Partner
+                            [Partner/displayName]
+                                Pauvre pomme
+                            [Partner/id]
+                                5
+                    [Activity/thread]
+                        @testEnv
+                        .{Record/insert}
+                            [Record/traits]
+                                Thread
+                            [Thread/id]
+                                100
+                            [Thread/model]
+                                slide.channel
+                    [Activity/type]
+                        @testEnv
+                        .{Record/insert}
+                            [Record/traits]
+                                ActivityType
+                            [ActivityType/displayName]
+                                Access Request
+                            [ActivityType/id]
+                                1
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    ActivityComponent
+                [ActivityComponent/activity]
+                    @activity
+            {Test/assert}
+                []
+                    @activity
+                    .{Activity/activityComponents}
+                    .{ActivityComponent/length}
+                    .{=}
+                        1
+                []
+                    should have activity component
+            {Test/assert}
+                []
+                    @activity
+                    .{Activity/activityComponents}
+                    .{Collection/first}
+                    .{ActivityComponent/grantAccessButton}
+                []
+                    should have grant access button
+
+            @testEnv
+            .{UI/click}
+                @activity
+                .{Activity/activityComponents}
+                .{Collection/first}
+                .{ActivityComponent/grantAccessButton}
+            {Test/verifySteps}
+                []
+                    access_grant
+                []
+                    Grant button should trigger the right rpc call
+`;

@@ -1,0 +1,117 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Test}
+        [Test/name]
+            channel - states: close should update the value on the server
+        [Test/model]
+            DiscussSidebarCategoryComponent
+        [Test/assertions]
+            2
+        [Test/scenario]
+            :testEnv
+                {record/insert}
+                    [Record/traits]
+                        Env
+            @testEnv
+            .{Record/insert}
+                [0]
+                    [Record/traits]
+                        mail.channel
+                    [mail.channel/id]
+                        20
+                [1]
+                    [Record/traits]
+                        res.users.settings
+                    [res.users.settings/user_id]
+                        @record
+                        .{Test/data}
+                        .{Data/currentUserId}
+                    [res.users.settings/is_discuss_sidebar_category_channel_open]
+                        true
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    Server
+                [Server/data]
+                    @record
+                    .{Test/data}
+            :initalSettings
+                @testEnv
+                .{Env/owlEnv}
+                .{Dict/get}
+                    services
+                .{Dict/get}
+                    rpc
+                .{Function/call}
+                    [model]
+                        res.users.settings
+                    [method]
+                        _find_or_create_for_user
+                    [args]
+                        {Record/insert}
+                            [Record/traits]
+                                Collection
+                            {Record/insert}
+                                [Record/traits]
+                                    Collection
+                                @record
+                                .{Test/data}
+                                .{Data/currentUserId}
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @initalSettings
+                    .{Dict/get}
+                        is_discuss_sidebar_category_channel_open
+                    .{=}
+                        true
+                [2]
+                    the vaule in server side should be true
+        
+            @testEnv
+            .{UI/afterNextRender}
+                @testEnv
+                .{UI/click}
+                    @testEnv
+                    .{Discuss/categoryChannel}
+                    .{DiscussSidebarCategory/discussSidebarCategoryComponents}
+                    .{Collection/first}
+                    .{DiscussSidebarCategoryComponent/title}
+            :newSettings
+                @testEnv
+                .{Env/owlEnv}
+                .{Dict/get}
+                    services
+                .{Dict/get}
+                    rpc
+                .{Function/call}
+                    [model]
+                        res.users.settings
+                    [method]
+                        _find_or_create_for_user
+                    [args]
+                        {Record/insert}
+                            [Record/traits]
+                                Collection
+                            {Record/insert}
+                                [Record/traits]
+                                    Collection
+                                @record
+                                .{Test/data}
+                                .{Data/currentUserId}
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @newSettings
+                    .{Dict/get}
+                        is_discuss_sidebar_category_channel_open
+                    .{=}
+                        false
+                [2]
+                    the vaule in server side should be false
+`;

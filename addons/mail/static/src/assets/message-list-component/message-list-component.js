@@ -1,0 +1,70 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Model}
+        [Model/name]
+            MessageListComponent
+        [Model/fields]
+            _isLastScrollProgrammatic
+            _willPatchSnapshot
+            getScrollableElement
+            hasScrollAdjust
+            selectedMessage
+            threadView
+        [Model/template]
+            root
+                empty
+                    emptyInboxTitle
+                    emptyInboxContent
+                    emptyStarredTitle
+                    emptyStarredContent
+                    emptyHistoryTitle
+                    emptyHistoryContent
+                    emptyOtherContent
+                alertLoadingFailed
+                    alertLoadingFailedText
+                    alertLoadingFailedRetryButton
+                loadMoreAsc
+                    loadingMore
+                        loadingMoreIcon
+                        loadingMoreLabel
+                    loadMore
+                beforeMessages
+                messageContainer
+                    separatorNewMessages
+                        separatorLineNewMessages
+                        separatorLabelNewMessages
+                    separatorDate
+                        separatorDateLineStart
+                        separatorLabelDate
+                        separatorDateLineEnd
+                    message
+                loadMoreDesc
+                    loadingMore
+                        loadingMoreIcon
+                        loadingMoreLabel
+                    loadMore
+        [Model/actions]
+            MessageListComponent/_adjustScrollForExtraMessagesAtTheEnd
+            MessageListComponent/_adjustScrollForExtraMessagesAtTheStart
+            MessageListComponent/_adjustScrollFromModel
+            MessageListComponent/_checkMostRecentMessageIsVisible
+            MessageListComponent/_getScrollableElement
+            MessageListComponent/_highlightMessageView
+            MessageListComponent/_isLoadMoreVisible
+            MessageListComponent/_loadMore
+            MessageListComponent/_scrollToEnd
+            MessageListComponent/adjustFromComponentHints
+            MessageListComponent/getMostRecentMessageViewComponent
+            MessageListComponent/getOrderedMessages
+            MessageListComponent/getOrderedMessageViewComponents
+            MessageListComponent/getScrollHeight
+            MessageListComponent/getScrollTop
+            MessageListComponent/setScrollTop
+            MessageListComponent/_onScrollThrottled
+        [Model/lifecycles]
+            onUpdate
+            onWillPatch
+`;

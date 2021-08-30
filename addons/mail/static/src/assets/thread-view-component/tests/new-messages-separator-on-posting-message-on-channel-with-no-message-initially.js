@@ -1,0 +1,142 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Test}
+        [Test/name]
+            new messages separator on posting message on channel with no message initially
+        [Test/model]
+            ThreadViewComponent
+        [Test/assertions]
+            4
+        [Test/scenario]
+            :testEnv
+                {Record/insert}
+                    [Record/traits]
+                        Env
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    mail.channel
+                [mail.channel/channel_type]
+                    channel
+                [mail.channel/id]
+                    20
+                [mail.channel/is_pinned]
+                    true
+                [mail.channel/message_unread_counter]
+                    0
+                [mail.channel/name]
+                    General
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    Server
+                [Server/data]
+                    @record
+                    .{Test/data}
+            :thread
+                @testEnv
+                .{Record/findById}
+                    [Thread/id]
+                        20
+                    [Thread/model]
+                        mail.channel
+            :threadViewer
+                @testEnv
+                .{Record/insert}
+                    [Record/traits]
+                        ThreadViewer
+                    [ThreadViewer/hasThreadView]
+                        true
+                    [ThreadViewer/thread]
+                        @thread
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    ThreadViewComponent
+                [ThreadViewComponent/threadView]
+                    @threadViewer
+                    .{ThreadViewer/threadView}
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @threadViewer
+                    .{ThreadViewer/threadView}
+                    .{ThreadView/thread}
+                    .{Thread/cache}
+                    .{ThreadCache/messages}
+                    .{Collection/length}
+                    .{=}
+                        0
+                [2]
+                    should have no messages
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @threadViewer
+                    .{ThreadViewer/threadView}
+                    .{ThreadView/messageListComponents}
+                    .{Collection/first}
+                    .{MessageListComponent/separatorNewMessages}
+                    .{isFalsy}
+                [2]
+                    should not display 'new messages' separator
+
+            @testEnv
+            .{UI/focus}
+                @threadViewer
+                .{ThreadViewer/threadView}
+                .{ThreadView/thread}
+                .{ThreadView/composer}
+                .{Composer/composerTextInputComponents}
+                .{Collection/first}
+                .{ComposerTextInputComponent/textarea}
+            @testEnv
+            .{Component/afterNextRender}
+                {func}
+                    @testEnv
+                    .{UI/insertText}
+                        hey !
+            @testEnv
+            .{Component/afterNextRender}
+                {func}
+                    @testEnv
+                    .{UI/click}
+                        @threadViewer
+                        .{ThreadViewer/threadView}
+                        .{ThreadView/thread}
+                        .{Thread/composer}
+                        .{Composer/composerViewComponents}
+                        .{Collection/first}
+                        .{ComposerViewComponent/buttonSend}
+            {Test/assert}
+                [0]
+                    @ecord
+                [1]
+                    @threadViewer
+                    .{ThreadViewer/threadView}
+                    .{ThreadView/thread}
+                    .{Thread/cache}
+                    .{ThreadCache/messages}
+                    .{Collection/length}
+                    .{=}
+                        1
+                [2]
+                    should have the message current partner just posted
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @threadViewer
+                    .{ThreadViewer/threadView}
+                    .{ThreadView/messageListComponents}
+                    .{Collection/first}
+                    .{MessageListComponent/separatorNewMessages}
+                    .{isFalsy}
+                [2]
+                    still no separator shown when current partner posted a message
+`;

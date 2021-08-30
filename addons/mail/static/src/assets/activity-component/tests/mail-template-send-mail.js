@@ -1,0 +1,130 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Test}
+        [Test/name]
+            mail template: send mail
+        [Test/model]
+            ActivityComponent
+        [Test/assertions]
+            7
+        [Test/scenario]
+            :testEnv
+                {Record/insert}
+                    [Record/traits]
+                        Env
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    Server
+                [Server/data]
+                    @record
+                    .{Test/data}
+                [Server/mockRPC]
+                    {func}
+                        [in]
+                            route
+                            args
+                            original
+                        [out]
+                            {if}
+                                @args
+                                .{Dict/get}
+                                    method
+                                .{=}
+                                    activity_send_mail
+                            .{then}
+                                {Test/step}
+                                    activity_send_mail
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        args
+                                    .{Collection/first}
+                                    .{Collection/length}
+                                    .{=}
+                                        1
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        args
+                                    .{Collection/first}
+                                    .{Collection/first}
+                                    .{=}
+                                        42
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        args
+                                    .{Collection/second}
+                                    .{=}
+                                        1
+                            .{else}
+                                @original
+            :activity
+                @testEnv
+                .{Record/insert}
+                    [Record/traits]
+                        Activity
+                    [Activity/id]
+                        12
+                    [Activity/mailTemplates]
+                        @testEnv
+                        .{Field/add}
+                            @testEnv
+                            .{Record/insert}
+                                [Record/traits]
+                                    MailTemplate
+                                [MailTemplate/id]
+                                    1
+                                [MailTemplate/name]
+                                    Dummy mail template
+                    [Activity/thread]
+                        @testEnv
+                        .{Record/insert}
+                            [Record/traits]
+                                Thread
+                            [Thread/id]
+                                42
+                            [Thread/model]
+                                res.partner
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    ActivityComponent
+                [ActivityComponent/activity]
+                    @activity
+            {Test/assert}
+                []
+                    @activity
+                    .{Activity/activityComponents}
+                    .{Collection/length}
+                    .{=}
+                        1
+                []
+                    should have activity component
+            {Test/assert}
+                []
+                    @activity
+                    .{Activity/activityComponents}
+                    .{Collection/first}
+                    .{ActivityComponent/send}
+                []
+                    should have activity mail template name send button
+
+            @testEnv
+            .{UI/click}
+                @activity
+                .{Activity/mailTemplates}
+                .{Collection/first}
+                .{MailTemplate/mailTemplateComponents}
+                .{Collection/first}
+                .{MailTemplateComponent/send}
+            {Test/verifySteps}
+                []
+                    activity_send_mail
+                []
+                    should have called activity_send_mail rpc
+`;

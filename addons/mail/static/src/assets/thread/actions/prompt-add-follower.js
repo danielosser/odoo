@@ -1,0 +1,77 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Action}
+        [Action/name]
+            Thread/promptAddFollower
+        [Action/params]
+            thread
+                [type]
+                    Thread
+        [Action/behavior]
+            :action
+                {Record/insert}
+                    [Record/traits]
+                        Object
+                    [type]
+                        ir.actions.act_window
+                    [res_model]
+                        mail.wizard.invite
+                    [view_mode]
+                        form
+                    [views]
+                        {Record/insert}
+                            [Record/traits]
+                                Collection
+                            {Record/insert}
+                                [Record/traits]
+                                    Collection
+                                [0]
+                                    false
+                                [1]
+                                    form
+                    [name]
+                        {Locale/text}
+                            Invite Follower
+                    [target]
+                        new
+                    [context]
+                        [default_res_model]
+                            @thread
+                            .{Thread/model}
+                        [default_res_id]
+                            @thread
+                            .{Thread/id}
+            @env
+            .{Env/owlEnv}
+            .{Dict/get}
+                bus
+            .{Dict/get}
+                trigger
+            .{Function/call}
+                [0]
+                    do-action
+                [1]
+                    [action]
+                        @action
+                    [options]
+                        [on_close]
+                            {func}
+                                {Record/doAsync}
+                                    [0]
+                                        @thread
+                                    [1]
+                                        {func}
+                                            {Thread/refreshFollowers}
+                                                @thread
+                                @env
+                                .{Env/owlEnv}
+                                .{Dict/get}
+                                    bus
+                                .{Dict/get}
+                                    trigger
+                                .{Function/call}
+                                    Thread:promptAddFollower-closed
+`;

@@ -1,0 +1,18 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Action}
+        [Action/name]
+            ChatWindowManager/openHiddenMenu
+        [Action/params]
+            chatWindowManager
+        [Action/behavior]
+            {Record/update}
+                [0]
+                    @chatWindowManager
+                [1]
+                    [ChatWindowManager/isHiddenMenuOpen]
+                        true
+`;

@@ -1,0 +1,60 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Action}
+        [Action/name]
+            MessageInReplyToView/onClickReply
+        [Action/params]
+            record
+                [type]
+                    MessageInReplyToView
+            ev
+                [type]
+                    MouseEvent
+        [Action/behavior]
+            {Event/markAsHandled}
+                [0]
+                    @ev
+                [1]
+                    MessageInReplyToView/onClickMessageInReplyTo
+            :threadView
+                @record
+                .{MessageInReplyToView/messageView}
+                .{&}
+                    @record
+                    .{MessageInReplyToView/messageView}
+                    .{MessageView/threadView}
+            :parentMessage
+                @record
+                .{MessageInReplyToView/messageView}
+                .{MessageView/message}
+                .{Message/parentMessage}
+            {if}
+                @threadView
+                .{isFalsy}
+                .{|}
+                    @parentMessage
+                    .{isFalsy}
+            .{then}
+                {break}
+            :parentMessageView
+                {MessageView/findById}
+                    [MessageView/message]
+                        @parentMessage
+                    [MessageView/threadView]
+                        @threadView
+            {if}
+                @parentMessageView
+                .{isFalsy}
+            .{then}
+                {break}
+            {ThreadView/addComponentHint}
+                [0]
+                    @threadView
+                [1]
+                    highlight-reply
+                [2]
+                    @parentMessageView
+`;

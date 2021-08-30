@@ -1,0 +1,134 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Test}
+        [Test/name]
+            click on cancel
+        [Test/model]
+            ActivityComponent
+        [Test/assertions]
+            7
+        [Test/scenario]
+            :testEnv
+                {Record/insert}
+                    [Record/traits]
+                        Env
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    Server
+                [Server/data]
+                    @record
+                    .{Test/data}
+                [Server/mockRPC]
+                    {func}
+                        [in]
+                            route
+                            args
+                            original
+                        [out]
+                            {if}
+                                @route
+                                .{=}
+                                    /web/dataset/call_kw/mail.activity/unlink
+                            .{then}
+                                {Test/step}
+                                    unlink
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        args
+                                    .{Collection/first}
+                                    .{Collectio/length}
+                                    .{=}
+                                        1
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        args
+                                    .{Collection/first}
+                                    .{Collection/first}
+                                    .{=}
+                                        12
+                                {break}
+                            .{else}
+                                @original
+            :activity
+                @testEnv
+                .{Record/insert}
+                    [Record/traits]
+                        Activity
+                    [Activity/canWrite]
+                        true
+                    [Activity/id]
+                        12
+                    [Activity/mailTemplates]
+                        @testEnv
+                        .{Field/add}
+                            @testEnv
+                            .{Record/insert}
+                                [Record/traits]
+                                    MailTemplate
+                                [MailTemplate/id]
+                                    1
+                                [MailTemplate/name]
+                                    Dummy mail template
+                    [Activity/thread]
+                        @testEnv
+                        .{Record/insert}
+                            [Record/traits]
+                                Thread
+                            [Thread/id]
+                                42
+                            [Thread/model]
+                                res.partner
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    ActivityComponent
+                [ActivityComponent/activity]
+                    @activity
+            {Test/assert}
+                []
+                    @activity
+                    .{Activity/activityComponents}
+                    .{Collection/length}
+                    .{=}
+                        1
+                []
+                    should have activity component
+            {Test/assert}
+                []
+                    @activity
+                    .{Activity/activityComponents}
+                    .{Collection/first}
+                    .{ActivityComponent/cancelButton}
+                []
+                    should have activity cancel button
+
+            @testEnv
+            .{Component/afterNextRender}
+                {func}
+                    @testEnv
+                    .{UI/click}
+                        @activity
+                        .{Activity/activityComponents}
+                        .{Collection/first}
+                        .{ActivityComponent/cancelButton}
+            {Test/verifySteps}
+                []
+                    unlink
+                []
+                    should have called unlink rpc after clicking on cancel
+            {Test/assert}
+                []
+                    @activity
+                    .{Activity/activityComponents}
+                    .{Collection/length}
+                    .{=}
+                        0
+                []
+                    should no longer display activity after clicking on cancel
+`;

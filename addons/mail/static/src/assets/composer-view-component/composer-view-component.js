@@ -1,0 +1,65 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Model}
+        [Model/name]
+            ComposerViewComponent
+        [Model/fields]
+            attachments
+            composerView
+            device
+            dropzoneVisible
+            hasCurrentPartnerAvatar
+            hasDiscardButton
+            hasFollowers
+            hasFooter
+            hasHeader
+            hasMentionSuggestionsBelowPosition
+            hasSendButton
+            hasThreadName
+            hasThreadTyping
+            isCompact
+            isExpandable
+            showAttachmentsExtensions
+            showAttachmentsFilenames
+            textInputSendShortcuts
+        [Model/template]
+            root
+                dropZone
+                fileUploader
+                coreHeader
+                    replyingToMessage
+                    threadName
+                    followers
+                    suggestedRecipientList
+                sidebarMain
+                    currentPartnerAvatar
+                    currentGuestAvatar
+                coreMain
+                    textInput
+                    buttons
+                        toolButtons
+                            toolButtonSeparator
+                            primaryToolButtons
+                                buttonEmojisPopover
+                                buttonAttachment
+                            secondaryToolButtons
+                                buttonFullComposer
+                        actionButtonsNotCompact
+                            buttonSend
+                                buttonSendIcon
+                            buttonDiscard
+                coreFooter
+                    threadTextualTypingStatus
+                    attachmentList
+                    actionButtonsCompact
+                        buttonSend
+                        buttonDiscard
+                    messageEditingButtons
+        [Model/actions]
+            ComposerViewComponent/_postMessage
+            ComposerViewComponent/contains
+            ComposerViewComponent/getCurrentPartnerAvatar
+`;

@@ -1,0 +1,80 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Field}
+        [Field/name]
+            partnersThatHaveSeen
+        [Field/model]
+            MessageSeenIndicator
+        [Field/type]
+            m2m
+        [Field/target]
+            Partner
+        [Field/compute]
+            {Dev/comment}
+                Manually called as not always called when necessary
+                @see MessageSeenIndicator/computeSeenValues
+            {if}
+                @record
+                .{MessageSeenIndicator/message}
+                .{isFalsy}
+                .{|}
+                    @record
+                    .{MessageSeenIndicator/thread}
+                    .{isFalsy}
+                .{|}
+                    @record
+                    .{MessageSeenIndicator/thread}
+                    .{Thread/partnerSeenInfos}
+                    .{isFalsy}
+            .{then}
+                {Record/empty}
+            .{else}
+                :otherPartnersThatHaveSeen
+                    @record
+                    .{MessageSeenIndicator/thread}
+                    .{Thread/partnerSeenInfos}
+                    .{Collection/filter}
+                        {func}
+                            [in]
+                                item
+                            [out]
+                                @item
+                                .{ThreadPartnerSeenInfo/partner
+                                .{&}
+                                    @item
+                                    .{ThreadPartnerSeenInfo/partner}
+                                    .{!=}
+                                        @record
+                                        .{MessageSeenIndicator/message}
+                                        .{Message/author}
+                                .{&}
+                                    @item
+                                    .{ThreadPartnerSeenInfo/lastSeenMessage}
+                                .{&}
+                                    @item
+                                    .{ThreadPartnerSeenInfo/lastSeenMessage}
+                                    .{Message/id}
+                                    .{>=}
+                                        @record
+                                        .{MessageSeenIndicator/message}
+                                        .{Message/id}
+                    .{Collection/map}
+                        {func}
+                            [in]
+                                item
+                            [out]
+                                @item
+                                .{ThreadPartnerSeenInfo/partner}
+                {if}
+                    @otherPartnersThatHaveSeen
+                    .{Collection/length}
+                    .{=}
+                        0
+                .{then}
+                    {Record/empty}
+                .{else}
+                    @otherPartnersThatHaveSeen
+`;

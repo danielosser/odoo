@@ -1,0 +1,62 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Model}
+        [Model/name]
+            ComposerView
+        [Model/fields]
+            _hasMentionRpcInProgress
+            _nextMentionRpcFunction
+            activeSuggestedRecord
+            attachmentList
+            chatter
+            composer
+            doFocus
+            extraSuggestedRecords
+            hasFocus
+            hasSuggestions
+            hasToScrollToActiveSuggestion
+            mainSuggestedRecords
+            messageViewInEditing
+            sendButtonText
+            suggestionDelimiter
+            suggestionDelimiterPosition
+            suggestionModelName
+            suggestionSearchTerm
+            threadView
+        [Model/id]
+            ComposerView/threadView
+            .{|}
+                ComposerView/messageViewInEditing
+            .{|}
+                ComposerView/chatter
+        [Model/onChanges]
+            _onChangeComposer
+            _onChangeDetectSuggestionDelimiterPosition
+            _onChangeUpdateSuggestionList
+        [Model/actions]
+            ComposerView/_executeOrQueueFunction
+            ComposerView/_generateEmojisOnHtml
+            ComposerView/_generateMentionsLinks
+            ComposerView/_getCommandFromText
+            ComposerView/_updateSuggestionList
+            ComposerView/closeSuggestions
+            ComposerView/discard
+            ComposerView/handleCurrentPartnerIsTyping
+            ComposerView/insertIntoTextInput
+            ComposerView/insertSuggestion
+            ComposerView/onClickCancelLink
+            ComposerView/onClickSaveLink
+            ComposerView/onClickStopReplying
+            ComposerView/openFullComposer
+            ComposerView/postMessage
+            ComposerView/setFirstSuggestionActive
+            ComposerView/setLastSuggestionActive
+            ComposerView/setNextSuggestionActive
+            ComposerView/setPreviousSuggestionActive
+            ComposerView/updateMessage
+        [Model/lifecycles]
+            onDelete
+`;

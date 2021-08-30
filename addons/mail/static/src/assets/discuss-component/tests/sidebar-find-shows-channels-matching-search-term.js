@@ -1,0 +1,162 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Test}
+        [Test/name]
+            sidebar find shows channels matching search term
+        [Test/model]
+            DiscussComponent
+        [Test/assertions]
+            3
+        [Test/scenario]
+            :testEnv
+                {Record/insert}
+                    [Record/traits]
+                        Env
+            @testEnv
+            .{Record/insert}
+                [0]
+                    [Record/traits]
+                        mail.channel
+                    [mail.channel/channel_partner_ids]
+                        {Record/insert}
+                            [Record/traits]
+                                Collection
+                    [mail.channel/channel_type]
+                        channel
+                    [mail.channel/id]
+                        20
+                    [mail.channel/members]
+                        {Record/insert}
+                            [Record/traits]
+                                Collection
+                    [mail.channel/name]
+                        test
+                    [mail.channel/public]
+                        public
+            :searchReadDef
+                {Record/insert}
+                    [Record/traits]
+                        Deferred
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    Server
+                [Server/data]
+                    @record
+                    .{Test/data}
+                [Server/mockRPC]
+                    {func}
+                        [in]
+                            route
+                            args
+                            original
+                        [out]
+                            :res
+                                @original
+                            {if}
+                                @args
+                                .{Dict/get}
+                                    method
+                                .{=}
+                                    search_read
+                            .{then}
+                                {Promise/resolve}
+                                    @searchReadDef
+                            @res
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    DiscussComponent
+            @testEnv
+            .{Component/afterNextRender}
+                {func}
+                    @testEnv
+                    .{UI/click}
+                        @testEnv
+                        .{Discuss/discussSidebarComponents}
+                        .{Collection/first}
+                        .{DiscussSidebarComponent/channelCategory}
+                        .{DiscussSidebarCategoryComponent/commandAdd}
+            @testEnv
+            .{UI/focus}
+                @testEnv
+                .{Discuss/discussSidebarComponents}
+                .{Collection/first}
+                .{DiscussSidebarComponent/channelCategory}
+                .{DiscussSidebarCategoryComponent/newItem}
+            @testEnv
+            .{UI/insertText}
+                test
+            @testEnv
+            .{UI/keydown}
+                @testEnv
+                .{Discuss/discussSidebarComponents}
+                .{Collection/first}
+                .{DiscussSidebarComponent/channelCategory}
+                .{DiscussSidebarCategoryComponent/newItem}
+            @testEnv
+            .{UI/keyup}
+                @testEnv
+                .{Discuss/discussSidebarComponents}
+                .{Collection/first}
+                .{DiscussSidebarComponent/channelCategory}
+                .{DiscussSidebarCategoryComponent/newItem}
+
+            {Promise/await}
+                @searchReadDef
+            {Dev/comment}
+                ensures search_read rpc is rendered.
+            {Utils/nextAnimationFrame}
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{web.Browser/document}
+                    .{web.Document/querySelectorAll}
+                        .ui-autocomplete
+                        .ui-menu-item
+                        a
+                    .{Collection/length}
+                    .{>}
+                        0
+                [2]
+                    should have autocomplete suggestion after typing on 'find or create channel' input
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    {Dev/comment}
+                        When searching for a single existing channel, the results list will have at least 3 lines:
+                        One for the existing channel itself
+                        One for creating a public channel with the search term
+                        One for creating a private channel with the search term
+                    @testEnv
+                    .{web.Browser/document}
+                    .{web.Document/querySelectorAll}
+                        .ui-autocomplete
+                        .ui-menu-item
+                        a
+                    .{Collection/length}
+                    .{=}
+                        3
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{web.Browser/document}
+                    .{web.Document/querySelectorAll}
+                        .ui-autocomplete
+                        .ui-menu-item
+                        a
+                    .{Collection/first}
+                    .{web.Element/textContent}
+                    .{=}
+                        test
+                [2]
+                    autocomplete suggestion should target the channel matching search term
+`;

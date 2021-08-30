@@ -1,0 +1,155 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Test}
+        [Test/name]
+            schedule next
+        [Test/model]
+            ActivityMarkDonePopoverComponent
+        [Test/assertions]
+            6
+        [Test/scenario]
+            :bus
+                {Record/insert}
+                    [Record/traits]
+                        Bus
+            {Bus/on}
+                [0]
+                    @bus
+                [1]
+                    do-action
+                [2]
+                    null
+                [3]
+                    {func}
+                        [in]
+                            payload
+                        [out]
+                            {Test/step}
+                                activity_action
+                            {Error/raise}
+                                The do-action event should not be triggered when the route doesn't return an action
+            :testEnv
+                {Record/insert}
+                    [Record/traits]
+                        Env
+                    [Env/owlEnv]
+                        [bus]
+                            @bus
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    Server
+                [Server/data]
+                    @record
+                    .{Test/data}
+                [Server/mockRPC]
+                    {func}
+                        [in]
+                            route
+                            args
+                            original
+                        [out]
+                            {if}
+                                @route
+                                .{=}
+                                    /web/dataset/call_kw/mail.activity/action_feedback_schedule_next
+                            .{then}
+                                {Test/step}
+                                    action_feedback_schedule_next
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        args
+                                    .{Collection/length}
+                                    .{=}
+                                        1
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        args
+                                    .{Collection/first}
+                                    .{Collection/length}
+                                    .{=}
+                                        1
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        args
+                                    .{Collection/first}
+                                    .{Collection/first}
+                                    .{=}
+                                        12
+                                {Test/assert}
+                                    @args
+                                    .{Dict/get}
+                                        kwargs
+                                    .{Dict/get}
+                                        feedback
+                                    .{=}
+                                        This task is done
+                                false
+                                {break}
+                            {if}
+                                route
+                                .{=}
+                                    /web/dataset/call_kw/mail.activity/unlink
+                            .{then}
+                                {Dev/comment}
+                                    'unlink' on non-existing record raises a
+                                    server crash
+                                {Error/raise}
+                                    'unlink' RPC on activity must not be called (already unlinked from mark as done)
+                            @original
+            :activity
+                @testEnv
+                .{Record/insert}
+                    [Record/traits]
+                        Activity
+                    [Activity/canWrite]
+                        true
+                    [Activity/category]
+                        not_upload_file
+                    [Activity/id]
+                        12
+                    [Activity/thread]
+                        @testEnv
+                        .{Record/insert}
+                            [Record/traits]
+                                Thread
+                            [Thread/id]
+                                42
+                            [Thread/model]
+                                res.partner
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    ActivityMarkDonePopoverComponent
+                [ActivityMarkDonePopoverComponent/activity]
+                    @activity
+            @testEnv
+            .{UI/focus}
+                @activity
+                .{Activity/activityMarkDonePopoverComponents}
+                .{Collection/first}
+                .{ActivityMarkDonePopoverComponent/feedback}
+            @testEnv
+            .{UI/insertText}
+                This task is done
+            @testEnv
+            .{Component/afterNextRender}
+                {func}
+                    @testEnv
+                    .{UI/click}
+                        @activity
+                        .{Activity/activityMarkDonePopoverComponents}
+                        .{Collection/first}
+                        .{ActivityMarkDonePopoverComponent/doneScheduleNextButton}
+            {Test/verifySteps}
+                []
+                    action_feedback_schedule_next
+                []
+                    Mark done and schedule next button should call the right rpc and not trigger an action
+`;

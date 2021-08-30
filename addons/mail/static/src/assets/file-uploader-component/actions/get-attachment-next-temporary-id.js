@@ -1,0 +1,23 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    :tmpId
+        0
+    {Action}
+        [Action/name]
+            FileUploaderComponent/getAttachmentNextTemporaryId
+        [Action/params]
+            record
+                [type]
+                    FileUploaderComponent
+        [Action/returns]
+            Integer
+        [Action/behavior]
+            :tmpId
+                @tmpId
+                .{+}
+                    1
+            @tmpId
+`;

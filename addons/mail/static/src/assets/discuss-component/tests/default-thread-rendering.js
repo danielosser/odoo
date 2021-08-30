@@ -1,0 +1,280 @@
+/** @odoo-module **/
+
+import { Define } from '@mail/define';
+
+export default Define`
+    {Test}
+        [Test/name]
+            default thread rendering
+        [Test/model]
+            DiscussComponent
+        [Test/assertions]
+            16
+        [Test/scenario]
+            {Dev/comment}
+                channel expected to be found in the sidebar,
+                with a random unique id that will be referenced in the test
+            :testEnv
+                {Record/insert}
+                    [Record/traits]
+                        Env
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    mail.channel
+                [mail.channel/id]
+                    20
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    Server
+                [Server/data]
+                    @record
+                    .{Test/data}
+            @testEnv
+            .{Record/insert}
+                [Record/traits]
+                    DiscussComponent
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Env/inbox}
+                    .{Thread/discussSidebarCategoryItemComponents}
+                    .{Collection/length}
+                    .{=}
+                        1
+                [2]
+                    should have inbox mailbox in the sidebar
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Env/starred}
+                    .{Thread/discussSidebarCategoryItemComponents}
+                    .{Collection/length}
+                    .{=}
+                        1
+                [2]
+                    should have starred mailbox in the sidebar
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Env/history}
+                    .{Thread/discussSidebarCategoryItemComponents}
+                    .{Collection/length}
+                    .{=}
+                        1
+                [2]
+                    should have history mailbox in the sidebar
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Record/findById}
+                        [Thread/id]
+                            20
+                        [Thread/model]
+                            mail.channel
+                    .{Thread/discussSidebarCategoryItemComponents}
+                    .{Collection/length}
+                    .{=}
+                        1
+                [2]
+                    should have channel 20 in the sidebar
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Discuss/thread}
+                    .{=}
+                        @testEnv
+                        .{Env/inbox}
+                [2]
+                    inbox mailbox should be active thread
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Discuss/thread}
+                    .{Thread/threadViews}
+                    .{Collection/first}
+                    .{ThreadView/messageListComponents}
+                    .{Collection/first}
+                    .{MessageListComponent/empty}
+                [2]
+                    should have empty thread in inbox
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Discuss/thread}
+                    .{Thread/threadViews}
+                    .{Collection/first}
+                    .{ThreadView/messageListComponents}
+                    .{Collection/first}
+                    .{MessageListComponent/empty}
+                    .{web.Element/textContent}
+                    .{=}
+                        Congratulations, your inbox is empty  New messages appear here.
+
+            @testEnv
+            .{Component/afterNextRender}
+                {func}
+                    @testEnv
+                    .{UI/click}
+                        @testEnv
+                        .{Env/starred}
+                        .{Thread/discussSidebarCategoryItemComponents}
+                        .{Collection/first}
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Discuss/thread}
+                    .{=}
+                        @testEnv
+                        .{Env/starred}
+                [2]
+                    starred mailbox should be active thread
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Discuss/thread}
+                    .{Thread/threadViews}
+                    .{Collection/first}
+                    .{ThreadView/messageListComponents}
+                    .{Collection/first}
+                    .{MessageListComponent/empty}
+                [2]
+                    should have empty thread in starred
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Discuss/thread}
+                    .{Thread/threadViews}
+                    .{Collection/first}
+                    .{ThreadView/messageListComponents}
+                    .{Collection/first}
+                    .{MessageListComponent/empty}
+                    .{web.Element/textContent}
+                    .{=}
+                        No starred messages  You can mark any message as 'starred', and it shows up in this mailbox.
+
+            @testEnv
+            .{Component/afterNextRender}
+                {func}
+                    @testEnv
+                    .{UI/click}
+                        @testEnv
+                        .{Env/history}
+                        .{Thread/discussSidebarCategoryItemComponents}
+                        .{Collection/first}
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Discuss/thread}
+                    .{=}
+                        @testEnv
+                        .{Env/history}
+                [2]
+                    history mailbox should be active thread
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Discuss/thread}
+                    .{Thread/threadViews}
+                    .{Collection/first}
+                    .{ThreadView/messageListComponents}
+                    .{Collection/first}
+                    .{MessageListComponent/empty}
+                [2]
+                    should have empty thread in starred
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Discuss/thread}
+                    .{Thread/threadViews}
+                    .{Collection/first}
+                    .{ThreadView/messageListComponents}
+                    .{Collection/first}
+                    .{MessageListComponent/empty}
+                    .{web.Element/textContent}
+                    .{=}
+                        No history messages  Messages marked as read will appear in the history.
+
+            @testEnv
+            .{Component/afterNextRender}
+                {func}
+                    @testEnv
+                    .{UI/click}
+                        @testEnv
+                        .{Record/findById}
+                            [Thread/id]
+                                20
+                            [Thread/model]
+                                mail.channel
+                        .{Thread/discussSidebarCategoryItemComponents}
+                        .{Collection/first}
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Discuss/thread}
+                    .{=}
+                        @testEnv
+                        .{Record/findById}
+                            [Thread/id]
+                                20
+                            [Thread/model]
+                                mail.channel
+                [2]
+                    channel 20 should be active thread
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Discuss/thread}
+                    .{Thread/threadViews}
+                    .{Collection/first}
+                    .{ThreadView/messageListComponents}
+                    .{Collection/first}
+                    .{MessageListComponent/empty}
+                [2]
+                    should have empty thread in channel
+            {Test/assert}
+                [0]
+                    @record
+                [1]
+                    @testEnv
+                    .{Discuss/thread}
+                    .{Thread/threadViews}
+                    .{Collection/first}
+                    .{ThreadView/messageListComponents}
+                    .{Collection/first}
+                    .{MessageListComponent/empty}
+                    .{web.Element/textContent}
+                    .{=}
+                        There are no messages in this conversation.
+`;
