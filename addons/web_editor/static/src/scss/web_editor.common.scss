@@ -13,12 +13,33 @@
         $-bg-color: o-color(color('o-cc#{$index}-bg'));
 
         $-text: color('o-cc#{$index}-text') or color-yiq(o-color('o-cc#{$index}-bg'));
-        $-headings: color('o-cc#{$index}-headings') or $-text;
-        $-h2: color('o-cc#{$index}-h2') or $-headings;
-        $-h3: color('o-cc#{$index}-h3') or $-h2;
-        $-h4: color('o-cc#{$index}-h4') or $-h3;
-        $-h5: color('o-cc#{$index}-h5') or $-h4;
-        $-h6: color('o-cc#{$index}-h6') or $-h5;
+        $-headings-gradient: o-website-value('o-cc#{$index}-headings-gradient');
+        $-headings: not $-headings-gradient and color('o-cc#{$index}-headings') or $-text;
+        $-h2-gradient: o-website-value('o-cc#{$index}-h2-gradient');
+        @if not $-h2-gradient and not color('o-cc#{$index}-h2') {
+            $-h2-gradient: $-headings-gradient;
+        }
+        $-h2: not $-h2-gradient and color('o-cc#{$index}-h2') or $-headings;
+        $-h3-gradient: o-website-value('o-cc#{$index}-h3-gradient');
+        @if not $-h3-gradient and not color('o-cc#{$index}-h3') {
+            $-h3-gradient: $-h2-gradient;
+        }
+        $-h3: not $-h3-gradient and color('o-cc#{$index}-h3') or $-h2;
+        $-h4-gradient: o-website-value('o-cc#{$index}-h4-gradient');
+        @if not $-h4-gradient and not color('o-cc#{$index}-h4') {
+            $-h4-gradient: $-h3-gradient;
+        }
+        $-h4: not $-h4-gradient and color('o-cc#{$index}-h4') or $-h3;
+        $-h5-gradient: o-website-value('o-cc#{$index}-h5-gradient');
+        @if not $-h5-gradient and not color('o-cc#{$index}-h5') {
+            $-h5-gradient: $-h4-gradient;
+        }
+        $-h5: not $-h5-gradient and color('o-cc#{$index}-h5') or $-h4;
+        $-h6-gradient: o-website-value('o-cc#{$index}-h6-gradient');
+        @if not $-h6-gradient and not color('o-cc#{$index}-h6') {
+            $-h6-gradient: $-h5-gradient;
+        }
+        $-h6: not $-h6-gradient and color('o-cc#{$index}-h6') or $-h5;
 
         @if not color('o-cc#{$index}-text') {
             @include print-variable('o-cc#{$index}-text', $-text);
@@ -26,20 +47,38 @@
         @if not color('o-cc#{$index}-headings') {
             @include print-variable('o-cc#{$index}-headings', $-headings);
         }
+        @if $-headings-gradient and not o-website-value('o-cc#{$index}-headings-gradient') {
+            @include print-variable('o-cc#{$index}-headings-gradient', $-headings-gradient);
+        }
         @if not color('o-cc#{$index}-h2') {
             @include print-variable('o-cc#{$index}-h2', $-h2);
+        }
+        @if not o-website-value('o-cc#{$index}-h2-gradient') {
+            @include print-variable('o-cc#{$index}-h2-gradient', $-h2-gradient);
         }
         @if not color('o-cc#{$index}-h3') {
             @include print-variable('o-cc#{$index}-h3', $-h3);
         }
+        @if not o-website-value('o-cc#{$index}-h3-gradient') {
+            @include print-variable('o-cc#{$index}-h3-gradient', $-h3-gradient);
+        }
         @if not color('o-cc#{$index}-h4') {
             @include print-variable('o-cc#{$index}-h4', $-h4);
+        }
+        @if not o-website-value('o-cc#{$index}-h4-gradient') {
+            @include print-variable('o-cc#{$index}-h4-gradient', $-h4-gradient);
         }
         @if not color('o-cc#{$index}-h5') {
             @include print-variable('o-cc#{$index}-h5', $-h5);
         }
+        @if not o-website-value('o-cc#{$index}-h5-gradient') {
+            @include print-variable('o-cc#{$index}-h5-gradient', $-h5-gradient);
+        }
         @if not color('o-cc#{$index}-h6') {
             @include print-variable('o-cc#{$index}-h6', $-h6);
+        }
+        @if not o-website-value('o-cc#{$index}-h6-gradient') {
+            @include print-variable('o-cc#{$index}-h6-gradient', $-h6-gradient);
         }
 
         $-link: color('o-cc#{$index}-link');
@@ -641,15 +680,10 @@ blockquote {
         }
     }
 }
+
 @for $index from 1 through length($o-color-combinations) {
     $-bg: color('o-cc#{$index}-bg');
     $-text: color('o-cc#{$index}-text');
-    $-headings: color('o-cc#{$index}-headings');
-    $-h2: color('o-cc#{$index}-h2');
-    $-h3: color('o-cc#{$index}-h3');
-    $-h4: color('o-cc#{$index}-h4');
-    $-h5: color('o-cc#{$index}-h5');
-    $-h6: color('o-cc#{$index}-h6');
     $-link: color('o-cc#{$index}-link');
     $-btn-primary: color('o-cc#{$index}-btn-primary');
     $-btn-primary-border: color('o-cc#{$index}-btn-primary-border');
@@ -667,24 +701,36 @@ blockquote {
 
         #{$o-color-extras-nesting-selector} {
             // Headings
-            h1, h2, h3, h4, h5, h6 {
-                // 'inherit' comes from the o-bg-color mixin
-                color: o-color($-headings);
-            }
-            h2, h3, h4, h5, h6 {
-                color: o-color($-h2);
-            }
-            h3, h4, h5, h6 {
-                color: o-color($-h3);
-            }
-            h4, h5, h6 {
-                color: o-color($-h4);
-            }
-            h5, h6 {
-                color: o-color($-h5);
-            }
-            h6 {
-                color: o-color($-h6);
+            $heading-var-names: headings, h2, h3, h4, h5, h6;
+            $-current-gradient: false;
+            $-current-color: o-color($-text);
+            @each $-depth in $heading-var-names {
+                $-heading-tag: if($-depth == 'headings', 'h1', #{$-depth});
+                $-color-var: 'o-cc#{$index}-#{$-depth}';
+                #{$-heading-tag} {
+                    @if o-website-value('o-cc#{$index}-#{$-depth}-gradient') {
+                        $-current-color: false;
+                        $-current-gradient: o-website-value('o-cc#{$index}-#{$-depth}-gradient');
+                    } @else if o-color(#{$-color-var}) {
+                        $-current-color: o-color(#{$-color-var});
+                        $-current-gradient: false;
+                    } @else {
+                        // Keep previous color or gradient.
+                    }
+                    @if $-current-gradient {
+                        @extend .text-gradient;
+                        background-image: #{$-current-gradient};
+                        // Note that the "100%" of the gradient is based on the width of the
+                        // element, therefore its colors span on the whole row for headers.
+                        // But setting the width would prevent the text-align from taking the
+                        // correct full width into account.
+                        // Using background-size does not work either because it cannot be set to
+                        // a value such as 'fit-content'.
+                    } @else {
+                        background-image: none;
+                        color: #{$-current-color};
+                    }
+                }
             }
 
             // Links

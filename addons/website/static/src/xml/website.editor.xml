@@ -99,12 +99,30 @@
             data-no-bundle-reload="true" data-with-gradients="true"/>
         <we-colorpicker string="Text" data-customize-website-color="null" t-attf-data-color="o-cc#{number}-text"/>
         <we-collapse>
-            <we-colorpicker string="Headings" data-customize-website-color="null" t-attf-data-color="o-cc#{number}-headings"/>
-            <we-colorpicker string="Headings 2" data-customize-website-color="null" t-attf-data-color="o-cc#{number}-h2"/>
-            <we-colorpicker string="Headings 3" data-customize-website-color="null" t-attf-data-color="o-cc#{number}-h3"/>
-            <we-colorpicker string="Headings 4" data-customize-website-color="null" t-attf-data-color="o-cc#{number}-h4"/>
-            <we-colorpicker string="Headings 5" data-customize-website-color="null" t-attf-data-color="o-cc#{number}-h5"/>
-            <we-colorpicker string="Headings 6" data-customize-website-color="null" t-attf-data-color="o-cc#{number}-h6"/>
+            <we-colorpicker string="Headings" data-customize-website-layer2-color="null"
+                t-attf-data-layer-color="o-cc#{number}-headings"
+                t-attf-data-layer-gradient="o-cc#{number}-headings-gradient"
+                data-no-bundle-reload="true" data-with-gradients="true"/>
+            <we-colorpicker string="Headings 2" data-customize-website-layer2-color="null"
+                t-attf-data-layer-color="o-cc#{number}-h2"
+                t-attf-data-layer-gradient="o-cc#{number}-h2-gradient"
+                data-no-bundle-reload="true" data-with-gradients="true"/>
+            <we-colorpicker string="Headings 3" data-customize-website-layer2-color="null"
+                t-attf-data-layer-color="o-cc#{number}-h3"
+                t-attf-data-layer-gradient="o-cc#{number}-h3-gradient"
+                data-no-bundle-reload="true" data-with-gradients="true"/>
+            <we-colorpicker string="Headings 4" data-customize-website-layer2-color="null"
+                t-attf-data-layer-color="o-cc#{number}-h4"
+                t-attf-data-layer-gradient="o-cc#{number}-h4-gradient"
+                data-no-bundle-reload="true" data-with-gradients="true"/>
+            <we-colorpicker string="Headings 5" data-customize-website-layer2-color="null"
+                t-attf-data-layer-color="o-cc#{number}-h5"
+                t-attf-data-layer-gradient="o-cc#{number}-h5-gradient"
+                data-no-bundle-reload="true" data-with-gradients="true"/>
+            <we-colorpicker string="Headings 6" data-customize-website-layer2-color="null"
+                t-attf-data-layer-color="o-cc#{number}-h6"
+                t-attf-data-layer-gradient="o-cc#{number}-h6-gradient"
+                data-no-bundle-reload="true" data-with-gradients="true"/>
         </we-collapse>
         <we-colorpicker string="Links" data-customize-website-color="null" t-attf-data-color="o-cc#{number}-link"/>
         <we-row string="Primary Buttons">
