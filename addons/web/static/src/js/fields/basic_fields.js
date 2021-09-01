@@ -224,6 +224,14 @@ var InputField = DebouncedField.extend({
     //--------------------------------------------------------------------------
 
     /**
+     * Returns the content of the input
+     *
+     * @private
+     */
+    _getInputValue: function () {
+        return this.$input.val();
+    },
+    /**
      * @override
      * @returns {string} the content of the input
      */
@@ -336,7 +344,7 @@ var InputField = DebouncedField.extend({
                 this.attrs.modifiersValue &&
                 this.attrs.modifiersValue.required &&
                 this.viewType !== 'list') {
-                if (!this.$input.val()){
+                if (!this._getInputValue()) {
                     this.setInvalidClass();
                     ev.stopPropagation();
                 } else {

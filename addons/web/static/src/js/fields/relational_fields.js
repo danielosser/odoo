@@ -335,6 +335,12 @@ var FieldMany2One = AbstractField.extend({
         return tmp;
     },
     /**
+     * @override
+     */
+    _getInputValue: function () {
+        return basicFields.InputField.prototype._getInputValue.apply(this, arguments);
+    },
+    /**
      * @private
      * @returns {Array}
      */
@@ -1992,6 +1998,9 @@ var FieldMany2ManyTags = AbstractField.extend({
 
         this.many2one._getSearchBlacklist = function () {
             return self.value.res_ids;
+        };
+        this.many2one._getInputValue = function () {
+            return self.value.res_ids.length;
         };
         return this.many2one.appendTo(this.$el);
     },
