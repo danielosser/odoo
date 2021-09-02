@@ -4579,6 +4579,45 @@ QUnit.module('Views', {
         form.destroy();
     });
 
+    QUnit.test('navigation on resetOnAnyFieldChange widget with tab key in form view', async function (assert) {
+        assert.expect(2);
+
+        this.data.partner.fields.monetary = { string: "Monetary", type: 'monetary' };
+
+        const form = await createView({
+            View: FormView,
+            model: 'partner',
+            data: this.data,
+            arch: '<form string="Partners">' +
+                    '<sheet>' +
+                        '<group>' +
+                            '<field name="foo"/>' +
+                            '<field name="qux" widget="monetary"/>' +
+                        '</group>' +
+                    '</sheet>' +
+                '</form>',
+            res_id: 2,
+        });
+
+        // go to edit mode
+        await testUtils.form.clickEdit(form);
+
+        // focus first input, trigger tab
+        form.$('input[name="foo"]').focus();
+
+        // we do not have a way to simulate change on TAB, so we are first changing focus
+        // to qux field and then manually changing foo field which will reset qux field
+        // so after reset focus should still be there in qux field.
+        form.$('input[name="foo"]').trigger($.Event('keydown', { which: $.ui.keyCode.TAB }));
+        assert.strictEqual(form.$('div[name="qux"] .o_input')[0], document.activeElement,
+            "qux field should be focused");
+        await testUtils.fields.editInput(form.$('input[name=foo]'), 'let us trigger an onchange');
+        assert.strictEqual(form.$('div[name="qux"] .o_input')[0], document.activeElement,
+            "qux field should be focused");
+
+        form.destroy();
+    });
+
     QUnit.test('clicking on a stat button with a context', async function (assert) {
         assert.expect(1);
 

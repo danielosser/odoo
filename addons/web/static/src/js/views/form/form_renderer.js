@@ -164,12 +164,19 @@ var FormRenderer = BasicRenderer.extend({
      */
     confirmChange: function () {
         var self = this;
+        const lastActivatedField = this.allFieldWidgets[this.state.id][this.lastActivatedFieldIndex];
         return this._super.apply(this, arguments).then(function (resetWidgets) {
             _.each(resetWidgets, function (widget) {
                 self._setIDForLabel(widget, self.idsForLabels[widget.name]);
             });
             if (self.$('.o_field_invalid').length) {
                 self.canBeSaved(self.state.id);
+            }
+            const isLastActivatedFieldReset = resetWidgets.find((widget) => {
+                return widget.name === lastActivatedField.name;
+            });
+            if (isLastActivatedFieldReset) {
+                self.focusLastActivatedWidget();
             }
             return resetWidgets;
         });
