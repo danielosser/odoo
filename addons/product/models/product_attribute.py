@@ -516,6 +516,18 @@ class ProductTemplateAttributeValue(models.Model):
     def _ids2str(self):
         return ','.join([str(i) for i in sorted(self.ids)])
 
+    def _get_ptav_name_map(self):
+        """Return a {ptav -> name} map, setting name for values from single value lines
+        or from no_variant attributes to the empty string ''
+        """
+        ptavs = self._without_no_variant_attributes()._filter_single_value_lines()
+        ptav_name_map = {
+            ptav_id: name
+            for ptav_id, name in zip(ptavs.ids, ptavs.mapped('name'))
+        }
+        ptav_name_map.update({}.fromkeys((self-ptavs).ids, ''))
+        return ptav_name_map
+
     def _get_combination_name(self):
         """Exclude values from single value lines or from no_variant attributes."""
         return ", ".join([ptav.name for ptav in self._without_no_variant_attributes()._filter_single_value_lines()])

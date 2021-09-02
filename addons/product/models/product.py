@@ -475,8 +475,11 @@ class ProductProduct(models.Model):
             supplier_info_by_template = {}
             for r in supplier_info:
                 supplier_info_by_template.setdefault(r.product_tmpl_id, []).append(r)
+        ptavs = self.sudo().product_template_attribute_value_ids
+        ptav_name_map = ptavs._get_ptav_name_map()
         for product in self.sudo():
-            variant = product.product_template_attribute_value_ids._get_combination_name()
+            variant = ", ".join([ptav_name_map[ptav_id] for ptav_id in product.product_template_attribute_value_ids.ids 
+                                 if ptav_name_map[ptav_id] != ''])
 
             name = variant and "%s (%s)" % (product.name, variant) or product.name
             sellers = []
