@@ -83,9 +83,9 @@ class CrmLead(models.Model):
             'default_tag_ids': self.tag_ids.ids,
         }
         if self.team_id:
-            action['context']['default_team_id'] = self.team_id.id,
+            action['context']['sale_force_team_id'] = self.team_id.id
         if self.user_id:
-            action['context']['default_user_id'] = self.user_id.id
+            action['context']['sale_force_user_id'] = self.user_id.id
         return action
 
     def action_view_sale_quotation(self):
@@ -96,6 +96,10 @@ class CrmLead(models.Model):
             'default_partner_id': self.partner_id.id,
             'default_opportunity_id': self.id
         }
+        if self.team_id:
+            action['context']['sale_force_team_id'] = self.team_id.id
+        if self.user_id:
+            action['context']['sale_force_user_id'] = self.user_id.id
         action['domain'] = [('opportunity_id', '=', self.id), ('state', 'in', ['draft', 'sent'])]
         quotations = self.mapped('order_ids').filtered(lambda l: l.state in ('draft', 'sent'))
         if len(quotations) == 1:
