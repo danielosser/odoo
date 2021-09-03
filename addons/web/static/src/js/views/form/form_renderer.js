@@ -172,11 +172,13 @@ var FormRenderer = BasicRenderer.extend({
             if (self.$('.o_field_invalid').length) {
                 self.canBeSaved(self.state.id);
             }
-            const isLastActivatedFieldReset = resetWidgets.find((widget) => {
-                return widget.name === lastActivatedField.name;
-            });
-            if (isLastActivatedFieldReset) {
-                self.focusLastActivatedWidget();
+            if (lastActivatedField) {
+                const isLastActivatedFieldReset = resetWidgets.find((widget) => {
+                    return widget.name === lastActivatedField.name;
+                });
+                if (isLastActivatedFieldReset) {
+                    self.focusLastActivatedWidget();
+                }
             }
             return resetWidgets;
         });
