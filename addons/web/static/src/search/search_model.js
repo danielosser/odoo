@@ -170,10 +170,10 @@ export class SearchModel extends EventBus {
      *
      * @param {Object} [config.action={id:false,views:[]}]
      * @param {boolean} [config.activateFavorite=true]
+     * @param {Object} [config.comparison]
      * @param {Object} [config.context={}]
      * @param {String} [config.displayName=""]
      * @param {Array} [config.domain=[]]
-     * @param {Array} [config.domains]
      * @param {Array} [config.dynamicFilters=[]]
      * @param {string[]} [config.groupBy=[]]
      * @param {boolean} [config.loadIrFilters=false]
@@ -197,17 +197,17 @@ export class SearchModel extends EventBus {
         this.view = view || { id: false };
 
         // used to avoid useless recomputations
+        this._comparison = null;
         this._context = null;
         this._domain = null;
-        this._domains = null;
         this._groupBy = null;
         this._orderBy = null;
 
-        const { context, domain, domains, groupBy, orderBy } = config;
+        const { comparison, context, domain, groupBy, orderBy } = config;
 
+        this.globalComparison = comparison;
         this.globalContext = context || {};
         this.globalDomain = domain || [];
-        this.globalDomains = domains; // rework that part
         this.globalGroupBy = groupBy || [];
         this.globalOrderBy = orderBy || [];
 
@@ -362,25 +362,25 @@ export class SearchModel extends EventBus {
 
     /**
      * @param {Object} [config={}]
+     * @param {Object} [config.comparison]
      * @param {Object} [config.context={}]
      * @param {Array} [config.domain=[]]
-     * @param {Object[]} [config.domains]
      * @param {string[]} [config.groupBy=[]]
      * @param {string[]} [config.orderBy=[]]
      */
     async reload(config = {}) {
         // used to avoid useless recomputations
+        this._comparison = null;
         this._context = null;
         this._domain = null;
-        this._domains = null;
         this._groupBy = null;
         this._orderBy = null;
 
-        const { context, domain, domains, groupBy, orderBy } = config;
+        const { comparison, context, domain, groupBy, orderBy } = config;
 
         this.globalContext = context || {};
         this.globalDomain = domain || [];
-        this.globalDomains = domains; // how to use this?
+        this.globalComparison = comparison;
         this.globalGroupBy = groupBy || [];
         this.globalOrderBy = orderBy || [];
 
@@ -402,7 +402,38 @@ export class SearchModel extends EventBus {
      * @returns {Object}
      */
     get comparison() {
-        return this._getComparison();
+        if (!this._comparison) {
+            if (this.globalComparison) {
+                this._comparison = this.globalComparison;
+            } else {
+                const comparison = this._getComparison();
+                let domains;
+                if (comparison) {
+                    const {
+                        fieldName,
+                        range,
+                        rangeDescription,
+                        comparisonRange,
+                        comparisonRangeDescription,
+                    } = comparison;
+                    domains = [
+                        {
+                            arrayRepr: Domain.and([this.domain, range]).toList(),
+                            description: rangeDescription,
+                        },
+                        {
+                            arrayRepr: Domain.and([this.domain, comparisonRange]).toList(),
+                            description: comparisonRangeDescription,
+                        },
+                    ];
+                    this._comparison = { domains, fieldName };
+                } else {
+                    domains = [{ arrayRepr: this.domain, description: null }];
+                    this._comparison = { domains };
+                }
+            }
+        }
+        return this._comparison;
     }
 
     /**
@@ -423,39 +454,6 @@ export class SearchModel extends EventBus {
             this._domain = this._getDomain();
         }
         return this._domain;
-    }
-
-    get domains() {
-        if (!this._domains) {
-            if (this.globalDomains) {
-                this._domains = this.globalDomains;
-            } else {
-                const comparison = this._getComparison();
-                if (comparison) {
-                    const {
-                        fieldName,
-                        range,
-                        rangeDescription,
-                        comparisonRange,
-                        comparisonRangeDescription,
-                    } = comparison;
-                    this._domains = [
-                        {
-                            arrayRepr: Domain.and([this.domain, range]).toList(),
-                            description: rangeDescription,
-                        },
-                        {
-                            arrayRepr: Domain.and([this.domain, comparisonRange]).toList(),
-                            description: comparisonRangeDescription,
-                        },
-                    ];
-                    this._domains.fieldName = fieldName; // bad but for now okay
-                } else {
-                    this._domains = [{ arrayRepr: this.domain, description: null }];
-                }
-            }
-        }
-        return this._domains;
     }
 
     get facets() {
@@ -1996,9 +1994,9 @@ export class SearchModel extends EventBus {
         if (this.blockNotification) {
             return;
         }
+        this._comparison = null;
         this._context = null;
         this._domain = null;
-        this._domains = null;
         this._groupBy = null;
         this._orderBy = null;
 

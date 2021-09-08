@@ -153,6 +153,7 @@ GraphView.defaultProps = {
 GraphView.props = {
     ...standardViewProps,
     additionalMeasures: { type: Array, elements: String, optional: true },
+    comparison: { type: Object },
     disableLinking: { type: Boolean, optional: true },
     display: { type: Object, optional: true },
     measure: { type: String, optional: true },

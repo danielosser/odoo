@@ -7,7 +7,7 @@ import { CallbackRecorder, useSetupAction } from "@web/webclient/actions/action_
 const { Component, hooks } = owl;
 const { useSubEnv } = hooks;
 
-export const SEARCH_KEYS = ["context", "domain", "domains", "groupBy", "orderBy"];
+export const SEARCH_KEYS = ["comparison", "context", "domain", "groupBy", "orderBy"];
 const OTHER_SEARCH_KEYS = ["irFilters", "searchViewArch", "searchViewFields", "searchViewId"];
 
 export class WithSearch extends Component {
@@ -83,6 +83,9 @@ export class WithSearch extends Component {
         for (const key of OTHER_SEARCH_KEYS) {
             componentProps.info[key] = this.searchModel[key];
         }
+        if (!this.props.searchMenuTypes.includes("comparison")) {
+            delete componentProps.comparison;
+        }
         return componentProps;
     }
 }
@@ -122,9 +125,9 @@ WithSearch.props = {
     display: { type: Object, optional: true },
 
     // search query elements
+    comparison: { type: Object, optional: true },
     context: { type: Object, optional: true },
     domain: { type: Array, element: [String, Array], optional: true },
-    domains: { type: Array, element: Object, optional: true },
     groupBy: { type: Array, element: String, optional: true },
     orderBy: { type: Array, element: String, optional: true },
 

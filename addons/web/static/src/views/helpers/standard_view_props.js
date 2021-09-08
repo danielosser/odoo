@@ -21,7 +21,6 @@ export const standardViewProps = {
     arch: { type: String },
     context: { type: Object },
     domain: { type: Array },
-    domains: { type: Array, elements: Object },
     fields: { type: Object, elements: Object },
     groupBy: { type: Array, elements: String },
     limit: { type: Number, optional: 1 },

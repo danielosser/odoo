@@ -101,13 +101,17 @@ export class GraphModel extends Model {
 
     /**
      * @param {Object} [searchParams]
+     * @param {Object} [searchParams.comparison]
      * @param {Object} [searchParams.context]
-     * @param {Object[]} [searchParams.domains]
      * @param {string[]} [searchParams.groupBy]
      */
     async load(searchParams) {
-        const { context, domains, groupBy } = searchParams;
-        const metaData = Object.assign({}, this.metaData, { context, domains });
+        const { comparison, context, groupBy } = searchParams;
+        const metaData = Object.assign({}, this.metaData, {
+            comparisonField: comparison.fieldName || null,
+            context,
+            domains: comparison.domains,
+        });
 
         metaData.measure = context.graph_measure || metaData.measure;
         metaData.mode = context.graph_mode || metaData.mode;
@@ -183,10 +187,10 @@ export class GraphModel extends Model {
      * @returns {Object}
      */
     _getData(dataPoints) {
-        const { domains, groupBy, mode } = this.metaData;
+        const { comparisonField, groupBy, mode } = this.metaData;
 
         let identify = false;
-        if (domains.length && groupBy.length && groupBy[0].fieldName === domains.fieldName) {
+        if (comparisonField && groupBy.length && groupBy[0].fieldName === comparisonField) {
             identify = true;
         }
         const dateClasses = identify ? this._getDateClasses(dataPoints) : null;
