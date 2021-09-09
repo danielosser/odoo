@@ -480,6 +480,9 @@ function factory(dependencies) {
         messagesAsAuthor: one2many('mail.message', {
             inverse: 'author',
         }),
+        messagesAsSender: one2many('mail.message', {
+            inverse: 'sender',
+        }),
         model: attr({
             default: 'res.partner',
         }),

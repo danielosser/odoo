@@ -47,6 +47,16 @@ function factory(dependencies) {
                     });
                 }
             }
+            if ('sender_id' in data) {
+                if (!data.sender_id) {
+                    data2.sender = unlinkAll();
+                } else {
+                    data2.sender = insert({
+                        display_name: data.sender_id[1],
+                        id: data.sender_id[0],
+                    });
+                }
+            }
             if ('body' in data) {
                 data2.body = data.body;
             }
@@ -566,6 +576,10 @@ function factory(dependencies) {
         attachments: many2many('mail.attachment', {
             inverse: 'messages',
         }),
+        /**
+         * This value describes the author of the message. It's not necessarily the sender of
+         * the message but the individual used to be impersonnated by the sender.
+         */
         author: many2one('mail.partner', {
             inverse: 'messagesAsAuthor',
         }),
@@ -758,6 +772,14 @@ function factory(dependencies) {
          */
         prettyBody: attr({
             compute: '_computePrettyBody',
+        }),
+        /**
+         * The sender is the one that wrote and send the message. By default, the sender
+         * and the author are the same. They can be different when an author is specified
+         * manually on a template.
+         */
+        sender: many2one('mail.partner', {
+            inverse: 'messagesAsSender',
         }),
         subject: attr(),
         subtype_description: attr(),
