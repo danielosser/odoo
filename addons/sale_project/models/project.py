@@ -4,7 +4,7 @@
 from ast import literal_eval
 
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import ValidationError, UserError, AccessError
 
 class Project(models.Model):
     _inherit = 'project.project'
@@ -117,10 +117,11 @@ class ProjectTask(models.Model):
     project_sale_order_id = fields.Many2one('sale.order', string="Project's sale order", related='project_id.sale_order_id')
     invoice_count = fields.Integer("Number of invoices", related='sale_order_id.invoice_count')
     task_to_invoice = fields.Boolean("To invoice", compute='_compute_task_to_invoice', search='_search_task_to_invoice', groups='sales_team.group_sale_salesman_all_leads')
+    display_sale_order_id = fields.Boolean(string='Display Sales Order', compute='_compute_display_sale_order_id')
 
     @property
     def SELF_READABLE_FIELDS(self):
-        return super().SELF_READABLE_FIELDS | {'sale_order_id', 'sale_line_id'}
+        return super().SELF_READABLE_FIELDS | {'sale_order_id', 'sale_line_id', 'display_sale_order_id'}
 
     @api.depends('sale_line_id', 'project_id', 'commercial_partner_id')
     def _compute_sale_order_id(self):
@@ -145,6 +146,18 @@ class ProjectTask(models.Model):
             # check sale_line_id and customer are coherent
             if task.sale_line_id.order_partner_id.commercial_partner_id != task.partner_id.commercial_partner_id:
                 task.sale_line_id = False
+
+    @api.depends('sale_order_id')
+    def _compute_display_sale_order_id(self):
+        if not self.sale_order_id:
+            self.display_sale_order_id = False
+            return
+        try:
+            sale_orders = self.env['sale.order'].search([('id', 'in', self.sale_order_id.ids)])
+            for task in self:
+                task.display_sale_order_id = task.sale_order_id and task.sale_order_id in sale_orders
+        except AccessError:
+            self.display_sale_order_id = False
 
     @api.constrains('sale_line_id')
     def _check_sale_line_type(self):
@@ -171,6 +184,15 @@ class ProjectTask(models.Model):
 
     def action_view_so(self):
         self.ensure_one()
+        if self.env.user.share:
+            if not self.display_sale_order_id:
+                return {}
+            return {
+                "name": "Portal Sale Order",
+                "type": "ir.actions.act_url",
+                "url": "/my/orders/%s" % self.sale_order_id.id,
+            }
+        # FIXME: I think it is impossible to have many
         so_ids = self._get_action_view_so_ids()
         action_window = {
             "type": "ir.actions.act_window",
