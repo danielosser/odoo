@@ -12,6 +12,11 @@ options.registry.countdown = options.Class.extend({
         'click .toggle-edit-message': '_onToggleEndMessageClick',
     }),
 
+    cleanForSave: async function () {
+        this.$target.find('.s_countdown_canvas_wrapper').removeClass("s_countdown_none");
+        this.$target.find('.s_countdown_end_message').removeClass("s_countdown_enable_preview");
+        this._super(...arguments);
+    },
     //--------------------------------------------------------------------------
     // Options
     //--------------------------------------------------------------------------
@@ -28,6 +33,8 @@ options.registry.countdown = options.Class.extend({
                 const message = this.endMessage || qweb.render('website.s_countdown.end_message');
                 this.$target.append(message);
             }
+            this.$target.toggleClass('hide-countdown', widgetValue === 'message_no_countdown');
+            this.updateUIEndMessage();
         } else {
             const $message = this.$target.find('.s_countdown_end_message').detach();
             if ($message.length) {
@@ -86,9 +93,9 @@ options.registry.countdown = options.Class.extend({
      */
     updateUIEndMessage: function () {
         this.$target.find('.s_countdown_canvas_wrapper')
-            .toggleClass("d-none", this.showEndMessage === true && this.$target.hasClass("hide-countdown"));
+            .toggleClass("s_countdown_none", this.showEndMessage === true && this.$target.hasClass("hide-countdown"));
         this.$target.find('.s_countdown_end_message')
-            .toggleClass("d-none", !this.showEndMessage);
+            .toggleClass("s_countdown_enable_preview", this.showEndMessage === true);
     },
 
     //--------------------------------------------------------------------------
