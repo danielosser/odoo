@@ -71,6 +71,25 @@ function factory(dependencies) {
         }
 
         /**
+         *
+         * @param {mail.message_reaction_group} messageReactionGroup
+         */
+        openReactionsSummary(messageReactionGroup) {
+            this.threadViewer.update({
+                messageReactionsSummaryView: insertAndReplace({
+                    highlightedReaction: link(messageReactionGroup),
+                    threadView: link(this),
+                }),
+            });
+            this.messageReactionsSummaryView.update({
+                messageReactionsSummary: insertAndReplace({
+                    message: link(messageReactionGroup.message),
+                    messageReactionsSummaryView: link(this.messageReactionsSummaryView),
+                }),
+            });
+        }
+
+        /**
          * Starts editing the last message of this thread from the current user.
          */
         startEditingLastMessageFromCurrentUser() {
@@ -462,6 +481,11 @@ function factory(dependencies) {
         messages: many2many('mail.message', {
             related: 'threadCache.messages',
         }),
+        messageReactionsSummaryView: one2one('mail.message_reactions_summary_view', {
+            related: 'threadViewer.messageReactionsSummaryView',
+            inverse: 'threadView',
+            isCausal: true,
+        }),
         /**
          * States the message views used to display this messages.
          */
@@ -469,6 +493,9 @@ function factory(dependencies) {
             compute: '_computeMessageViews',
             inverse: 'threadView',
             isCausal: true,
+        }),
+        orderedNonEmptyMessages: many2many('mail.message', {
+            related: 'threadCache.orderedNonEmptyMessages',
         }),
         /**
          * States the order mode of the messages on this thread view.

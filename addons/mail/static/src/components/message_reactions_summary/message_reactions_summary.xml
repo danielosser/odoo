@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="mail.MessageReactionsSummary" owl="1">
+        <div  class="o_MessageReactionsSummary">
+            <t t-if="messageReactionsSummary">
+                <t t-if="messageReactionsSummary.messageReactionsSummaryView.highlightedReaction">
+                    <div class="o_MessageReactionsSummary_reactionsGroup mt-2 mx-2">
+                        <t t-foreach="messageReactionsSummary.messageReactionsSummaryView.highlightedReaction.message.messageReactionGroups" t-as="reaction" t-key="reaction.localId">
+                            <MessageReactionGroupForSummary
+                                messageReactionGroupLocalId="reaction.localId"
+                            />
+                        </t>
+                    </div>
+                    <div>
+                        <hr></hr>
+                    </div>
+                    <div class="o_MessageReactionsSummary_content">
+                        <t t-foreach="messageReactionsSummary.partners" t-as="partner" t-key="partner.localId">
+                            <div class="o_MessageReactionsSummary_partner d-flex flex-row ml-2 mb-2">
+                                <div class="o_MessageReactionsSummary_partnerAvatarContainer">
+                                    <img class="rounded-circle" t-att-src="partner.avatarUrl"/>
+                                </div>
+                                <span class="m-2" t-esc="partner.name"/>
+                            </div>
+                        </t>
+                        <t t-foreach="messageReactionsSummary.guests" t-as="guest" t-key="guest.localId">
+                            <div class="o_MessageReactionsSummary_partner d-flex flex-row ml-2 mb-2">
+                                <div class="o_MessageReactionsSummary_partnerAvatarContainer">
+                                    <img class="rounded-circle" t-att-src="guest.avatarUrl"/>
+                                </div>
+                                <span class="m-2" t-esc="guest.name"/>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+                <t t-else="">
+                    <div class="o_MessageReactionsSummary_noReaction d-flex align-items-center justify-content-center">
+                        <span class="m-2 font-italic">
+                            No reaction to display
+                        </span>
+                    </div>
+                </t>
+            </t>
+        </div>
+    </t>
+
+</templates>

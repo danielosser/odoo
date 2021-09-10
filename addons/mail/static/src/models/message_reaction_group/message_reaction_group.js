@@ -15,6 +15,7 @@ function factory(dependencies) {
         _created() {
             super._created();
             this.onClick = this.onClick.bind(this);
+            this.onContextMenu = this.onContextMenu.bind(this);
         }
 
         //----------------------------------------------------------------------
@@ -33,6 +34,16 @@ function factory(dependencies) {
             } else {
                 this.message.addReaction(this.content);
             }
+        }
+
+        /**
+         * Handles right click or long press touch in mobile on the reaction group.
+         *
+         * @param {MouseEvent} ev
+         */
+        onContextMenu(ev) {
+            markEventHandled(ev, 'MessageReactionGroup.onContextMenu');
+            this.message.messageViews[0].threadView.openReactionsSummary(this);
         }
 
         //----------------------------------------------------------------------
