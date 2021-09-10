@@ -911,8 +911,7 @@ const Wysiwyg = Widget.extend({
                 }
                 const _onMousedown = ev => {
                     if (
-                        !ev.target.closest('.oe-toolbar') &&
-                        !ev.target.closest('.ui-autocomplete') &&
+                        !ev.target.closest('.oe-toolbar, .ui-autocomplete, .o_select_media_dialog') &&
                         (!this.linkTools || ![ev.target, ...wysiwygUtils.ancestors(ev.target)].includes(this.linkTools.$link[0]))
                     ) {
                         // Destroy the link tools on click anywhere outside the

@@ -4,7 +4,6 @@ odoo.define('wysiwyg.widgets.LinkTools', function (require) {
 const Link = require('wysiwyg.widgets.Link');
 const {ColorPaletteWidget} = require('web_editor.ColorPalette');
 const {ColorpickerWidget} = require('web.Colorpicker');
-const OdooEditorLib = require('@web_editor/../lib/odoo-editor/src/OdooEditor');
 const dom = require('web.dom');
 const {
     computeColorClasses,
@@ -13,8 +12,7 @@ const {
     getNumericAndUnit,
     isColorGradient,
 } = require('web_editor.utils');
-
-const setSelection = OdooEditorLib.setSelection;
+const MediaDialog = require('wysiwyg.widgets.MediaDialog');
 
 /**
  * Allows to customize link content and style.
@@ -27,6 +25,8 @@ const LinkTools = Link.extend({
         'change .link-custom-color-border input': '_onChangeCustomBorderWidth',
         'keypress .link-custom-color-border input': '_onKeyPressCustomBorderWidth',
         'click we-select [name="link_border_style"] we-button': '_onBorderStyleSelectOption',
+        'click .o_we_upload_file': '_onUploadFileClick',
+        'click .o_we_remove_file': '_onRemoveFileClick',
     }),
 
     /**
@@ -43,6 +43,8 @@ const LinkTools = Link.extend({
         this.customColors = {};
         this.colorpickers = {};
         this.colorpickersPromises = {};
+        this.fileName = this.linkEl.dataset.fileName;
+        this.download = this.linkEl.hasAttribute('download') || /download=true/.test(this.linkEl.href);
     },
     /**
      * @override
@@ -74,6 +76,29 @@ const LinkTools = Link.extend({
     },
 
     //--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
+
+    /**
+     * @override
+     */
+    applyLinkToDom(data) {
+        // If a file was uploaded, we want to display its filename as the
+        // text content
+        if (!this.data.originalText && this.fileName) {
+            data.content = this.fileName;
+        }
+        this._super(data);
+
+        if (!this.fileName || this._getFileAction() !== 'download') {
+            this.linkEl.removeAttribute('download');
+            this.linkEl.setAttribute('href', data.url.replace(/[&?]+download=true/, ''));
+        } else {
+            this.linkEl.setAttribute('download', '');
+        }
+    },
+
+    //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
 
@@ -102,6 +127,7 @@ const LinkTools = Link.extend({
             'we-selection-items[name="link_style_color"] > we-button',
             'we-selection-items[name="link_style_size"] > we-button',
             'we-selection-items[name="link_style_shape"] > we-button',
+            'we-selection-items[name="file_action"] > we-button',
         ];
         return this.$(options.join(','));
     },
@@ -122,6 +148,15 @@ const LinkTools = Link.extend({
      */
     _getLinkType: function () {
         return this.$('we-selection-items[name="link_style_color"] we-button.active').data('value') || '';
+    },
+    /**
+     * Returns the opening method for the file.
+     *
+     * @private
+     * @returns {string}
+     */
+    _getFileAction() {
+        return this.$('we-selection-items[name="file_action"] we-button.active').data('value') || '';
     },
     /**
      * @override
@@ -214,6 +249,11 @@ const LinkTools = Link.extend({
             $activeBorderStyleToggler.empty();
             $activeBorderStyleButton.find('div').clone().appendTo($activeBorderStyleToggler);
         }
+        this.el.querySelector('.o_we_upload_file_wrapper').classList.toggle('d-none', !!this.fileName);
+        this.el.querySelector('.o_we_edit_file_wrapper').classList.toggle('d-none', !this.fileName);
+        this.el.querySelector('.o_we_file_action_wrapper').classList.toggle('d-none', !this.fileName);
+        this.el.querySelector('.o_we_filename').textContent = this.fileName;
+        this.el.querySelector('input[name="url"]').readOnly = !!this.fileName;
     },
     /**
      * Updates the colorpicker associated to a given property - updated with its selected color.
@@ -311,16 +351,35 @@ const LinkTools = Link.extend({
             $colorPreview.css('background-image', isColorGradient(color) ? color : '');
         }
     },
+    /**
+     * @override
+     */
+    _isOptionValueActive($option) {
+        const optionEl = $option[0];
+        if (optionEl.closest('.o_we_file_action_wrapper')) {
+            const value = optionEl.dataset.value;
+            return value === 'download' ? this.download : !this.download;
+        }
+        return this._super(...arguments);
+    },
 
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------
 
+    /**
+     * @private
+     * @param {Event} ev
+     */
     _onClickCheckbox: function (ev) {
         const $target = $(ev.target);
         $target.closest('we-button.o_we_checkbox_wrapper').toggleClass('active');
         this._adaptPreview();
     },
+    /**
+     * @private
+     * @param {Event} ev
+     */
     _onPickSelectOption: function (ev) {
         const $target = $(ev.target);
         if ($target.closest('[name="link_border_style"]').length) {
@@ -374,6 +433,47 @@ const LinkTools = Link.extend({
             $target.siblings('we-button').removeClass("active");
             this.options.wysiwyg.odooEditor.historyStep();
         }
+    },
+    /**
+     * @private
+     * @param {Event} ev
+     */
+    _onUploadFileClick(ev) {
+        const documentDialog = new MediaDialog(this, {noIcons: true, noVideos: true, noImages: true});
+        documentDialog.on('save', this, this._onFileUploaded);
+        documentDialog.open();
+    },
+    /**
+     * @private
+     * @param {Event} ev
+     */
+    _onRemoveFileClick(ev) {
+        this.el.querySelector('input[name="url"]').value = '';
+        this.el.querySelector('we-checkbox[name="is_new_window"]').closest('we-button.o_we_checkbox_wrapper').classList.remove('active');
+        delete this.fileName;
+        delete this.linkEl.dataset.fileName;
+        this._updateOptionsUI();
+        this._adaptPreview();
+    },
+    /**
+     * @private
+     * @param {Object} data
+     */
+    _onFileUploaded(data) {
+        if (data) {
+            const {src, href, title} = data;
+            let url = href || src;
+            // The documentDialog automatically adds download=true to the
+            // url on save, but in this case we want the file to open in a
+            // new window by default, and configurable with an option.
+            url = url.replace(/[&?]+download=true/, '').replace(window.location.origin, '');
+            this.el.querySelector('we-checkbox[name="is_new_window"]').closest('we-button.o_we_checkbox_wrapper').classList.add('active');
+            this.el.querySelector('input[name="url"]').value = url;
+            this.fileName = title || url.split('/').slice(-1)[0];
+            this.linkEl.dataset.fileName = this.fileName;
+        }
+        this._updateOptionsUI();
+        this._adaptPreview();
     },
 });
 
