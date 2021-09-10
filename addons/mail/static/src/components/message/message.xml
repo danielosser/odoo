@@ -167,7 +167,11 @@
                     </t>
                     <div t-if="message.messageReactionGroups.length > 0" class="d-flex flex-wrap ml-2">
                         <t t-foreach="message.messageReactionGroups" t-as="messageReactionGroup" t-key="messageReactionGroup.localId">
-                            <MessageReactionGroup class="mr-1 mb-1" messageReactionGroupLocalId="messageReactionGroup.localId"/>
+                            <MessageReactionGroup
+                                class="mr-1 mb-1"
+                                messageReactionGroupLocalId="messageReactionGroup.localId"
+                                threadViewLocalId="threadView.localId"
+                            />
                         </t>
                     </div>
                 </div>

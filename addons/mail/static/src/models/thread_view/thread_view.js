@@ -3,7 +3,7 @@
 import { registerNewModel } from '@mail/model/model_core';
 import { RecordDeletedError } from '@mail/model/model_errors';
 import { attr, many2many, many2one, one2one } from '@mail/model/model_field';
-import { clear, create, link, unlink, update } from '@mail/model/model_field_command';
+import { clear, create, insertAndReplace, link, unlink, update } from '@mail/model/model_field_command';
 import { OnChange } from '@mail/model/model_onchange';
 
 function factory(dependencies) {
@@ -52,6 +52,25 @@ function factory(dependencies) {
                 hint,
                 threadViewer: this.threadViewer,
             });
+        }
+
+        /**
+         *
+         */
+        openReactionsSummary(messageReactionGroup) {
+            const message = messageReactionGroup.message;
+            if (message) {
+                message.update({
+                    messageReactionsSummary: insertAndReplace({
+                        messageId: message.localId,
+                        highlightedReaction: messageReactionGroup,
+                    }),
+                });
+                this.threadViewer.update({
+                    hasReactionsSummary: true,
+                    messageReactionGroupLocalId: messageReactionGroup.localId,
+                });
+            }
         }
 
         /**
@@ -294,6 +313,12 @@ function factory(dependencies) {
             related: 'threadViewer.hasMemberList',
         }),
         /**
+         * Determines whether this thread view has a reactions summary.
+         */
+        hasReactionsSummary: attr({
+            related: 'threadViewer.hasReactionsSummary',
+        }),
+        /**
          * Determines whether this thread view has a top bar.
          */
         hasTopbar: attr({
@@ -352,6 +377,9 @@ function factory(dependencies) {
         lastVisibleMessage: many2one('mail.message'),
         messages: many2many('mail.message', {
             related: 'threadCache.messages',
+        }),
+        messageReactionGroupLocalId: attr({
+            related: 'threadViewer.messageReactionGroupLocalId'
         }),
         nonEmptyMessages: many2many('mail.message', {
             related: 'threadCache.nonEmptyMessages',

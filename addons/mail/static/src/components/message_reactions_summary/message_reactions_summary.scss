@@ -1,0 +1,56 @@
+// ------------------------------------------------------------------
+// Layout
+// ------------------------------------------------------------------
+
+.o_MessageReactionsSummary {
+    display:flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.o_MessageReactionsSummary_content {
+
+}
+
+.o_MessageReactionsSummary_reactionsGroup {
+    cursor: pointer;
+    display:flex;
+    flex-direction: row;
+}
+
+// ------------------------------------------------------------------
+// Style
+// ------------------------------------------------------------------
+
+.o_MessageReactionsSummary {
+    background: gray('200');
+}
+
+.o_MessageReactionsSummary_content {
+
+}
+
+.o_MessageReactionsSummary_reaction {
+    border-radius: $o-mail-rounded-rectangle-border-radius-sm;
+    border-style: solid;
+    border-width: $border-width;
+    border-color: gray('200');
+    &.o-activeReaction {
+        background: gray('400');
+        border-color: gray('400');
+    }
+}
+
+.o_MessageReactionsSummary_reactionCount {
+    &.o-activeReactionCount {
+        color: white;
+    }
+}
+
+.o_MessageReactionsSummary_active_reaction_count {
+
+}
+
+.o_MessageReactionsSummary_reaction {
+
+}

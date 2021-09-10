@@ -96,6 +96,12 @@ function factory(dependencies) {
             default: false,
         }),
         /**
+         * Determines whether this thread viewer has a reactions summary.
+         */
+        hasReactionsSummary: attr({
+            default: false,
+        }),
+        /**
          * Determines whether `this.thread` should be displayed.
          */
         hasThreadView: attr({
@@ -107,6 +113,10 @@ function factory(dependencies) {
         hasTopbar: attr({
             default: false,
         }),
+        /**
+         * Determines the highlighted reaction when message reactions summary is open.
+         */
+        messageReactionGroupLocalId: attr(),
         /**
          * Determines the selected `mail.message`.
          */

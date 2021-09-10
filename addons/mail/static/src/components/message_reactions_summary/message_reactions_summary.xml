@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="mail.MessageReactionsSummary" owl="1">
+        <div  class="o_MessageReactionsSummary">
+            <div class="o_MessageReactionsSummary_reactionsGroup mt-2 mx-2">
+                <t t-foreach="message.messageReactionGroups" t-as="reaction" t-key="reaction.localId">
+                    <div class="o_MessageReactionsSummary_reaction mr-1 mb-1" t-att-class="{ 'o-activeReaction': reaction.content === messageReactionsSummary.highlightedReaction.content }" t-on-click="_onClickReaction">
+                        <span class="o_MessageReactionsSummary_reactionEmote mx-1" t-esc="reaction.content"/>
+                        <span class="o_MessageReactionsSummary_reactionCount  mx-1" t-att-class="{ 'o-activeReactionCount': reaction.content === messageReactionsSummary.highlightedReaction.content }" t-esc="reaction.count"/>
+                    </div>
+                </t>
+            </div>
+            <div>
+                <hr></hr>
+            </div>
+            <div class="o_MessageReactionsSummary_content">
+                <t t-foreach="messageReactionsSummary.partnersWhoReacted" t-as="partner" t-key="partner.localId">
+                    <div class="o_MessageReactionsSummary_partner d-flex flex-row ml-2 mb-2">
+                        <div class="o_Message_authorAvatarContainer o_Message_sidebarItem">
+                            <img class="o_Message_authorAvatar rounded-circle" t-att-src="partner.avatar"/>
+                        </div>
+                        <span class="o_MessageReactionsSummary_partnerName m-2" t-esc="partner.name"/>
+                    </div>
+                </t>
+            </div>
+        </div>
+    </t>
+
+</templates>

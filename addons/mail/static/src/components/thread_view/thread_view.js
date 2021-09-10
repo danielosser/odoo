@@ -21,6 +21,15 @@ export class ThreadView extends Component {
          * Reference of the message list. Useful to determine scroll positions.
          */
         this._messageListRef = useRef('messageList');
+        this._onClickCaptureGlobal = this._onClickCaptureGlobal.bind(this);
+    }
+
+    mounted() {
+        document.addEventListener('click', this._onClickCaptureGlobal, true);
+    }
+
+    willUnmount() {
+        document.removeEventListener('click', this._onClickCaptureGlobal, true);
     }
 
     //--------------------------------------------------------------------------
@@ -92,6 +101,15 @@ export class ThreadView extends Component {
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------
+
+    _onClickCaptureGlobal(ev) {
+        if (ev.target.className.includes('o_MessageReactionsSummary')) {
+            return;
+        }
+        this.threadView.threadViewer.update({
+            hasReactionsSummary: false,
+        });
+    }
 
     /**
      * @private

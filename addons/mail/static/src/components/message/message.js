@@ -526,6 +526,10 @@ export class Message extends Component {
         ev.preventDefault();
         this.message.originThread.open();
     }
+
+    _onContextMenu() {
+        this.threadView.openContextMenu(this.props.messageLocalId);
+    }
 }
 
 Object.assign(Message, {

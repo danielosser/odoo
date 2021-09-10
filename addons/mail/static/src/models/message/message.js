@@ -731,6 +731,9 @@ function factory(dependencies) {
             inverse: 'message',
             isCausal: true,
         }),
+        messageReactionsSummary: one2one('mail.message_reactions_summary', {
+            inverse: 'message',
+        }),
         message_type: attr(),
         notifications: one2many('mail.notification', {
             inverse: 'message',
