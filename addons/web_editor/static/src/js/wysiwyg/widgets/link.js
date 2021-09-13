@@ -190,8 +190,18 @@ const Link = Widget.extend({
             attrs.rel = `${data.rel}`;
         }
 
+        // If there is a data.modalSelector, it means that the target of the
+        // link is a modal. Which will be opened by clicking on the link.
+        if (data.modalSelector) {
+            this.$link[0].dataset.toggle = 'modal';
+            this.$link[0].dataset.target = data.modalSelector;
+        } else if (this.$link[0].dataset.toggle = 'modal') {
+            delete this.$link[0].dataset.toggle;
+            delete this.$link[0].dataset.target;
+        }
+
         this.$link.attr(attrs);
-        if (!this.$link.attr('target')) {
+        if (!this.$link.attr('target') || data.modalSelector) {
             this.$link[0].removeAttribute('target');
         }
         if (data.content !== this.data.originalText || data.url !== this.data.url) {
@@ -310,6 +320,13 @@ const Link = Widget.extend({
             (type && shapeClasses ? (` ${shapeClasses}`) : '') +
             (type && size ? (' btn-' + size) : '');
         var isNewWindow = this._isNewWindow(url);
+        let modalSelector = false;
+        // Check if the target of the link is a modal.
+        if (url.indexOf('#') === 0 && url.length > 1) {
+            modalSelector = '#' + $.escapeSelector(url.substring(1));
+            const isModalTarget = $(modalSelector).length && $(modalSelector).hasClass('modal');
+            modalSelector = isModalTarget ? modalSelector : false;
+        }
         var doStripDomain = this._doStripDomain();
         if (url.indexOf('@') >= 0 && url.indexOf('mailto:') < 0 && !url.match(/^http[s]?/i)) {
             url = ('mailto:' + url);
@@ -330,6 +347,7 @@ const Link = Widget.extend({
             oldAttributes: this.data.oldAttributes,
             isNewWindow: isNewWindow,
             doStripDomain: doStripDomain,
+            modalSelector: modalSelector,
         };
     },
     /**

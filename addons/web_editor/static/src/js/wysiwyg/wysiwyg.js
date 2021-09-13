@@ -92,6 +92,14 @@ const Wysiwyg = Widget.extend({
             return videoWidget.getWrappedIframe(src)[0];
         };
 
+        // Disables the toggle modal Bootstrap event and create a new event that
+        // opens modals only if the link is not editable.
+        $(document)
+            .off('click.bs.modal.data-api', '[data-toggle="modal"]')
+            .on('click.toggle_modal', '[data-toggle="modal"]:not([contenteditable="true"])', (ev) => {
+                $(ev.currentTarget.dataset.target).modal('show');
+            });
+
         this.odooEditor = new OdooEditor(this.$editable[0], Object.assign({
             _t: _t,
             toolbar: this.toolbar.$el[0],
@@ -519,6 +527,7 @@ const Wysiwyg = Widget.extend({
         const $body = $(document.body);
         $body.off('mousemove', this.resizerMousemove);
         $body.off('mouseup', this.resizerMouseup);
+        $(document).off('click.toggle_modal');
         const $wrapwrap = $('#wrapwrap');
         if ($wrapwrap.length) {
             $('#wrapwrap')[0].removeEventListener('scroll', this.odooEditor.multiselectionRefresh, { passive: true });

@@ -55,7 +55,7 @@ const PopupWidget = publicWidget.Widget.extend({
 
         if (display === 'afterDelay') {
             this.timeout = setTimeout(() => this._showPopup(), delay);
-        } else {
+        } else if (display === 'mouseExit') {
             $(document).on('mouseleave.open_popup', () => this._showPopup());
         }
     },
