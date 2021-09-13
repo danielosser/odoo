@@ -551,7 +551,7 @@ class Post(models.Model):
 
         # add karma for posting new questions
         if not post.parent_id and post.state == 'active':
-            self.env.user.sudo().add_karma(post.forum_id.karma_gen_question_new)
+            self.env.user.sudo()._add_karma(post.forum_id.karma_gen_question_new, post, _('Asking a new question'))
         post.post_notification()
         return post
 
@@ -593,8 +593,10 @@ class Post(models.Model):
                 # update karma except for self-acceptance
                 mult = 1 if vals['is_correct'] else -1
                 if vals['is_correct'] != post.is_correct and post.create_uid.id != self._uid:
-                    post.create_uid.sudo().add_karma(post.forum_id.karma_gen_answer_accepted * mult)
-                    self.env.user.sudo().add_karma(post.forum_id.karma_gen_answer_accept * mult)
+                    post.create_uid.sudo()._add_karma(post.forum_id.karma_gen_answer_accepted * mult, post,
+                                                     _('Answer accepted') if mult > 0 else _('Answer no more accepted'))
+                    self.env.user.sudo()._add_karma(post.forum_id.karma_gen_answer_accept * mult, post,
+                                                     _('Accepting an answer') if mult > 0 else _('No more accepting an answer'))
             if tag_ids:
                 if set(post.tag_ids.ids) != tag_ids and self.env.user.karma < post.forum_id.karma_edit_retag:
                     raise AccessError(_('%d karma required to retag.', post.forum_id.karma_edit_retag))
@@ -665,7 +667,7 @@ class Post(models.Model):
                     count_post = post.search_count([('parent_id', '=', False), ('forum_id', '=', post.forum_id.id), ('create_uid', '=', post.create_uid.id)])
                     if count_post == 1:
                         karma *= 10
-                post.create_uid.sudo().add_karma(karma * -1)
+                post.create_uid.sudo()._add_karma(karma * -1, post, _('Reopened a banned question'))
 
         self.sudo().write({'state': 'active'})
 
@@ -685,7 +687,12 @@ class Post(models.Model):
                     count_post = post.search_count([('parent_id', '=', False), ('forum_id', '=', post.forum_id.id), ('create_uid', '=', post.create_uid.id)])
                     if count_post == 1:
                         karma *= 10
-                post.create_uid.sudo().add_karma(karma)
+                message = (
+                    _('Downvoting for posting spam contents')
+                    if reason_id == reason_spam else
+                    _('Downvoting for posting offensive contents')
+                )
+                post.create_uid.sudo()._add_karma(karma, post, message)
 
         self.write({
             'state': 'close',
@@ -701,7 +708,11 @@ class Post(models.Model):
                 raise AccessError(_('%d karma required to validate a post.', post.forum_id.karma_moderate))
             # if state == pending, no karma previously added for the new question
             if post.state == 'pending':
-                post.create_uid.sudo().add_karma(post.forum_id.karma_gen_question_new)
+                post.create_uid.sudo()._add_karma(
+                    post.forum_id.karma_gen_question_new,
+                    post,
+                    _('Asking A Question'),
+                )
             post.write({
                 'state': 'active',
                 'active': True,
@@ -745,7 +756,7 @@ class Post(models.Model):
                 raise AccessError(_('%d karma required to mark a post as offensive.', post.forum_id.karma_moderate))
             # remove some karma
             _logger.info('Downvoting user <%s> for posting spam/offensive contents', post.create_uid)
-            post.create_uid.sudo().add_karma(post.forum_id.karma_gen_answer_flagged)
+            post.create_uid.sudo()._add_karma(post.forum_id.karma_gen_answer_flagged, post, _('Downvoted for posting offensive contents'))
             # TODO: potential bottleneck, could be done in batch
             post.write({
                 'state': 'offensive',
@@ -779,8 +790,8 @@ class Post(models.Model):
         # if unlinking an answer with accepted answer: remove provided karma
         for post in self:
             if post.is_correct:
-                post.create_uid.sudo().add_karma(post.forum_id.karma_gen_answer_accepted * -1)
-                self.env.user.sudo().add_karma(post.forum_id.karma_gen_answer_accepted * -1)
+                post.create_uid.sudo()._add_karma(post.forum_id.karma_gen_answer_accepted * -1, post, _('The accepted answer is deleted'))
+                self.env.user.sudo()._add_karma(post.forum_id.karma_gen_answer_accepted * -1, post, _('Deleting the accepted answer'))
         return super(Post, self).unlink()
 
     def bump(self):
@@ -1071,9 +1082,48 @@ class Vote(models.Model):
 
     def _get_karma_value(self, old_vote, new_vote, up_karma, down_karma):
         _karma_upd = {
-            '-1': {'-1': 0, '0': -1 * down_karma, '1': -1 * down_karma + up_karma},
-            '0': {'-1': 1 * down_karma, '0': 0, '1': up_karma},
-            '1': {'-1': -1 * up_karma + down_karma, '0': -1 * up_karma, '1': 0}
+            '-1': {
+                '-1': {
+                    'karma': 0,
+                    'reason': _('No changes')
+                },
+                '0': {
+                    'karma': - down_karma,
+                    'reason': _('No more downvoted'),
+                },
+                '1': {
+                    'karma': -1 * down_karma + up_karma,
+                    'reason': _('Upvoted'),
+                }
+            },
+            '0': {
+                '-1': {
+                    'karma': down_karma,
+                    'reason': _('Downvoted'),
+                },
+                '0': {
+                    'karma': 0,
+                    'reason': _('No changes')
+                },
+                '1': {
+                    'karma': up_karma,
+                    'reason': _('Upvoted'),
+                }
+            },
+            '1': {
+                '-1': {
+                    'karma': up_karma + down_karma,
+                    'reason': _('Downvoted'),
+                },
+                '0': {
+                    'karma': -up_karma,
+                    'reason': _('No more upvoted'),
+                },
+                '1': {
+                    'karma': 0,
+                    'reason': _('No changes')
+                }
+            }
         }
         return _karma_upd[old_vote][new_vote]
 
@@ -1133,10 +1183,16 @@ class Vote(models.Model):
 
     def _vote_update_karma(self, old_vote, new_vote):
         if self.post_id.parent_id:
-            karma_value = self._get_karma_value(old_vote, new_vote, self.forum_id.karma_gen_answer_upvote, self.forum_id.karma_gen_answer_downvote)
+            karma_value = self._get_karma_value(
+                old_vote, new_vote, self.forum_id.karma_gen_answer_upvote,
+                self.forum_id.karma_gen_answer_downvote)
+            source = _('Answer %s', karma_value['reason'])
         else:
-            karma_value = self._get_karma_value(old_vote, new_vote, self.forum_id.karma_gen_question_upvote, self.forum_id.karma_gen_question_downvote)
-        self.recipient_id.sudo().add_karma(karma_value)
+            karma_value = self._get_karma_value(
+                old_vote, new_vote, self.forum_id.karma_gen_question_upvote,
+                self.forum_id.karma_gen_question_downvote)
+            source = _('Question %s', karma_value['reason'])
+        self.recipient_id.sudo()._add_karma(karma_value['karma'], self.post_id, source)
 
 
 class Tags(models.Model):
@@ -1163,6 +1219,6 @@ class Tags(models.Model):
     @api.model
     def create(self, vals):
         forum = self.env['forum.forum'].browse(vals.get('forum_id'))
-        if self.env.user.karma < forum.karma_tag_create:
+        if self.env.user.karma < forum.karma_tag_create and not self.env.is_admin():
             raise AccessError(_('%d karma required to create a new Tag.', forum.karma_tag_create))
         return super(Tags, self.with_context(mail_create_nolog=True, mail_create_nosubscribe=True)).create(vals)
