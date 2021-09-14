@@ -20,6 +20,7 @@ const CountdownWidget = publicWidget.Widget.extend({
      */
     start: function () {
         this.$wrapper = this.$('.s_countdown_canvas_wrapper');
+        this.$textWrapper = this.$wrapper.find('.s_countdown_text_wrapper');
         this.hereBeforeTimerEnds = false;
         this.endAction = this.el.dataset.endAction;
         this.endTime = parseInt(this.el.dataset.endTime);
@@ -54,7 +55,7 @@ const CountdownWidget = publicWidget.Widget.extend({
         this.$('.s_countdown_end_redirect_message').remove();
         this.$('canvas').remove();
         this.$('.s_countdown_end_message').addClass('d-none');
-        this.$('.s_countdown_text_wrapper').remove();
+        this.$('.s_countdown_text').remove();
         this.$('.s_countdown_canvas_wrapper').removeClass('d-none');
 
         clearInterval(this.setInterval);
@@ -185,15 +186,18 @@ const CountdownWidget = publicWidget.Widget.extend({
         const hideCountdown = this.isFinished && !this.editableMode && this.$el.hasClass('hide-countdown');
         if (this.layout === 'text') {
             this.$('canvas').addClass('d-none');
-            if (!this.$textWrapper) {
+            if (!this.$textWrapper.length) {
                 this.$textWrapper = $('<span/>').attr({
                     class: 's_countdown_text_wrapper d-none',
                 });
                 this.$textWrapper.text(_t("Countdown ends in"));
-                this.$textWrapper.append($('<span/>').attr({
-                    class: 's_countdown_text ml-1',
-                }));
                 this.$textWrapper.appendTo(this.$wrapper);
+            }
+
+            if (!this.$textWrapper.find('.s_countdown_text').length) {
+                $('<span/>').attr({
+                    class: 's_countdown_text ml-1',
+                }).appendTo(this.$textWrapper);
             }
 
             this.$textWrapper.toggleClass('d-none', hideCountdown);
@@ -201,6 +205,8 @@ const CountdownWidget = publicWidget.Widget.extend({
             const countdownText = this.diff.map(e => e.nb + ' ' + e.label).join(', ');
             this.$('.s_countdown_text').text(countdownText.toLowerCase());
         } else {
+            this.$target.find('.s_countdown_text_wrapper').remove();
+
             for (const val of this.diff) {
                 const canvas = val.canvas;
                 const ctx = canvas.getContext("2d");
@@ -229,7 +235,9 @@ const CountdownWidget = publicWidget.Widget.extend({
         }
 
         if (this.isFinished) {
+            const $container = this.$('> .container, > .container-fluid, > .o_container_small');
             clearInterval(this.setInterval);
+            $container.toggleClass('d-none', hideCountdown);
             if (!this.editableMode) {
                 this._handleEndCountdownAction();
             }

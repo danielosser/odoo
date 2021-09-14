@@ -12,4 +12,4 @@ class TestSnippets(odoo.tests.HttpCase):
         self.start_tour("/?enable_editor=1", "snippet_empty_parent_autoremove", login='admin')
 
     def test_02_countdown_preview(self):
-        self.start_tour("/?enable_editor=1", "snippet_countdown_preview", login='admin')
+        self.start_tour("/?enable_editor=1", "snippet_countdown", login='admin')

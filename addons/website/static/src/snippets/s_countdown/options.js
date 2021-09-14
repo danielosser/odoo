@@ -13,6 +13,13 @@ options.registry.countdown = options.Class.extend({
     }),
 
     /**
+     * @override
+     */
+    start: function () {
+        this._super(...arguments);
+        this._updateMinHeight();
+    },
+    /**
      * Remove any preview classes, if present.
      *
      * @override
@@ -46,11 +53,19 @@ options.registry.countdown = options.Class.extend({
         }
     },
     /**
+    * Changes the countdown size.
+    */
+    changeSize: function (previewMode, widgetValue, params) {
+        this._updateMinHeight();
+    },
+    /**
     * Changes the countdown style.
     *
     * @see this.selectClass for parameters
     */
     layout: function (previewMode, widgetValue, params) {
+        this._updateMinHeight();
+
         switch (widgetValue) {
             case 'circle':
                 this.$target[0].dataset.progressBarStyle = 'disappear';
@@ -125,6 +140,13 @@ options.registry.countdown = options.Class.extend({
             }
         }
         return this._super(...arguments);
+    },
+    /**
+     * @private
+     */
+    _updateMinHeight: function () {
+        const height = this.$target[0].dataset.layout === 'text' ? '' : `${this.$target[0].dataset.size}px`;
+        this.$target.find('.s_countdown_canvas_wrapper').css('min-height', height);
     },
 
     //--------------------------------------------------------------------------
