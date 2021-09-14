@@ -147,7 +147,8 @@ function align(editor, mode) {
 function colorElement(element, color, mode) {
     const newClassName = element.className
         .replace(mode === 'color' ? TEXT_CLASSES_REGEX : BG_CLASSES_REGEX, '')
-        .replace(/\btext-gradient\b/g, '') // cannot be combined with setting a background
+        .replace(/\btext-gradient\b/g, '') // added by this method on text gradients
+        .replace(/\btext-solid\b/g, '') // added by this method on all non text gradients
         .replace(/\s+/, ' ');
     element.className !== newClassName && (element.className = newClassName);
     element.style['background-image'] = '';
@@ -165,6 +166,7 @@ function colorElement(element, color, mode) {
             element.classList.add('text-gradient');
         } else {
             element.style['background-image'] = color;
+            element.classList.add('text-solid');
         }
     } else {
         element.style[mode] = color;

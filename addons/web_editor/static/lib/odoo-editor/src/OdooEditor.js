@@ -1381,7 +1381,7 @@ export class OdooEditor extends EventTarget {
             const computedStyle = getComputedStyle(endContainer);
             const backgroundImage = computedStyle.backgroundImage;
             const hasGradient = isColorGradient(backgroundImage);
-            const hasTextGradientClass = endContainer.classList.contains('text-gradient');
+            const hasTextGradientClass = computedStyle['-webkit-background-clip'] === 'text';
             if (!foreColor) {
                 if (hasGradient && hasTextGradientClass) {
                     foreColor = backgroundImage;

@@ -693,11 +693,14 @@ blockquote {
     // Those color classes color multiple elements when applied on a snippet.
     // Those rules are not important so that they can be overridden through
     // bg and text utility classes. **
-    .o_cc#{$index} {
+    .o_cc#{$index}, .o_cc .o_cc#{$index} {
         // Background & Text
         $-bg-color: o-color($-bg);
         @include o-bg-color($-bg-color, o-color($-text), $important: false, $yiq-min-opacity-threshold: 0);
         background-image: o-website-value('o-cc#{$index}-bg-gradient');
+        @if o-website-value('o-cc#{$index}-bg-gradient') {
+            @extend .text-solid;
+        }
 
         #{$o-color-extras-nesting-selector} {
             // Headings
@@ -727,6 +730,7 @@ blockquote {
                         // Using background-size does not work either because it cannot be set to
                         // a value such as 'fit-content'.
                     } @else {
+                        @extend .text-solid;
                         background-image: none;
                         color: #{$-current-color};
                     }
@@ -910,6 +914,19 @@ section, .oe_img_bg, [data-oe-shape-data] {
         -webkit-background-clip: inherit;
         -webkit-text-fill-color: inherit;
     }
+
+    .btn, *[style*=color], *[style*=background-color], .o_record_cover_image {
+        @extend .text-solid;
+    }
+    .fa, .badge, .dropdown-menu {
+        @extend .text-solid;
+        background-image: none;
+    }
+}
+
+.text-solid {
+    -webkit-background-clip: border-box;
+    -webkit-text-fill-color: initial;
 }
 
 /* QWEB */

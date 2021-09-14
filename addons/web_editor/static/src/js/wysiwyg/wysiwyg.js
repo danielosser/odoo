@@ -1185,7 +1185,7 @@ const Wysiwyg = Widget.extend({
         const backgroundImage = $(targetElement).css('background-image');
         let backgroundGradient = false;
         if (weUtils.isColorGradient(backgroundImage)) {
-            const textGradient = targetElement.classList.contains('text-gradient');
+            const textGradient = $(targetElement).css('-webkit-background-clip') === 'text';
             if (eventName === "foreColor" && textGradient || eventName !== "foreColor" && !textGradient) {
                 backgroundGradient = backgroundImage;
             }
