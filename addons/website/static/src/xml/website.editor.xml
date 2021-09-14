@@ -124,7 +124,10 @@
                 t-attf-data-layer-gradient="o-cc#{number}-h6-gradient"
                 data-no-bundle-reload="true" data-with-gradients="true"/>
         </we-collapse>
-        <we-colorpicker string="Links" data-customize-website-color="null" t-attf-data-color="o-cc#{number}-link"/>
+        <we-colorpicker string="Links" data-customize-website-layer2-color="null"
+            t-attf-data-layer-color="o-cc#{number}-link"
+            t-attf-data-layer-gradient="o-cc#{number}-link-gradient"
+            data-no-bundle-reload="true" data-with-gradients="true"/>
         <we-row string="Primary Buttons">
             <we-colorpicker title="Background" data-customize-website-layer2-color="null"
                 t-attf-data-layer-color="o-cc#{number}-btn-primary"

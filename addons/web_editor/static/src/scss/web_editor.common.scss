@@ -746,6 +746,16 @@ blockquote {
                 @include hover {
                     color: auto-contrast($-link-hover-color, $-bg-color, 'o-cc#{$index}-link');
                 }
+                @if o-website-value('o-cc#{$index}-link-gradient') {
+                    @extend .text-gradient;
+                    background-image: o-website-value('o-cc#{$index}-link-gradient');
+                    &:hover {
+                        filter: invert(0.2);
+                    }
+                } @else {
+                    @extend .text-solid;
+                    background-image: none;
+                }
             }
 
             // Buttons
