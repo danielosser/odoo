@@ -97,7 +97,10 @@
             t-attf-data-layer-color="o-cc#{number}-bg"
             t-attf-data-layer-gradient="o-cc#{number}-bg-gradient"
             data-no-bundle-reload="true" data-with-gradients="true"/>
-        <we-colorpicker string="Text" data-customize-website-color="null" t-attf-data-color="o-cc#{number}-text"/>
+        <we-colorpicker string="Text" data-customize-website-layer2-color="null"
+            t-attf-data-layer-color="o-cc#{number}-text"
+            t-attf-data-layer-gradient="o-cc#{number}-text-gradient"
+            data-no-bundle-reload="true" data-with-gradients="true"/>
         <we-collapse>
             <we-colorpicker string="Headings" data-customize-website-layer2-color="null"
                 t-attf-data-layer-color="o-cc#{number}-headings"

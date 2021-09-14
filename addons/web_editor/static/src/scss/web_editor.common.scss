@@ -13,7 +13,11 @@
         $-bg-color: o-color(color('o-cc#{$index}-bg'));
 
         $-text: color('o-cc#{$index}-text') or color-yiq(o-color('o-cc#{$index}-bg'));
+        $-text-gradient: o-website-value('o-cc#{$index}-text-gradient');
         $-headings-gradient: o-website-value('o-cc#{$index}-headings-gradient');
+        @if not $-headings-gradient and not color('o-cc#{$index}-headings') {
+            $-headings-gradient: $-text-gradient;
+        }
         $-headings: not $-headings-gradient and color('o-cc#{$index}-headings') or $-text;
         $-h2-gradient: o-website-value('o-cc#{$index}-h2-gradient');
         @if not $-h2-gradient and not color('o-cc#{$index}-h2') {
@@ -701,12 +705,21 @@ blockquote {
         @if o-website-value('o-cc#{$index}-bg-gradient') {
             @extend .text-solid;
         }
+        p, span:not(.oe_img_bg):not(.s_parallax_bg), div {
+            @if o-website-value('o-cc#{$index}-text-gradient') {
+                @extend .text-gradient;
+                background-image: o-website-value('o-cc#{$index}-text-gradient');
+            } @else {
+                @extend .text-solid;
+                background-image: none;
+            }
+        }
 
         #{$o-color-extras-nesting-selector} {
             // Headings
             $heading-var-names: headings, h2, h3, h4, h5, h6;
-            $-current-gradient: false;
             $-current-color: o-color($-text);
+            $-current-gradient: o-website-value('o-cc#{$index}-text-gradient');
             @each $-depth in $heading-var-names {
                 $-heading-tag: if($-depth == 'headings', 'h1', #{$-depth});
                 $-color-var: 'o-cc#{$index}-#{$-depth}';
