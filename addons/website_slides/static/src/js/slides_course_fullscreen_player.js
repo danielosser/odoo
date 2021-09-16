@@ -299,9 +299,9 @@
 
         init: function (parent, options, slide) {
             options = _.defaults(options || {}, {
-                title: "Share",
+                title: _t('Share This Course'),
                 buttons: [{text: "Cancel", close: true}],
-                size: 'medium',
+                size: 'large',
             });
             this._super(parent, options);
             this.slide = slide;
@@ -312,19 +312,27 @@
             var form = this.$('.o_wslides_js_share_email');
             var input = form.find('input');
             var slideID = form.find('button').data('slide-id');
-            if (input.val() && input[0].checkValidity()) {
+            if (input.val()) {
                 form.removeClass('o_has_error').find('.form-control, .custom-select').removeClass('is-invalid');
                 this._rpc({
                     route: '/slides/slide/send_share_email',
                     params: {
                         slide_id: slideID,
-                        email: input.val(),
+                        emails: input.val(),
                         fullscreen: true
                     },
-                }).then(function () {
-                    form.html('<div class="alert alert-info" role="alert">' + _t('<strong>Thank you!</strong> Mail has been sent.') + '</div>');
+                }).then((action) => {
+                    if (action) {
+                        form.find('.alert-info').removeClass('d-none');
+                        form.find('.input-group').addClass('d-none');
+                    } else {
+                        this.displayNotification({ message: _t('Please enter valid email(s)'), type: 'danger' });
+                        form.addClass('o_has_error').find('.form-control, .custom-select').addClass('is-invalid');
+                        input.focus();
+                    }
                 });
             } else {
+                this.displayNotification({ message: _t('Please enter valid email(s)'), type: 'danger' });
                 form.addClass('o_has_error').find('.form-control, .custom-select').addClass('is-invalid');
                 input.focus();
             }
