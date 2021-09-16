@@ -1877,6 +1877,11 @@ class ExportFormat(object):
             records = Model.browse(ids) if ids else Model.search(domain, offset=0, limit=False, order=False)
 
             export_data = records.export_data(field_names).get('datas',[])
+            relational_fields = [Model._fields[name].relational for name in field_names]
+            for row in export_data:
+                for i, val in enumerate(row):
+                    if relational_fields[i] and not val:
+                        row[i] = ''
             response_data = self.from_data(columns_headers, export_data)
 
         return request.make_response(response_data,
