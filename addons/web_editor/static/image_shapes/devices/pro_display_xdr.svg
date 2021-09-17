@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1280 950" width="1280" height="950" data-forced-size="true">
+	<style>
+        .source {
+            width: calc(100% - 32px);
+    		height: 74%;
+        }
+        .mask_preview { clip-path: polygon(0.79% 1.69%, 100.03% 0.63%, 100.05% 76.77%, 1.11% 76.89%); }
+        .overlay { mix-blend-mode: overlay; }
+    </style>
+	<defs>
+		<linearGradient id="gradient_01" x1="640" y1="735" x2="640" y2="932" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#c1c1c3"/>
+			<stop offset="0.22" stop-color="#c7c7c9"/>
+			<stop offset="0.86" stop-color="#d6d6d8"/>
+			<stop offset="0.91" stop-color="#d8d8da"/>
+			<stop offset="0.93" stop-color="#dfdfe1"/>
+			<stop offset="0.94" stop-color="#e7e7e8"/>
+			<stop offset="0.95" stop-color="#e2e2e3"/>
+			<stop offset="0.96" stop-color="#d5d5d6"/>
+			<stop offset="0.97" stop-color="#bebfc0"/>
+			<stop offset="0.98" stop-color="#9ea0a1"/>
+			<stop offset="0.98" stop-color="#959798"/>
+			<stop offset="1" stop-color="#4f5051"/>
+		</linearGradient>
+		<linearGradient id="gradient_02" x1="481" y1="940" x2="800" y2="940" gradientUnits="userSpaceOnUse">
+			<stop offset="0.01" stop-color="#c1c2c3"/>
+			<stop offset="0.01" stop-color="#b7b9ba"/>
+			<stop offset="0.02" stop-color="#a9abac"/>
+			<stop offset="0.03" stop-color="#b3b5b6"/>
+			<stop offset="0.03" stop-color="#b7b9b9"/>
+			<stop offset="0.05" stop-color="#dcdcdd"/>
+			<stop offset="0.06" stop-color="#eaeaea"/>
+			<stop offset="0.08" stop-color="#d6d6d8"/>
+			<stop offset="0.81" stop-color="#d6d6d8"/>
+			<stop offset="0.93" stop-color="#d6d6d8"/>
+			<stop offset="0.95" stop-color="#d4d4d6"/>
+			<stop offset="0.96" stop-color="#cdcdcf"/>
+			<stop offset="0.96" stop-color="#c1c1c2"/>
+			<stop offset="0.97" stop-color="#afafb1"/>
+			<stop offset="0.97" stop-color="#a4a4a5"/>
+			<stop offset="0.98" stop-color="#959798"/>
+			<stop offset="1" stop-color="#c6c7c8"/>
+		</linearGradient>
+		<clipPath id="clip-path" clipPathUnits="objectBoundingBox">
+			<use xlink:href="#filterPath" fill="none"/>
+        </clipPath>
+        <path id="filterPath" d="M1,1H0V0H1Z"/>
+    </defs>
+    <svg viewBox="0 0 1 1" id="preview" preserveAspectRatio="none">
+        <g class="mask_preview">
+            <use xlink:href="#filterPath" fill="darkgrey"/>
+        </g>
+    </svg>
+    <image xlink:href="" clip-path="url(#clip-path)" preserveAspectRatio="xMidYMin slice" class="source" x="16" y="16"/>
+	<g>
+		<rect x="480.53" y="734.89" width="318.94" height="196.45" fill="url(#gradient_01)"/>
+		<rect x="480.53" y="931.34" width="318.94" height="17" fill="url(#gradient_02)"/>
+		<rect x="754.58" y="948.34" width="41.34" height="1.66" fill="#25282a"/>
+		<rect x="484.09" y="948.34" width="41.34" height="1.66" fill="#25282a"/>
+		<path d="M1270.57,0H9.43A9.43,9.43,0,0,0,0,9.43v716a9.43,9.43,0,0,0,9.43,9.43H1270.57a9.43,9.43,0,0,0,9.43-9.43V9.43A9.43,9.43,0,0,0,1270.57,0Zm-6.93,718.42H16.36V16.47H1263.64Z" fill="#383E45"/>
+		<polygon class="overlay" points="480.53 734.89 480.53 931.34 480.53 948.34 484.09 948.34 484.09 950 525.42 950 525.42 948.34 754.58 948.34 754.58 950 795.91 950 795.91 948.34 799.47 948.34 799.47 931.34 799.47 734.89 480.53 734.89" fill="#3AADAA"/>
+	</g>
+</svg>
