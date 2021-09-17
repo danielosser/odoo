@@ -703,15 +703,14 @@ blockquote {
         @include o-bg-color($-bg-color, o-color($-text), $important: false, $yiq-min-opacity-threshold: 0);
         background-image: o-website-value('o-cc#{$index}-bg-gradient');
         @if o-website-value('o-cc#{$index}-bg-gradient') {
-            @extend .text-solid;
+            @extend .cc-text-solid;
         }
         p, span:not(.oe_img_bg):not(.s_parallax_bg), div {
             @if o-website-value('o-cc#{$index}-text-gradient') {
-                @extend .text-gradient;
+                @extend .cc-text-gradient;
                 background-image: o-website-value('o-cc#{$index}-text-gradient');
             } @else {
-                @extend .text-solid;
-                background-image: none;
+                @extend .cc-text-solid-no-image;
             }
         }
 
@@ -734,7 +733,7 @@ blockquote {
                         // Keep previous color or gradient.
                     }
                     @if $-current-gradient {
-                        @extend .text-gradient;
+                        @extend .cc-text-gradient;
                         background-image: #{$-current-gradient};
                         // Note that the "100%" of the gradient is based on the width of the
                         // element, therefore its colors span on the whole row for headers.
@@ -743,8 +742,7 @@ blockquote {
                         // Using background-size does not work either because it cannot be set to
                         // a value such as 'fit-content'.
                     } @else {
-                        @extend .text-solid;
-                        background-image: none;
+                        @extend .cc-text-solid-no-image;
                         color: #{$-current-color};
                     }
                 }
@@ -760,14 +758,13 @@ blockquote {
                     color: auto-contrast($-link-hover-color, $-bg-color, 'o-cc#{$index}-link');
                 }
                 @if o-website-value('o-cc#{$index}-link-gradient') {
-                    @extend .text-gradient;
+                    @extend .cc-text-gradient;
                     background-image: o-website-value('o-cc#{$index}-link-gradient');
                     &:hover {
                         filter: invert(0.2);
                     }
                 } @else {
-                    @extend .text-solid;
-                    background-image: none;
+                    @extend .cc-text-solid-no-image;
                 }
             }
 
@@ -937,19 +934,33 @@ section, .oe_img_bg, [data-oe-shape-data] {
         -webkit-background-clip: inherit;
         -webkit-text-fill-color: inherit;
     }
-
-    .btn, *[style*=color], *[style*=background-color], .o_record_cover_image {
-        @extend .text-solid;
-    }
-    .fa, .badge, .dropdown-menu {
-        @extend .text-solid;
-        background-image: none;
-    }
 }
 
 .text-solid {
     -webkit-background-clip: border-box;
     -webkit-text-fill-color: initial;
+}
+
+.cc-text-gradient {
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    .btn, *[style*=color], *[style*=background-color], .o_record_cover_image {
+        @extend .cc-text-solid;
+    }
+    .fa, .badge, .dropdown-menu {
+        @extend .cc-text-solid-no-image;
+    }
+}
+
+.cc-text-solid {
+    -webkit-background-clip: border-box;
+    -webkit-text-fill-color: initial;
+}
+
+.cc-text-solid-no-image {
+    @extend .text-solid;
+    background-image: none;
 }
 
 /* QWEB */
