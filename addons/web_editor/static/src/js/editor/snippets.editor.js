@@ -269,8 +269,10 @@ var SnippetEditor = Widget.extend({
             this.$optionsSection.remove();
         }
         this._super(...arguments);
-        this.$target.removeData('snippet-editor');
-        this.$target.off('.snippet_editor');
+        if (this.$target) {
+            this.$target.removeData('snippet-editor');
+            this.$target.off('.snippet_editor');
+        }
     },
 
     //--------------------------------------------------------------------------
@@ -2155,10 +2157,24 @@ var SnippetsMenu = Widget.extend({
             if (snippetEditor) {
                 return snippetEditor.__isStarted;
             }
-
-            let editableArea = self.getEditableArea();
-            snippetEditor = new SnippetEditor(parentEditor || self, $snippet, self.templateOptions, $snippet.closest('[data-oe-type="html"], .oe_structure').add(editableArea), self.options);
-            self.snippetEditors.push(snippetEditor);
+            try {
+                let editableArea = self.getEditableArea();
+                snippetEditor = new SnippetEditor(parentEditor || self, $snippet, self.templateOptions, $snippet.closest('[data-oe-type="html"], .oe_structure').add(editableArea), self.options);
+                self.snippetEditors.push(snippetEditor);
+            } catch (e) {
+                if (e instanceof TypeError) {
+                    if ($parent.length) {
+                        self.displayNotification({
+                            title: _t("Unauthorized"),
+                            message: _t("You are not authorized to edit the selection."),
+                            type: 'danger',
+                        });
+                    }
+                    return snippetEditor;
+                } else {
+                    throw e;
+                }
+            }
             // Keep parent below its child inside the DOM as its `o_handle`
             // needs to be (visually) on top of the child ones.
             return snippetEditor.prependTo(self.$snippetEditorArea);
@@ -2466,9 +2482,21 @@ var SnippetsMenu = Widget.extend({
                             self.$el.find('.oe_snippet_thumbnail').removeClass('o_we_already_dragging');
                         });
                     } else {
-                        $toInsert.remove();
-                        dragAndDropResolve();
-                        self.$el.find('.oe_snippet_thumbnail').removeClass('o_we_already_dragging');
+                        try {
+                            $toInsert.remove();
+                            dragAndDropResolve();
+                            self.$el.find('.oe_snippet_thumbnail').removeClass('o_we_already_dragging');
+                        } catch (e) {
+                            if (e instanceof TypeError) {
+                                self.displayNotification({
+                                    title: _t("Unauthorized"),
+                                    message: _t("You are not authorized to edit the selection."),
+                                    type: 'danger',
+                                });
+                            } else {
+                                throw e;
+                            }
+                        }
                     }
                 },
             },
