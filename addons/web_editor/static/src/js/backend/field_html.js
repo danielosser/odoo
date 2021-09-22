@@ -3,10 +3,12 @@ odoo.define('web_editor.field.html', function (require) {
 
 var ajax = require('web.ajax');
 var basic_fields = require('web.basic_fields');
+var ModelFieldSelectorPopOver = require("web.ModelFieldSelectorPopover");
 var core = require('web.core');
 var wysiwygLoader = require('web_editor.loader');
 var field_registry = require('web.field_registry');
 const {QWebPlugin} = require('@web_editor/js/backend/QWebPlugin');
+var getRangePosition = require('@web_editor/../lib/odoo-editor/src/utils/utils').getRangePosition;
 // must wait for web/ to add the default html widget, otherwise it would override the web_editor one
 require('web._field_registry');
 
@@ -37,12 +39,66 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
     quickEditExclusion: [
         '[href]',
     ],
-
+    dynamicPlaceholderOptions: {
+        readonly: false,
+        needDefaultValue: true,
+        cancelOnEscape: true,
+        filter: (model) => !["one2many", "boolean", "many2many"].includes(model.type)
+    },
     custom_events: {
         wysiwyg_focus: '_onWysiwygFocus',
         wysiwyg_blur: '_onWysiwygBlur',
         wysiwyg_change: '_onChange',
         wysiwyg_attachment: '_onAttachmentChange',
+    },
+
+    /**
+     * @override
+     */
+    init: function () {
+        this._super(...arguments);
+        if (this.nodeOptions && this.nodeOptions.dynamic_placeholder) {
+            // When the dynamic placeholder is active,
+            // the recordData need to be updated when `mailing_model_real` change
+            this.resetOnAnyFieldChange = true;
+        }
+    },
+
+    openDynamicPlaceholder: async function (baseModel, chain = []) {
+        if (!baseModel) {
+            return;
+        }
+        const triggerKeyReplaceRegex = new RegExp(this.nodeOptions.dynamic_placeholder + '$');
+
+        const modelSelector = new ModelFieldSelectorPopOver(this, baseModel, [], this.dynamicPlaceholderOptions);
+        modelSelector.on("field_chain_changed", undefined, (ev) => {
+            this.wysiwyg.odooEditor.editable.focus();
+            if (ev.data.chain.length) {
+                let dynamicPlaceholder = "${object." + ev.data.chain.join('.');
+                const defaultValue = ev.data.defaultValue;
+                dynamicPlaceholder += defaultValue && defaultValue !== '' ? ` or '''${defaultValue}'''}` : '}';
+                this.wysiwyg.undo();
+                this.wysiwyg.odooEditor.execCommand('insertText', dynamicPlaceholder);
+            }
+            modelSelector.destroy();
+        });
+        modelSelector.on("field_chain_cancel", undefined, () => {
+            this.wysiwyg.odooEditor.editable.focus();
+            modelSelector.destroy();
+        });
+        await modelSelector.insertAfter(this.$el);
+        modelSelector.open(chain, true);
+
+        let top, left;
+        const position = getRangePosition(modelSelector.$el, this.wysiwyg.options.document);
+
+        top = position.top;
+        left = position.left - 25;
+        top = Math.min(top, window.window.innerHeight - modelSelector.$el.height() - 15);
+        left = Math.min(left, window.window.innerWidth - modelSelector.$el.width() - 10);
+
+        modelSelector.$el.css('top', top);
+        modelSelector.$el.css('left', left);
     },
 
     /**
@@ -536,6 +592,18 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
             this.wysiwyg.$editable.after(this._$codeview);
             this.wysiwyg.toolbar.$el.append($codeviewButton);
             $codeviewButton.click(() => this._toggleCodeView(this._$codeview, $codeviewButton));
+        }
+        if (this.nodeOptions.dynamic_placeholder) {
+            const onKeyDown = async ev => {
+                if (ev.key === this.nodeOptions.dynamic_placeholder) {
+                    ev.preventDefault();
+                    const baseModel = this.recordData && this.recordData.mailing_model_real ? this.recordData.mailing_model_real : undefined;
+                    await this.openDynamicPlaceholder(baseModel);
+                    this.wysiwyg.odooEditor.execCommand('insertText', ev.key);
+                }
+            };
+            const editable = this.wysiwyg.odooEditor.editable;
+            editable.addEventListener('keydown', onKeyDown, true);
         }
     },
     /**
