@@ -130,6 +130,24 @@ class WebsiteCoverPropertiesMixin(models.AbstractModel):
                 img = img[:-1] + suffix + ')'
         return img
 
+    def write(self, vals):
+        result = True
+        for item in self:
+            copy_vals = dict(vals)
+            # Prevent updates on list displays from destroying resize_class.
+            if 'cover_properties' in copy_vals:
+                cover_properties = json_safe.loads(copy_vals['cover_properties'])
+                resize_class = cover_properties.get('resize_class', '').split()
+                if 'o_half_screen_height' not in resize_class and \
+                        'o_full_screen_height' not in resize_class and \
+                        'cover_auto' not in resize_class:
+                    old_cover_properties = json_safe.loads(item.cover_properties)
+                    cover_properties['resize_class'] = old_cover_properties.get('resize_class', 'o_half_screen_height')
+                    copy_vals['cover_properties'] = json_safe.dumps(cover_properties)
+            result &= super(WebsiteCoverPropertiesMixin, item).write(copy_vals)
+        return result
+
+
 class WebsiteMultiMixin(models.AbstractModel):
 
     _name = 'website.multi.mixin'
