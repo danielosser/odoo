@@ -63,7 +63,7 @@ class ProjectCustomerPortal(CustomerPortal):
         # task count
         task_count = Task.search_count(domain)
         # pager
-        url = "/my/project/%s" % project.id
+        url = "/my/projects/%s" % project.id
         pager = portal_pager(
             url=url,
             url_args={'date_begin': date_begin, 'date_end': date_end, 'sortby': sortby, 'groupby': groupby, 'search_in': search_in, 'search': search},
@@ -146,7 +146,7 @@ class ProjectCustomerPortal(CustomerPortal):
         })
         return request.render("project.portal_my_projects", values)
 
-    @http.route(['/my/project/<int:project_id>'], type='http', auth="public", website=True)
+    @http.route(['/my/projects/<int:project_id>'], type='http', auth="public", website=True)
     def portal_my_project(self, project_id=None, access_token=None, page=1, date_begin=None, date_end=None, sortby=None, search=None, search_in='content', groupby=None, **kw):
         try:
             project_sudo = self._document_check_access('project.project', project_id, access_token)
@@ -201,7 +201,7 @@ class ProjectCustomerPortal(CustomerPortal):
             {'session_info': self._prepare_project_sharing_session_info(project)},
         )
 
-    @http.route('/my/project/<int:project_id>/task/<int:task_id>', type='http', auth='public', website=True)
+    @http.route('/my/projects/<int:project_id>/task/<int:task_id>', type='http', auth='public', website=True)
     def portal_my_project_task(self, project_id=None, task_id=None, access_token=None, **kw):
         try:
             project_sudo = self._document_check_access('project.project', project_id, access_token)
