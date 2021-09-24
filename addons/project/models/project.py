@@ -42,6 +42,7 @@ PROJECT_TASK_READABLE_FIELDS = {
     'legend_normal',
     'legend_blocked',
     'legend_done',
+    'display_parent_task_button',
 }
 
 PROJECT_TASK_WRITABLE_FIELDS = {
@@ -1043,6 +1044,9 @@ class Task(models.Model):
                                      domain="[('allow_task_dependencies', '=', True), ('id', '!=', id)]")
     dependent_tasks_count = fields.Integer(string="Dependent Tasks", compute='_compute_dependent_tasks_count')
 
+    # Project sharing fields
+    display_parent_task_button = fields.Boolean(compute='_compute_display_parent_task_button')
+
     # recurrence fields
     allow_recurring_tasks = fields.Boolean(related='project_id.allow_recurring_tasks')
     recurring_task = fields.Boolean(string="Recurrent")
@@ -1474,6 +1478,20 @@ class Task(models.Model):
              WHERE partners.name ILIKE %s
         """
         return [('id', 'inselect', (query, [f'%{value}%']))]
+
+    @api.depends_context('uid')
+    @api.depends('parent_id.project_id.privacy_visibility')
+    def _compute_display_parent_task_button(self):
+        portal_access_projects = self.parent_id.project_id.filtered(lambda project: project.privacy_visibility == 'portal')
+        if not portal_access_projects:
+            # since the field will only be used in project sharing feature, we hide the button if the portal user has no access to the task
+            self.display_parent_task_button = False
+        user_can_access_by_project = {project.id for project in portal_access_projects}
+        if self.user_has_groups('base.group_portal'):
+            collaborators_read_group = self.env['project.collaborator'].read_group([('project_id', 'in', portal_access_projects.ids), ('partner_id', '=', self.env.user.partner_id.id)], ['project_id'], ['project_id'])
+            user_can_access_by_project = {res['project_id'][0] for res in collaborators_read_group}
+        for task in self:
+            task.display_parent_task_button = task.parent_id.project_id.id in user_can_access_by_project
 
     @api.returns('self', lambda value: value.id)
     def copy(self, default=None):
@@ -2062,6 +2080,15 @@ class Task(models.Model):
         return children + children._get_all_subtasks(depth - 1)
 
     def action_open_parent_task(self):
+        if self.parent_id.project_id != self.project_id and not self.parent.project_id._check_project_sharing_access():
+            if self.parent_id.project_id.check('read'):
+                return {
+                    "name": "Portal Parent Task",
+                    "type": "ir.actions.act_url",
+                    "url": "/my/projects/%s/%s" % (self.parent_id.project_id.id, self.parent_id.id),
+                }
+            else:  # The portal user has no access to the parent task, so normally the button should be invisible.
+                return {}
         return {
             'name': _('Parent Task'),
             'view_mode': 'form',
