@@ -452,12 +452,14 @@ var SelectCreateDialog = ViewDialog.extend({
             text: _t("Cancel"),
             classes: 'btn-secondary o_form_button_cancel',
             close: true,
+            hotkey: 'z'
         }];
         if (!this.options.no_create) {
             this.__buttons.unshift({
                 text: _t("Create"),
                 classes: 'btn-primary',
-                click: this.create_edit_record.bind(this)
+                click: this.create_edit_record.bind(this),
+                hotkey: 'c'
             });
         }
         if (!this.options.disable_multiple_selection) {
@@ -466,6 +468,7 @@ var SelectCreateDialog = ViewDialog.extend({
                 classes: 'btn-primary o_select_button',
                 disabled: true,
                 close: true,
+                hotkey: 'v',
                 click: async () => {
                     const resIds = await this.viewController.getSelectedIdsWithDomain();
                     const values = resIds.map(e => ({id: e}));
