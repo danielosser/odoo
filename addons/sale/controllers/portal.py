@@ -7,6 +7,7 @@ from odoo import fields, http, _
 from odoo.exceptions import AccessError, MissingError, ValidationError
 from odoo.fields import Command
 from odoo.http import request
+from odoo.osv import expression
 
 from odoo.addons.payment.controllers import portal as payment_portal
 from odoo.addons.payment import utils as payment_utils
@@ -41,14 +42,29 @@ class CustomerPortal(portal.CustomerPortal):
 
     @http.route(['/my/quotes', '/my/quotes/page/<int:page>'], type='http', auth="user", website=True)
     def portal_my_quotes(self, page=1, date_begin=None, date_end=None, sortby=None, **kw):
+        values = self._prepare_my_quotes_values(page, date_begin, date_end, sortby)
+        pager = portal_pager(**values['pager'])
+
+        # search the count to display, according to the pager data
+        quotations = values['quotations'](pager['offset'])
+        request.session['my_quotations_history'] = quotations.ids[:100]
+
+        # update values to get the correct data to render.
+        values.update(quotations=quotations.sudo(), pager=pager)
+        return request.render("sale.portal_my_quotations", values)
+
+    def _prepare_my_quotes_values(self, page, date_begin, date_end, sortby, additional_domain=None):
         values = self._prepare_portal_layout_values()
         partner = request.env.user.partner_id
         SaleOrder = request.env['sale.order']
 
-        domain = [
-            ('message_partner_ids', 'child_of', [partner.commercial_partner_id.id]),
-            ('state', 'in', ['sent', 'cancel'])
-        ]
+        domain = expression.AND([
+            [
+                ('message_partner_ids', 'child_of', [partner.commercial_partner_id.id]),
+                ('state', 'in', ['sent', 'cancel'])
+            ],
+            additional_domain if additional_domain and isinstance(additional_domain, list) else [],
+        ])
 
         searchbar_sortings = {
             'date': {'label': _('Order Date'), 'order': 'date_order desc'},
@@ -64,30 +80,22 @@ class CustomerPortal(portal.CustomerPortal):
         if date_begin and date_end:
             domain += [('create_date', '>', date_begin), ('create_date', '<=', date_end)]
 
-        # count for pager
-        quotation_count = SaleOrder.search_count(domain)
-        # make pager
-        pager = portal_pager(
-            url="/my/quotes",
-            url_args={'date_begin': date_begin, 'date_end': date_end, 'sortby': sortby},
-            total=quotation_count,
-            page=page,
-            step=self._items_per_page
-        )
-        # search the count to display, according to the pager data
-        quotations = SaleOrder.search(domain, order=sort_order, limit=self._items_per_page, offset=pager['offset'])
-        request.session['my_quotations_history'] = quotations.ids[:100]
-
         values.update({
             'date': date_begin,
-            'quotations': quotations.sudo(),
+            'quotations': lambda pager_offset: SaleOrder.search(domain, order=sort_order, limit=self._items_per_page, offset=pager_offset),
             'page_name': 'quote',
-            'pager': pager,
+            'pager': {
+                "url": "/my/quotes",
+                "url_args": {'date_begin': date_begin, 'date_end': date_end, 'sortby': sortby},
+                "total": SaleOrder.search_count(domain),
+                "page": page,
+                "step": self._items_per_page
+            },
             'default_url': '/my/quotes',
             'searchbar_sortings': searchbar_sortings,
             'sortby': sortby,
         })
-        return request.render("sale.portal_my_quotations", values)
+        return values
 
     @http.route(['/my/orders', '/my/orders/page/<int:page>'], type='http', auth="user", website=True)
     def portal_my_orders(self, page=1, date_begin=None, date_end=None, sortby=None, **kw):
