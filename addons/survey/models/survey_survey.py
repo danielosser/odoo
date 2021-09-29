@@ -996,11 +996,12 @@ class Survey(models.Model):
                 ('state', '=', 'done'),
                 ('test_entry', '=', False)
             ]
-        count_data = self.env['survey.user_input'].sudo().read_group(user_input_domain, ['scoring_success', 'id:count_distinct'], ['scoring_success'])
+        count_data_success = self.env['survey.user_input'].sudo().read_group(user_input_domain, ['scoring_success', 'id:count_distinct'], ['scoring_success'])
+        completed_count = self.env['survey.user_input'].sudo().search_count(user_input_domain + [('state', "=", "done")])
 
         scoring_success_count = 0
         scoring_failed_count = 0
-        for count_data_item in count_data:
+        for count_data_item in count_data_success:
             if count_data_item['scoring_success']:
                 scoring_success_count += count_data_item['scoring_success_count']
             else:
@@ -1011,7 +1012,7 @@ class Survey(models.Model):
             'count': scoring_success_count,
             'color': '#2E7D32'
         }, {
-            'text': _('Missed'),
+            'text': _('Failed'),
             'count': scoring_failed_count,
             'color': '#C62828'
         }])
@@ -1019,7 +1020,11 @@ class Survey(models.Model):
         total = scoring_success_count + scoring_failed_count
         return {
             'global_success_rate': round((scoring_success_count / total) * 100, 1) if total > 0 else 0,
-            'global_success_graph': success_graph
+            'global_success_graph': success_graph,
+            'count_all': total,
+            'count_finished': completed_count,
+            'count_failed': scoring_failed_count,
+            'count_passed': total - scoring_failed_count
         }
 
     # ------------------------------------------------------------

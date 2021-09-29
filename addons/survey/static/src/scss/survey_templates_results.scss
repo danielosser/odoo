@@ -1,0 +1,33 @@
+.o_survey_results_topbar_filters {
+    // Dropdown copied from event templates to get a coherent styling
+    .dropdown-toggle {
+        @include hover-focus {
+            text-decoration: none;
+        }
+        &:after {
+            margin-left: 1.2em;
+        }
+        .fa {
+            margin-right: .4em;
+        }
+    }
+    .dropdown-menu {
+        margin-top: $navbar-padding-y;
+        min-width: 12rem;
+        max-height: 250px;
+        overflow-y: auto;
+    }
+    .dropdown-item {
+        &.active .badge { // Invert badge display when the item is active
+            background-color: color-yiq(theme-color('primary'));
+            color: theme-color('primary');
+        }
+    }
+    // Ensures only the cross icon shows a pointer
+    .btn.filter-remove-answer {
+        cursor: default !important;
+        i.fa-times {
+            cursor: pointer;
+        }
+    }
+}

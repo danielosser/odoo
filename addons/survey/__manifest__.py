@@ -76,6 +76,7 @@ sent mails with personal token for the invitation of the survey.
             'survey/static/src/css/survey_templates_print.css',
             'survey/static/src/css/survey_templates_result.css',
             'survey/static/src/scss/survey_templates_form.scss',
+            'survey/static/src/scss/survey_templates_results.scss',
         ],
         'survey.survey_user_input_session_assets': [
             'survey/static/src/js/libs/chartjs-plugin-datalabels.min.js',
