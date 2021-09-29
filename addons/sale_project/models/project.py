@@ -115,7 +115,6 @@ class ProjectTask(models.Model):
         compute='_compute_sale_line', recursive=True, store=True, readonly=False, copy=False, tracking=True, index=True,
         help="Sales Order Item to which the time spent on this task will be added, in order to be invoiced to your customer.")
     project_sale_order_id = fields.Many2one('sale.order', string="Project's sale order", related='project_id.sale_order_id')
-    invoice_count = fields.Integer("Number of invoices", related='sale_order_id.invoice_count')
     task_to_invoice = fields.Boolean("To invoice", compute='_compute_task_to_invoice', search='_search_task_to_invoice', groups='sales_team.group_sale_salesman_all_leads')
     display_sale_order_id = fields.Boolean(string='Display Sales Order', compute='_compute_display_sale_order_id')
 
