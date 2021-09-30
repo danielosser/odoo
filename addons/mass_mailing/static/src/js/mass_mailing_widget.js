@@ -334,6 +334,7 @@ var MassMailingFieldHtml = FieldHtml.extend({
         const options = this._super.apply(this, arguments);
         options.resizable = false;
         options.autoresize = false;
+        options.placeholder = false;
         if (!this._wysiwygSnippetsActive) {
             delete options.snippets;
         }

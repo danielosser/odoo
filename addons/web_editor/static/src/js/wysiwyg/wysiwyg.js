@@ -45,6 +45,8 @@ const Wysiwyg = Widget.extend({
     },
     init: function (parent, options) {
         this._super.apply(this, arguments);
+        this.defaultOptions.fieldName = parent.name;
+        this.defaultOptions.fieldString = parent.string;
         this.id = ++id;
         this.options = options;
         // autohideToolbar is true by default (false by default if navbar present).
@@ -65,7 +67,6 @@ const Wysiwyg = Widget.extend({
     start: async function () {
         const _super = this._super;
         const self = this;
-
         var options = this._editorOptions();
         this._value = options.value;
 
@@ -98,7 +99,7 @@ const Wysiwyg = Widget.extend({
             document: this.options.document,
             autohideToolbar: !!this.options.autohideToolbar,
             isRootEditable: this.options.isRootEditable,
-            placeholder: this.options.placeholder,
+            placeholder: this.options.placeholder !== undefined ? this.options.placeholder : options.fieldString,
             controlHistoryFromDocument: this.options.controlHistoryFromDocument,
             getContentEditableAreas: this.options.getContentEditableAreas,
             defaultLinkAttributes: this.options.userGeneratedContent ? {rel: 'ugc' } : {},
@@ -551,9 +552,11 @@ const Wysiwyg = Widget.extend({
         this.$root = this.$editable;
 
         if (this.options.autoresize) {
-            this.$editable.addClass("auto-resize");
+            this.$editable.addClass("oe-size-auto-resize");
             this.$editable.css("min-height", this.options.minHeight || 10);
             this.$editable.css("max-height", this.options.maxHeight || 340);
+        } else if (this.options.height) {
+            this.$editable.height(this.options.height);
         } else {
             this.$editable.css("min-height", this.options.minHeight || 100);
             this.$editable.css("max-height", this.options.maxHeight || 450);
