@@ -192,15 +192,34 @@ var SnippetEditor = Widget.extend({
             this.dropped = false;
             const smoothScrollOptions = this.options.getScrollOptions({
                 jQueryDraggableOptions: {
-                    cursorAt: {
-                        left: 10,
-                        top: 10
-                    },
                     handle: '.o_move_handle',
+                    appendTo: this.$target[0].parentElement,
                     helper: () => {
-                        var $clone = this.$el.clone().css({width: '24px', height: '24px', border: 0});
-                        $clone.appendTo(this.$body).removeClass('d-none');
-                        return $clone;
+                        const $drag = this.$target.clone(true);
+                        const $originalCanvases = this.$target.find('canvas');
+                        const $clonedCanvases = $drag.find('canvas');
+                        const {height, width} = this.$target[0].getBoundingClientRect();
+
+                        const previewArea = 100 * 200; // The standard preview size.
+                        const blockArea = height * width;
+                        const previewScale = (previewArea / blockArea) ** 0.5;
+
+                        // To have a correct preview, canvases must be re-drawn
+                        // on the clone.
+                        for (let i = 0; i < $originalCanvases.length; i++) {
+                            $clonedCanvases[i].getContext('2d').drawImage($originalCanvases[i], 0, 0);
+                        }
+
+                        $drag.css({
+                            margin: 0,
+                            width,
+                            height,
+                            'max-width': width,
+                            'max-height': height,
+                            transform: `scale(${previewScale}, ${previewScale})`,
+                        });
+                        $drag.addClass('o_cc o_cc1'); // Adds a background color to the preview for usability.
+                        return $drag[0];
                     },
                     start: this._onDragAndDropStart.bind(this),
                     stop: (...args) => {
@@ -838,7 +857,7 @@ var SnippetEditor = Widget.extend({
      *
      * @private
      */
-    _onDragAndDropStart: function () {
+    _onDragAndDropStart: function (event, ui) {
         this.options.wysiwyg.odooEditor.observerUnactive('dragAndDropMoveSnippet');
         this.trigger_up('drag_and_drop_start');
         this.options.wysiwyg.odooEditor.automaticStepUnactive();
@@ -847,10 +866,6 @@ var SnippetEditor = Widget.extend({
         this._dropSiblings = {
             prev: self.$target.prev()[0],
             next: self.$target.next()[0],
-        };
-        self.size = {
-            width: self.$target.width(),
-            height: self.$target.height()
         };
         self.$target.after('<div class="oe_drop_clone" style="display: none;"/>');
         self.$target.detach();
@@ -879,10 +894,9 @@ var SnippetEditor = Widget.extend({
             $selectorChildren: $selectorChildren,
         });
 
-        this.$body.addClass('move-important');
-
         this.$editable.find('.oe_drop_zone').droppable({
             over: function () {
+                ui.helper.addClass('d-none');
                 if (self.dropped) {
                     self.$target.detach();
                     $('.oe_drop_zone').removeClass('invisible');
@@ -896,6 +910,7 @@ var SnippetEditor = Widget.extend({
                     self.dropped = false;
                     self.$target.detach();
                     $(this).removeClass('invisible');
+                    ui.helper.removeClass('d-none');
                 }
             },
         });
@@ -950,7 +965,6 @@ var SnippetEditor = Widget.extend({
         var $from = $clone.parent();
 
         this.$el.removeClass('d-none');
-        this.$body.removeClass('move-important');
         $clone.remove();
 
         this.options.wysiwyg.odooEditor.observerActive('dragAndDropMoveSnippet');
@@ -1641,13 +1655,13 @@ var SnippetsMenu = Widget.extend({
                 var $zone = $(this);
                 var $children = $zone.find('> :not(.oe_drop_zone, .oe_drop_clone)');
 
-                if (!$zone.children().last().is('.oe_drop_zone')) {
+                if (!$zone.children().last().is('.oe_drop_zone, .ui-draggable-dragging')) {
                     data = testPreviousSibling($zone[0].lastChild, $zone)
                         || setDropZoneDirection($zone, $zone, $children.last());
                     self._insertDropzone($('<we-hook/>').appendTo($zone), data.vertical, data.style);
                 }
 
-                if (!$zone.children().first().is('.oe_drop_clone')) {
+                if (!$zone.children().first().is('.oe_drop_clone, .ui-draggable-dragging')) {
                     data = testPreviousSibling($zone[0].firstChild, $zone)
                         || setDropZoneDirection($zone, $zone, $children.first());
                     self._insertDropzone($('<we-hook/>').prependTo($zone), data.vertical, data.style);
@@ -1658,7 +1672,7 @@ var SnippetsMenu = Widget.extend({
             $selectorSiblings = $(_.uniq(($selectorSiblings || $()).add($selectorChildren.children()).get()));
         }
 
-        var noDropZonesSelector = '[data-invisible="1"], .o_we_no_overlay, :not(:visible)';
+        var noDropZonesSelector = '[data-invisible="1"], .o_we_no_overlay, :not(:visible), .ui-draggable-dragging, .ui-draggable-dragging *';
         if ($selectorSiblings) {
             $selectorSiblings.not(`.oe_drop_zone, .oe_drop_clone, ${noDropZonesSelector}`).each(function () {
                 var data;

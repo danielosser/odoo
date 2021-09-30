@@ -47,6 +47,11 @@ body.editor_enable.editor_has_snippets {
     color: $o-we-sidebar-color;
 }
 
+.ui-draggable-dragging {
+    z-index: $o-we-zindex;
+    box-shadow: 0 5px 25px -10px black;
+}
+
 .oe_snippet {
     // No root because can be drag and drop (and the helper is in the body)
     @include o-snippets-font;
@@ -62,7 +67,6 @@ body.editor_enable.editor_has_snippets {
 
     &.ui-draggable-dragging {
         transform: rotate(-12deg) scale(1.1);
-        box-shadow: 0 5px 25px -10px black;
         transition: transform 0.3s, box-shadow 0.3s;
     }
 
@@ -2107,7 +2111,7 @@ body.editor_enable.editor_has_snippets {
                     }
                 }
                 > .o_overlay_move_options > .o_move_handle {
-                    cursor: move;
+                    cursor: url(/web_editor/static/src/img/openhand.cur), default;
                     width: 30px;
                     height: 22px;
                     background-image: url('/web_editor/static/src/img/snippets_options/o_overlay_move_drag.svg');
