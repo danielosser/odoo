@@ -656,10 +656,6 @@ class Project(models.Model):
             'context': {'search_default_group_date': 1, 'default_account_id': self.analytic_account_id.id}
         }
 
-    def action_view_kanban_project(self):
-        # [XBO] TODO: remove me in master
-        return
-
     # ---------------------------------------------
     #  PROJECT UPDATES
     # ---------------------------------------------
