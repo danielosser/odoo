@@ -321,7 +321,7 @@ class ProjectCustomerPortal(CustomerPortal):
             'grouped_tasks': get_grouped_tasks,
             'page_name': 'task',
             'default_url': url,
-            'task_url': 'task',
+            'task_url': 'tasks',
             'pager': {
                 "url": url,
                 "url_args": {'date_begin': date_begin, 'date_end': date_end, 'sortby': sortby, 'groupby': groupby, 'search_in': search_in, 'search': search},
