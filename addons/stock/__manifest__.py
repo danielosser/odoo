@@ -105,9 +105,9 @@
         'web.assets_backend': [
             'stock/static/src/js/inventory_report_list_controller.js',
             'stock/static/src/js/inventory_report_list_view.js',
-            'stock/static/src/js/inventory_singleton_list_renderer.js',
-            'stock/static/src/js/inventory_singleton_list_controller.js',
-            'stock/static/src/js/inventory_singleton_list_view.js',
+            'stock/static/src/js/inventory_adjustments_list_controller.js',
+            'stock/static/src/js/inventory_adjustments_list_view.js',
+            'stock/static/src/js/inventory_adjustments_list_renderer.js',
             'stock/static/src/js/report_stock_forecasted.js',
             'stock/static/src/js/report_stock_reception.js',
             'stock/static/src/js/lazy_column_list.js',
@@ -128,13 +128,14 @@
             'stock/static/tests/tours/stock_report_tests.js',
         ],
         'web.qunit_suite_tests': [
-            'stock/static/tests/singleton_list_tests.js',
+            'stock/static/tests/inventory_adjustments_list_tests.js',
             'stock/static/tests/popover_widget_tests.js',
             'stock/static/tests/lazy_column_list_tests.js',
             'stock/static/tests/stock_traceability_report_backend_tests.js',
         ],
         'web.assets_qweb': [
             'stock/static/src/xml/inventory_report.xml',
+            'stock/static/src/xml/inventory_adjustments.xml',
             'stock/static/src/xml/inventory_lines.xml',
             'stock/static/src/xml/popover_widget.xml',
             'stock/static/src/xml/forecast_widget.xml',

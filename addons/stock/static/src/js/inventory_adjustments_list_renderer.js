@@ -1,4 +1,4 @@
-odoo.define('stock.SingletonListRenderer', function (require) {
+odoo.define('stock.InventoryAdjustmentsListRenderer', function (require) {
 "use strict";
 
 var core = require('web.core');
@@ -11,7 +11,7 @@ var _t = core._t;
  *
  */
 
-var SingletonListRenderer = ListRenderer.extend({
+var InventoryAdjustmentsListRenderer = ListRenderer.extend({
 
     _disableRecordSelectors: function () {
         this._super.apply(this, arguments);
@@ -29,6 +29,6 @@ var SingletonListRenderer = ListRenderer.extend({
     },
 });
 
-return SingletonListRenderer;
+return InventoryAdjustmentsListRenderer;
 
 });

@@ -1,7 +1,7 @@
-odoo.define('web.singleton_list_tests', function (require) {
+odoo.define('web.inventory_adjustments_list_tests', function (require) {
 "use strict";
 
-var SingletonListView = require('stock.SingletonListView');
+var InventoryAdjustmentsListView = require('stock.InventoryAdjustmentsListView');
 var testUtils = require('web.test_utils');
 
 var createView = testUtils.createView;
@@ -41,16 +41,16 @@ QUnit.module('Views', {
     }
 }, function () {
 
-    QUnit.module('SingletonListView');
+    QUnit.module('InventoryAdjustmentsListView');
 
     QUnit.test('Create new record correctly', async function (assert) {
         assert.expect(2);
 
         var list = await createView({
-            View: SingletonListView,
+            View: InventoryAdjustmentsListView,
             model: 'person',
             data: this.data,
-            arch: '<tree editable="top" js_class="singleton_list">'+
+            arch: '<tree editable="top" js_class="inventory_adjustments_list">'+
                     '<field name="name"/>'+
                     '<field name="age"/>'+
                    '</tree>',
@@ -80,10 +80,10 @@ QUnit.module('Views', {
         assert.expect(3);
 
         var list = await createView({
-            View: SingletonListView,
+            View: InventoryAdjustmentsListView,
             model: 'person',
             data: this.data,
-            arch: '<tree editable="top" js_class="singleton_list">'+
+            arch: '<tree editable="top" js_class="inventory_adjustments_list">'+
                     '<field name="name"/>'+
                     '<field name="age"/>'+
                    '</tree>',
@@ -116,13 +116,13 @@ QUnit.module('Views', {
 
     QUnit.test('Don\'t raise error when trying to create duplicate line', async function (assert) {
         assert.expect(3);
-       /* In some condition, a list editable with the `singletonlist` js_class
+       /* In some condition, a list editable with the `inventoryAdjustmentslist` js_class
        can try to select a record at a line who isn't the same place anymore.
        In this case, the list can try to find the id of an undefined record.
        This test just insures we don't raise a traceback in this case.
        */
         var list = await createView({
-            View: SingletonListView,
+            View: InventoryAdjustmentsListView,
             model: 'person',
             data: {
                 person: {
@@ -135,7 +135,7 @@ QUnit.module('Views', {
                     ]
                 }
             },
-            arch: '<tree editable="top" js_class="singleton_list">'+
+            arch: '<tree editable="top" js_class="inventory_adjustments_list">'+
                     '<field name="name"/>'+
                     '<field name="age"/>'+
                    '</tree>',
@@ -172,10 +172,10 @@ QUnit.module('Views', {
 
         var refresh_count = 0;
         var list = await createView({
-            View: SingletonListView,
+            View: InventoryAdjustmentsListView,
             model: 'person',
             data: this.data,
-            arch: '<tree editable="top" js_class="singleton_list">'+
+            arch: '<tree editable="top" js_class="inventory_adjustments_list">'+
                     '<field name="name"/>'+
                     '<field name="age"/>'+
                    '</tree>',
@@ -223,10 +223,10 @@ QUnit.module('Views', {
 
         var refresh_count = 0;
         var list = await createView({
-            View: SingletonListView,
+            View: InventoryAdjustmentsListView,
             model: 'person',
             data: this.data,
-            arch: '<tree editable="top" js_class="singleton_list">'+
+            arch: '<tree editable="top" js_class="inventory_adjustments_list">'+
                     '<field name="name"/>'+
                     '<field name="age"/>'+
                     '<field name="job"/>'+

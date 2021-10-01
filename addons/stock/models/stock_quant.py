@@ -61,15 +61,19 @@ class StockQuant(models.Model):
     product_uom_id = fields.Many2one(
         'uom.uom', 'Unit of Measure',
         readonly=True, related='product_id.uom_id')
+    priority = fields.Selection(related='product_tmpl_id.priority')
     company_id = fields.Many2one(related='location_id.company_id', string='Company', store=True, readonly=True)
     location_id = fields.Many2one(
         'stock.location', 'Location',
         domain=lambda self: self._domain_location_id(),
         auto_join=True, ondelete='restrict', required=True, index=True, check_company=True)
+    storage_category_id = fields.Many2one(related='location_id.storage_category_id', store=True)
+    cyclic_inventory_frequency = fields.Integer(related='location_id.cyclic_inventory_frequency')
     lot_id = fields.Many2one(
         'stock.production.lot', 'Lot/Serial Number', index=True,
         ondelete='restrict', check_company=True,
         domain=lambda self: self._domain_lot_id())
+    sn_duplicated = fields.Boolean(string="Duplicated Serial Number", compute='_compute_sn_duplicated', help="If the same SN is in another Quant")
     package_id = fields.Many2one(
         'stock.quant.package', 'Package',
         domain="[('location_id', '=', location_id)]",
@@ -110,6 +114,7 @@ class StockQuant(models.Model):
     inventory_date = fields.Date(
         'Scheduled Date', compute='_compute_inventory_date', store=True, readonly=False,
         help="Next date the On Hand Quantity should be counted.")
+    last_count_date = fields.Date(help='Last time the Quantity was Updated')
     inventory_quantity_set = fields.Boolean(store=True, compute='_compute_inventory_quantity_set', readonly=False)
     is_outdated = fields.Boolean('Quantity has been moved since last count', compute='_compute_is_outdated')
     user_id = fields.Many2one(
@@ -147,6 +152,15 @@ class StockQuant(models.Model):
     def _compute_inventory_quantity_auto_apply(self):
         for quant in self:
             quant.inventory_quantity_auto_apply = quant.quantity
+
+    @api.depends('lot_id')
+    def _compute_sn_duplicated(self):
+        self.sn_duplicated = False
+        domain = [('tracking', '=', 'serial'), ('lot_id', 'in', self.lot_id.ids), ('location_id.usage', 'in', ['internal', 'transit'])]
+        results = self.read_group(domain, ['lot_id'], ['lot_id'])
+        duplicated_sn_ids = [x['lot_id'][0] for x in results if x['lot_id_count'] > 1]
+        quants_with_duplicated_sn = self.env['stock.quant'].search([('lot_id', 'in', duplicated_sn_ids)])
+        quants_with_duplicated_sn.sn_duplicated = True
 
     def _set_inventory_quantity(self):
         """ Inverse method to create stock move when `inventory_quantity` is set
@@ -405,6 +419,15 @@ class StockQuant(models.Model):
         self.inventory_diff_quantity = 0
         self.inventory_quantity_set = False
 
+    def action_warning_duplicated_sn(self):
+        return {
+            'name': _('Warning Duplicated SN'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.quant',
+            'views': [(self.env.ref('stock.duplicated_sn_warning').id, 'form')],
+            'target': 'new',
+        }
+
     @api.constrains('product_id')
     def check_product_id(self):
         if any(elem.product_id.type != 'product' for elem in self):
@@ -590,7 +613,11 @@ class StockQuant(models.Model):
         date_by_location = {loc: loc._get_next_inventory_date() for loc in self.mapped('location_id')}
         for quant in self:
             quant.inventory_date = date_by_location[quant.location_id]
-        self.write({'inventory_quantity': 0, 'user_id': False})
+        self.write({
+            'last_count_date': fields.Date.today(),
+            'inventory_quantity': 0,
+            'user_id': False,
+        })
         self.write({'inventory_diff_quantity': 0})
 
     @api.model
@@ -779,7 +806,7 @@ class StockQuant(models.Model):
         """ Returns a list of fields user can edit when he want to edit a quant in `inventory_mode`.
         """
         fields = ['inventory_quantity', 'inventory_quantity_auto_apply', 'inventory_diff_quantity',
-                  'inventory_date', 'user_id', 'inventory_quantity_set', 'is_outdated']
+                  'inventory_date', 'user_id', 'inventory_quantity_set', 'is_outdated', 'lot_id', 'last_count_date']
         return fields
 
     def _get_inventory_move_values(self, qty, location_id, location_dest_id, out=False):
