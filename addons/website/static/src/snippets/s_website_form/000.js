@@ -140,6 +140,20 @@ odoo.define('website.s_website_form', function (require) {
                 });
             }
 
+            const telFields = this.el.querySelectorAll('input[type="tel"]');
+            if (telFields.length) {
+                this._rpc({
+                    route: '/website/form/get_country_phone_code'
+                }).then((phoneCode) => {
+                    if (phoneCode) {
+                        telFields.forEach(telField => {
+                            if (!telField.value) {
+                                telField.value = '+' + phoneCode;
+                            }
+                        });
+                    }
+                })
+            }
             // Check disabled states
             this.inputEls = this.$target[0].querySelectorAll('.s_website_form_field.s_website_form_field_hidden_if .s_website_form_input');
             this._disabledStates = new Map();

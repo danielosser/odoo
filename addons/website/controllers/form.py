@@ -21,6 +21,13 @@ class WebsiteForm(http.Controller):
         # This is a workaround to don't add language prefix to <form action="/website/form/" ...>
         return ""
 
+    @http.route('/website/form/get_country_phone_code', type='json', auth="public", website=True)
+    def get_country_phone_code(self, **kwargs):
+        geoip = request.session.geoip
+        if not bool(geoip):
+            return None
+        return request.env['res.country'].search([('code', '=', geoip.get('country_code'))], limit=1).phone_code
+
     # Check and insert values from the form on the model <model>
     @http.route('/website/form/<string:model_name>', type='http', auth="public", methods=['POST'], website=True, csrf=False)
     def website_form(self, model_name, **kwargs):
