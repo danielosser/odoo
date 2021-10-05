@@ -95,6 +95,56 @@ class ReportJournal(models.AbstractModel):
     def _get_query_get_clause(self, data):
         return self.env['account.move.line'].with_context(data['form'].get('used_context', {}))._query_get()
 
+    def _get_tax_grids(self, data, journal_id):
+        """
+        For each grid (where +52 and -52 count as the same grid) we want to give:
+          The name of the grid (E.g. 52)
+          The positive amount that went into this grid (+)
+          The negative amount that went into this grid (-)
+          The impact that the period/journal had on this grid
+        """
+        move_state = ['draft', 'posted']
+        if data['form'].get('target_move', 'all') == 'posted':
+            move_state = ['posted']
+
+        query_get_clause = self._get_query_get_clause(data)
+        params = [tuple(move_state), tuple(journal_id.ids)] + query_get_clause[2]
+
+        query = """
+            WITH tag_info (tag_name, balance) as (
+                SELECT tag.name, SUM(COALESCE("account_move_line".balance, 0)
+                                     * CASE WHEN tag.tax_negate THEN -1 ELSE 1 END
+                                     * CASE WHEN "account_move_line".tax_tag_invert THEN -1 ELSE 1 END
+                                 ) AS balance
+                FROM account_account_tag tag 
+                JOIN account_account_tag_account_move_line_rel rel ON tag.id = rel.account_account_tag_id, 
+                """ + query_get_clause[0] + """
+                LEFT JOIN account_move am ON "account_move_line".move_id = am.id
+                WHERE applicability = 'taxes'
+                AND am.state IN %s
+                AND "account_move_line".journal_id IN %s
+                AND """ + query_get_clause[1] + """ AND "account_move_line".id = rel.account_move_line_id
+                GROUP BY tag.name
+            )
+            SELECT 
+            substring(tag_name from 2 for length(tag_name) - 1) AS name, 
+            balance, 
+            CASE WHEN sign(balance) = 1 THEN '+' ELSE '-' END AS sign
+            FROM tag_info
+            ORDER BY name
+        """
+        self.env.cr.execute(query, tuple(params))
+        res = {}
+
+        for name, balance, sign in self.env.cr.fetchall():
+            if not res.get(name):
+                res[name] = {}
+            res[name]['grid'] = name
+            res[name][sign] = res[name].get(sign, 0) + balance
+            res[name]['impact'] = res[name].get('+', 0) + res[name].get('-', 0)
+
+        return res
+
     @api.model
     def _get_report_values(self, docids, data=None):
         if not data.get('form'):
@@ -116,6 +166,7 @@ class ReportJournal(models.AbstractModel):
             'sum_credit': self._sum_credit,
             'sum_debit': self._sum_debit,
             'get_taxes': self._get_taxes,
+            'get_tax_grids': self._get_tax_grids,
             'company_id': self.env['res.company'].browse(
                 data['form']['company_id'][0]),
         }
