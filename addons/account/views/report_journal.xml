@@ -133,7 +133,7 @@
                                 <td/>
                                 <td class="text-right"><strong>Total</strong></td>
                                 <td>
-                                    <span t-esc="sum_debit(data, o)"
+                                    <span t-esc="sum_debits.get(o.id, 0)"
                                           t-options="{
                                             'widget': 'monetary',
                                             'display_currency': (company_id or res_company).currency_id
@@ -141,7 +141,7 @@
                                           class="pull-right font-weight-bold"/>
                                 </td>
                                 <td>
-                                    <span t-esc="sum_credit(data, o)"
+                                    <span t-esc="sum_credits.get(o.id, 0)"
                                           t-options="{
                                               'widget': 'monetary',
                                               'display_currency': (company_id or res_company).currency_id
@@ -156,7 +156,7 @@
                     </table>
 
                     <div class="row" style="page-break-inside: avoid">
-                        <t t-set="taxes" t-value="get_taxes(data, o)"/>
+                        <t t-set="taxes" t-value="taxes_details.get(o.id)"/>
                         <div class="col-4" t-if="taxes">
                             <table class="table table-sm table-striped">
                                 <thead>
@@ -177,7 +177,7 @@
                             </table>
                         </div>
 
-                        <t t-set="grids" t-value="get_tax_grids(data, o)"/>
+                        <t t-set="grids" t-value="tax_grid_details.get(o.id)"/>
                         <div class="col-4" t-if="grids">
                             <table class="table table-sm table-striped">
                                 <thead>
