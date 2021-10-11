@@ -194,6 +194,8 @@ class Lead(models.Model):
         ('incorrect', 'Incorrect')], string='Email Quality', compute="_compute_email_state", store=True)
     website = fields.Char('Website', index=True, help="Website of the contact", compute="_compute_website", readonly=False, store=True)
     lang_id = fields.Many2one('res.lang', string='Language')
+    # Installed languages
+    lang_active_count = fields.Integer(compute='_compute_lang_active_count')
     # Address fields
     street = fields.Char('Street', compute='_compute_partner_address_values', readonly=False, store=True)
     street2 = fields.Char('Street2', compute='_compute_partner_address_values', readonly=False, store=True)
@@ -229,6 +231,9 @@ class Lead(models.Model):
     _sql_constraints = [
         ('check_probability', 'check(probability >= 0 and probability <= 100)', 'The probability of closing the deal should be between 0% and 100%!')
     ]
+
+    def _compute_lang_active_count(self):
+        self.lang_active_count = len(self.env['res.lang'].get_installed())
 
     @api.depends('activity_date_deadline')
     def _compute_kanban_state(self):
