@@ -5,14 +5,18 @@ const config = require('web.config');
 const core = require('web.core');
 const publicWidget = require('web.public.widget');
 const DynamicSnippetCarousel = require('website.s_dynamic_snippet_carousel');
+const DynamicSnippet = require('website.s_dynamic_snippet');
 var wSaleUtils = require('website_sale.utils');
 
 const DynamicSnippetProducts = DynamicSnippetCarousel.extend({
     selector: '.s_dynamic_snippet_products',
-    read_events: {
+});
+
+DynamicSnippet.include({
+    read_events: Object.assign({}, DynamicSnippet.prototype.read_events, {
         'click .js_add_cart': '_onAddToCart',
         'click .js_remove': '_onRemoveFromRecentlyViewed',
-    },
+    }),
 
     //--------------------------------------------------------------------------
     // Private
