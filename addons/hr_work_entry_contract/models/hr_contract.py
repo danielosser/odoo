@@ -102,6 +102,20 @@ class HrContract(models.Model):
                         start_dt, end_dt, resources=resource, tz=tz)[resource.id]
                     real_leaves = static_attendances & leaves
 
+                if not contract.has_static_work_entries():
+                    # An attendance based contract might have an invalid planning, by definition it may not happen with
+                    # static work entries.
+                    # Creating overlapping slots for example might lead to a single work entry.
+                    # In that case we still create both work entries to indicate a problem (conflicting W E).
+                    split_attendances = []
+                    for attendance in real_attendances:
+                        if attendance[2] and len(attendance[2]) > 1:
+                            split_attendances += [(attendance[0], attendance[1], a) for a in attendance[2]]
+                        else:
+                            split_attendances += [attendance]
+                    real_attendances = split_attendances
+
+
                 # A leave period can be linked to several resource.calendar.leave
                 split_leaves = []
                 for leave_interval in leaves:
