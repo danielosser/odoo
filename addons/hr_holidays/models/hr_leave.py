@@ -715,11 +715,15 @@ class HolidaysRequest(models.Model):
         for holiday in self:
             if holiday.holiday_type != 'employee' or not holiday.employee_id or not holiday.holiday_status_id or holiday.holiday_status_id.requires_allocation == 'no':
                 continue
-            mapped_days = holiday.holiday_status_id.get_employees_days([holiday.employee_id.id], holiday.date_from)
-            leave_days = mapped_days[holiday.employee_id.id][holiday.holiday_status_id.id]
-            if float_compare(leave_days['remaining_leaves'], 0, precision_digits=2) == -1 or float_compare(leave_days['virtual_remaining_leaves'], 0, precision_digits=2) == -1:
-                raise ValidationError(_('The number of remaining time off is not sufficient for this time off type.\n'
-                                        'Please also check the time off waiting for validation.'))
+            allocation = holiday.holiday_allocation_id
+            number_of_leave_days = sum(allocation.taken_leave_ids.mapped('number_of_days'))
+            remaining_allocation_days = allocation.max_leaves - number_of_leave_days
+            if float_compare(remaining_allocation_days, 0, precision_digits=2) == -1:
+                raise ValidationError(_('The number of days for this allocation is not sufficient.\n'
+                                        '%(remaining_days)s days remaining out of %(total_days)s days for %(name)s',
+                                        remaining_days=max(allocation.max_leaves - allocation.leaves_taken, 0),
+                                        total_days=allocation.max_leaves,
+                                        name=allocation.name_validity))
 
     @api.constrains('date_from', 'date_to', 'employee_id')
     def _check_date_state(self):
@@ -856,10 +860,49 @@ class HolidaysRequest(models.Model):
         for leave in self:
             if leave.holiday_type == 'employee' and not leave.multi_employee and\
                 leave.holiday_status_id.requires_allocation == 'yes' and not leave.holiday_allocation_id:
-                raise ValidationError(_(
-                    'Could not find an allocation of type %(leave_type)s for the requested time period.',
-                    leave_type=leave.holiday_status_id.display_name,
-                ))
+                allocations = self.env['hr.leave.allocation'].search(
+                    [
+                        ('holiday_status_id', 'in', leave.holiday_status_id.ids),
+                        ('employee_id', 'in', leave.employee_id.ids),
+                        ('state', '=', 'validate'),
+                        '|',
+                        ('date_from', '<=', leave.date_to),
+                        '&',
+                        ('date_to', '=', False),
+                        ('date_to', '>=', leave.date_from),
+                    ], order="date_to"
+                )
+                allocations_list = []
+                for allocation in allocations:
+                    allocations_list.append(_(
+                        '%(remaining_days)s days remaining out of %(total_days)s for %(allocation_name)s',
+                        remaining_days=allocation.max_leaves - sum(allocation.taken_leave_ids.mapped('number_of_days')),
+                        total_days=allocation.max_leaves,
+                        allocation_name=allocation.name_validity
+                    ))
+                if len(allocations_list) > 1:
+                    raise ValidationError(_(
+                        'Could not find a suitable allocation between %(date_from)s and %(date_to)s.\n\n'
+                        'Available allocations during the requested time period:\n'
+                        '%(allocations)s',
+                        date_from=leave.request_date_from,
+                        date_to=leave.request_date_to,
+                        allocations='\n'.join(allocations_list)
+                    ))
+                elif len(allocations_list) == 1:
+                    raise ValidationError(_(
+                        'Could not find a suitable allocation between %(date_from)s and %(date_to)s.\n\n'
+                        'Available allocation during the requested time period:\n'
+                        '%(allocations)s',
+                        date_from=leave.request_date_from,
+                        date_to=leave.request_date_to,
+                        allocations='\n'.join(allocations_list)
+                    ))
+                else:
+                    raise ValidationError(_(
+                        'Could not find an allocation of type %(leave_type)s for the requested time period.',
+                        leave_type=leave.holiday_status_id.display_name,
+                    ))
 
     @api.constrains('holiday_allocation_id', 'date_to', 'date_from')
     def _check_leave_type_validity(self):

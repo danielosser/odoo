@@ -10,7 +10,7 @@ from collections import defaultdict
 
 from odoo import api, fields, models
 from odoo.osv import expression
-from odoo.tools import format_date
+from odoo.tools import float_compare, format_date
 from odoo.tools.translate import _
 from odoo.tools.float_utils import float_round
 
@@ -400,14 +400,25 @@ class HolidaysType(models.Model):
         for record in self:
             name = record.name
             if record.requires_allocation == "yes":
-                name = "%(name)s (%(count)s)" % {
-                    'name': name,
-                    'count': _('%g remaining out of %g') % (
-                        float_round(record.virtual_remaining_leaves, precision_digits=2) or 0.0,
-                        float_round(record.max_leaves, precision_digits=2) or 0.0,
-                    ) + (_(' hours') if record.request_unit == 'hour' else _(' days'))
-                }
-            res.append((record.id, name))
+                if record._context.get('default_date_from'):
+                    employee_id = record._context.get('employee_id')
+                    leaves_count = record.get_employees_days([employee_id], date=record._context['default_date_from'])[employee_id][record.id]
+                    virtual_remaining_leaves = float_round(leaves_count.get('virtual_remaining_leaves', 0), precision_digits=2)
+                    max_leaves = float_round(leaves_count.get('max_leaves', 0), precision_digits=2)
+                else:
+                    virtual_remaining_leaves = float_round(record.virtual_remaining_leaves, precision_digits=2)
+                    max_leaves = float_round(record.max_leaves, precision_digits=2)
+                if float_compare(virtual_remaining_leaves, 0, precision_digits=2) == 1:
+                    name = "%(name)s (%(count)s)" % {
+                        'name': record.name,
+                        'count': _('%g remaining out of %g') % (
+                            virtual_remaining_leaves or 0.0,
+                            max_leaves or 0.0,
+                        ) + (_(' hours') if record.request_unit == 'hour' else _(' days'))
+                    }
+                    res.append((record.id, name))
+            else:
+                res.append((record.id, record.name))
         return res
 
     @api.model
