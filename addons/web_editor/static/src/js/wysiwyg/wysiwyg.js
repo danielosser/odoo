@@ -1229,14 +1229,20 @@ const Wysiwyg = Widget.extend({
                     });
                     this.colorpickers[eventName] = colorpicker;
                     colorpicker.on('custom_color_picked color_picked', null, ev => {
-                        if (hadNonCollapsedSelection) {
+                        const selection = this.odooEditor.document.getSelection();
+                        const range = selection.rangeCount && selection.getRangeAt(0);
+                        const hasNonCollapsedSelection = range && !selection.isCollapsed;
+                        if (hadNonCollapsedSelection && !hasNonCollapsedSelection) {
                             this.odooEditor.historyResetLatestComputedSelection(true);
                         }
                         this._processAndApplyColor(eventName, ev.data.color);
                         this._updateEditorUI();
                     });
                     colorpicker.on('color_hover color_leave', null, ev => {
-                        if (hadNonCollapsedSelection) {
+                        const selection = this.odooEditor.document.getSelection();
+                        const range = selection.rangeCount && selection.getRangeAt(0);
+                        const hasNonCollapsedSelection = range && !selection.isCollapsed;
+                        if (hadNonCollapsedSelection && !hasNonCollapsedSelection) {
                             this.odooEditor.historyResetLatestComputedSelection(true);
                         }
                         this.odooEditor.historyPauseSteps();
