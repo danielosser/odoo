@@ -20,18 +20,26 @@ var ShareMail = publicWidget.Widget.extend({
         var self = this;
         var input = this.$('input');
         var slideID = this.$('button').data('slide-id');
-        if (input.val() && input[0].checkValidity()) {
+        if (input.val()) {
             this.$el.removeClass('o_has_error').find('.form-control, .custom-select').removeClass('is-invalid');
             this._rpc({
                 route: '/slides/slide/send_share_email',
                 params: {
                     slide_id: slideID,
-                    email: input.val(),
+                    emails: input.val(),
                 },
-            }).then(function () {
-                self.$el.html($('<div class="alert alert-info" role="alert">' + _t('<strong>Thank you!</strong> Mail has been sent.') + '</div>'));
+            }).then((action) => {
+                if (action) {
+                    self.$('.alert-info').removeClass('d-none');
+                    self.$('.input-group').addClass('d-none');
+                } else {
+                    self.displayNotification({ message: _t('Please enter valid email(s)'), type: 'danger' });
+                    self.$el.addClass('o_has_error').find('.form-control, .custom-select').addClass('is-invalid');
+                    input.focus();
+                }
             });
         } else {
+            this.displayNotification({ message: _t('Please enter valid email(s)'), type: 'danger' });
             this.$el.addClass('o_has_error').find('.form-control, .custom-select').addClass('is-invalid');
             input.focus();
         }
