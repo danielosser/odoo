@@ -139,9 +139,17 @@ class Channel(models.Model):
         'image.mixin',
         'website.seo.metadata',
         'website.published.multi.mixin',
+        'website.cover_properties.mixin',
         'website.searchable.mixin',
     ]
     _order = 'sequence, id'
+
+    def _default_cover_properties(self):
+        return {
+            'background_color_style': 'background-color: rgba(0, 0, 0, 0); background-image: linear-gradient(120deg, #875A7B, #78516F);',
+            'opacity': '0',
+            'resize_class': 'cover_auto'
+        }
 
     def _default_access_token(self):
         return str(uuid.uuid4())
