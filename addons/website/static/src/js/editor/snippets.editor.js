@@ -352,6 +352,12 @@ weSnippetEditor.SnippetsMenu.include({
                 }
             }
             if ($snippet) {
+                // Re-apply background gradient if needed.
+                const $textGradient = $snippet.closest('.text-gradient');
+                if ($textGradient.length) {
+                    $snippet.addClass('text-gradient');
+                    $snippet[0].style['background-image'] = $textGradient[0].style['background-image'];
+                }
                 $snippet[0].normalize();
                 this.trigger_up('activate_snippet', {
                     $snippet: $snippet,
