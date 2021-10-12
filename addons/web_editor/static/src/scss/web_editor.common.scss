@@ -847,6 +847,11 @@ section, .oe_img_bg, [data-oe-shape-data] {
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
+    // Neutralize text-gradient if another color is set within.
+    font[style*="color"]:not(.text-gradient), font[style*="background-image"]:not(.text-gradient), [class*="text-"]:not(.text-gradient) {
+        -webkit-background-clip: initial;
+        -webkit-text-fill-color: initial;
+    }
 }
 
 /* QWEB */
