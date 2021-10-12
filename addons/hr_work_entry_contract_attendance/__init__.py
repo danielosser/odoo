@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from odoo import api, SUPERUSER_ID
 from . import models
+from . import wizard
 
 def _generate_attendances(cr, registry):
     env = api.Environment(cr, SUPERUSER_ID, {})
