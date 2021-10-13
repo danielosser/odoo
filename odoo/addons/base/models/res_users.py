@@ -800,6 +800,55 @@ class Users(models.Model):
         # use self.env.user here, because it has uid=SUPERUSER_ID
         return self.env.user.write({'password': new_passwd})
 
+    @api.model
+    def _remove_user(self, password):
+        """Try to remove the current portal user.
+
+        if fail, archive it and remove sensitive information.
+        """
+        ip = request.httprequest.environ['REMOTE_ADDR'] if request else 'n/a'
+        _logger.info('Account deletion asked for "%s" (#%i) from %s', self.env.user.login, self.env.uid, ip)
+
+        self._check_credentials(password, {'interactive': True})
+
+        log_user = f'User #{self.env.uid}:'
+
+        # A user can not self-deactivate, switch to super user
+        user = self.env.user.with_user(SUPERUSER_ID)
+
+        try:
+            self._cr.execute('SAVEPOINT remove_portal_user')
+            partner = user.partner_id
+            user.unlink()
+            partner.unlink()
+
+            _logger.info('%s User and partner deleted from the database.', log_user)
+        except Exception:
+            # Can not unlink the users, maybe because of constraints on other models
+            # remove sensitive information and archive the record
+
+            self._cr.execute('ROLLBACK TO SAVEPOINT remove_portal_user')
+            _logger.info('%s Deletion of the user failed, archive it instead.', log_user)
+
+            _logger.info('%s Change the password.', log_user)
+            self.change_password(password, os.urandom(32).hex())
+
+            deleted_name = f'__deleted_user_{user.id}_{time.time()}'
+
+            _logger.info('%s Archive the user and remove sensitive information.', log_user)
+
+            user.write({
+                'name': deleted_name,
+                'login': deleted_name,
+                'active': False,
+            })
+
+            _logger.info('%s Archive the partner.', log_user)
+
+            user.partner_id.active = False
+        else:
+            self._cr.execute('RELEASE SAVEPOINT remove_portal_user')
+
     def preference_save(self):
         return {
             'type': 'ir.actions.client',

@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import _, api, exceptions, fields, models, modules
+import logging
+
+from odoo import SUPERUSER_ID, _, api, exceptions, fields, models, modules
 from odoo.addons.base.models.res_users import is_selection_groups
+
+_logger = logging.getLogger(__name__)
 
 
 class Users(models.Model):
@@ -136,6 +140,22 @@ class Users(models.Model):
         if self.partner_id.email:
             return '%s (%s)' % (body, self.partner_id.email)
         return body
+
+    @api.model
+    def _remove_user(self, password):
+        """Blacklist the email of the user after deleting it."""
+        email = self.env.user.email
+
+        super(Users, self)._remove_user(password=password)
+
+        # Current user doesn't not exist anymore
+        self = self.with_user(SUPERUSER_ID)
+
+        try:
+            self.env['mail.blacklist'].sudo()._add(email)
+            _logger.info('User #%i Email blacklisted.', self.env.uid)
+        except exceptions.UserError:
+            _logger.info('User #%i Invalid email can not be blacklisted.', self.env.uid)
 
     # ------------------------------------------------------------
     # DISCUSS

@@ -210,11 +210,20 @@ class CustomerPortal(Controller):
         values['get_error'] = get_error
 
         if request.httprequest.method == 'POST':
-            values.update(self._update_password(
-                post['old'].strip(),
-                post['new1'].strip(),
-                post['new2'].strip()
-            ))
+            if post['action'] == 'change_password':
+                values.update(self._update_password(
+                    post['old'].strip(),
+                    post['new1'].strip(),
+                    post['new2'].strip(),
+                ))
+            elif post['action'] == 'deactivate_account':
+                error = self._deactivate_account(post)
+                if not error:
+                    request.session.logout()
+                    param = {'message': _('Account deleted!')}
+                    return request.redirect('/web/login?%s' % urls.url_encode(param))
+
+                values['errors'] = {'deactivate': error}
 
         return request.render('portal.portal_my_security', values, headers={
             'X-Frame-Options': 'DENY'
@@ -230,19 +239,37 @@ class CustomerPortal(Controller):
 
         try:
             request.env['res.users'].change_password(old, new1)
-        except UserError as e:
-            return {'errors': {'password': e.name}}
         except AccessDenied as e:
             msg = e.args[0]
             if msg == AccessDenied().args[0]:
                 msg = _('The old password you provided is incorrect, your password was not changed.')
             return {'errors': {'password': {'old': msg}}}
+        except UserError as e:
+            return {'errors': {'password': str(e)}}
 
         # update session token so the user does not get logged out (cache cleared by passwd change)
         new_token = request.env.user._compute_session_token(request.session.sid)
         request.session.session_token = new_token
 
         return {'success': {'password': True}}
+
+    def _deactivate_account(self, values):
+        """Deactivate the current user.
+
+        Return the error message if something bad happened
+        or nothing if the account was deactivated.
+        """
+        if not request.env.user.has_group('base.group_portal'):
+            return _('Only the portal users can deactivate their accounts.')
+        elif values.get('validation') != request.env.user.login:
+            return _('You should enter "%r" to validate your action.', request.env.user.login)
+        elif not values.get('password'):
+            return _('Password empty')
+
+        try:
+            request.env['res.users']._remove_user(values.get('password'))
+        except AccessDenied:
+            return _('Wrong password')
 
     @http.route('/portal/attachment/add', type='http', auth='public', methods=['POST'], website=True)
     def attachment_add(self, name, file, res_model, res_id, access_token=None, **kwargs):
