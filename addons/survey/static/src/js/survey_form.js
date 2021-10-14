@@ -713,7 +713,7 @@ publicWidget.registry.SurveyFormWidget = publicWidget.Widget.extend({
     *   return params = { 'dateQuestionId' : '2019-05-23', 'datetimeQuestionId' : '2019-05-23 14:05:12' }
     */
     _prepareSubmitDates: function (params, questionId, value, isDateTime) {
-        var momentDate = isDateTime ? field_utils.parse.datetime(value, null, {timezone: true}) : field_utils.parse.date(value);
+        var momentDate = isDateTime ? field_utils.parse.datetime(value, null, {timezone: false}) : field_utils.parse.date(value);
         var formattedDate = momentDate ? momentDate.toJSON() : '';
         params[questionId] = formattedDate;
         return params;

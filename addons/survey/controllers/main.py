@@ -244,7 +244,7 @@ class Survey(http.Controller):
                 'id': page.id,
                 'title': page.title,
             } for page in survey_sudo.page_ids],
-            'format_datetime': lambda dt: format_datetime(request.env, dt, dt_format=False),
+            'format_datetime': lambda dt: format_datetime(request.env, dt, dt_format=False, tz='UTC'),
             'format_date': lambda date: format_date(request.env, date)
         }
         if survey_sudo.questions_layout != 'page_per_question':
@@ -564,7 +564,7 @@ class Survey(http.Controller):
             'answer': answer_sudo if survey_sudo.scoring_type != 'scoring_without_answers' else answer_sudo.browse(),
             'questions_to_display': answer_sudo._get_print_questions(),
             'scoring_display_correction': survey_sudo.scoring_type == 'scoring_with_answers' and answer_sudo,
-            'format_datetime': lambda dt: format_datetime(request.env, dt, dt_format=False),
+            'format_datetime': lambda dt: format_datetime(request.env, dt, dt_format=False, tz='UTC'),
             'format_date': lambda date: format_date(request.env, date),
         })
 

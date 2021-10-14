@@ -92,10 +92,14 @@ sent mails with personal token for the invitation of the survey.
             'survey/static/src/css/survey_templates_result.css',
             'survey/static/src/js/fields_section_one2many.js',
             'survey/static/src/js/fields_form_page_description.js',
+            'survey/static/src/js/field_survey_answer_datetime.js',
             'survey/static/src/scss/survey_survey_views.scss',
         ],
         'web.assets_tests': [
             'survey/static/tests/**/*',
+        ],
+        'web.qunit_suite_tests': [
+            'survey/static/tests/field_survey_answer_datetime_tests.js',
         ],
     },
     'license': 'LGPL-3',
