@@ -64,7 +64,7 @@ class AccountTaxReport(models.Model):
 
         return copied_report
 
-    def get_lines_in_hierarchy(self):
+    def get_lines_in_hierarchy(self): #TODO OCO sans doute à généraliser, et le flatten de las se chargera de liquider ça comme il faut
         """ Returns an interator to the lines of this tax report, were parent lines
         ar all directly followed by their children.
         """
@@ -75,7 +75,7 @@ class AccountTaxReport(models.Model):
             lines_to_treat = list(to_yield.children_line_ids.sorted(lambda x: x.sequence)) + lines_to_treat[1:]
             yield to_yield
 
-    def get_checks_to_perform(self, amounts, carried_over):
+    def get_checks_to_perform(self, amounts, carried_over): #TODO OCO ça franchement, on en profiterait bien pour le refaire ... à voir ; on peut dans un premier temps juste généraliser
         """ To override in localizations
         If value is a float, it will be formatted with format_value
         The line is not displayed if it is falsy (0, 0.0, False, ...)
