@@ -27,7 +27,8 @@
 .oe_invoice_outstanding_credits_debits {
     clear: both;
     float: right;
-    min-width: 350px;
+    min-width: 260px;
+    padding-top: 20px;
 }
 
 @media (max-width: 767.98px) {

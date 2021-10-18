@@ -12,6 +12,7 @@ var _t = core._t;
 var ShowPaymentLineWidget = AbstractField.extend({
     events: _.extend({
         'click .outstanding_credit_assign': '_onOutstandingCreditAssign',
+        'click .outstanding_credit_view_journal': '_onOutstandingCreditOpenJournalEntry',
     }, AbstractField.prototype.events),
     supportedFieldTypes: ['char'],
 
@@ -125,6 +126,26 @@ var ShowPaymentLineWidget = AbstractField.extend({
             }).then(function () {
                 self.trigger_up('reload');
             });
+    },
+    /**
+     * @private
+     * @override
+     * @param {MouseEvent} event
+     */
+    _onOutstandingCreditOpenJournalEntry: function (event) {
+        event.stopPropagation();
+        event.preventDefault();
+        var self = this;
+        var move_id = $(event.target).data('id');
+        if (move_id !== undefined && !isNaN(move_id)){
+            this._rpc({
+                    model: 'account.move',
+                    method: 'action_view_entry',
+                    args: [move_id],
+                }).then((action) => {
+                    self.do_action(action);
+                });
+            }
     },
     /**
      * @private
