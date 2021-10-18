@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <function model="purchase.order.line" name="write">
+            <value model="purchase.order.line" search="[('product_id', '=', ref('product.product_delivery_01')), ('order_id', '=', ref('purchase.purchase_order_1'))]"/>
+            <value eval="{'account_analytic_id': ref('project.analytic_office_design')}"/>
+        </function>
+        <function model="purchase.order.line" name="write">
+            <value model="purchase.order.line" search="[('product_id', '=', ref('product.product_product_27')), ('order_id', '=', ref('purchase.purchase_order_1'))]"/>
+            <value eval="{'account_analytic_id': ref('project.analytic_office_design')}"/>
+        </function>
+    </data>
+</odoo>

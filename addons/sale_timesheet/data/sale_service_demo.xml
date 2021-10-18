@@ -11,6 +11,14 @@
             <field name="product_uom_qty">5.0</field>
         </record>
 
+        <!-- Project Template -->
+        <record id="so_template_project" model="project.project">
+            <field name="name">Sales Order</field>
+            <field name="active">False</field>
+            <field name="type_ids" eval="[(4, ref('project.project_stage_0')), (4, ref('project.project_stage_1')), (4, ref('project.project_stage_2'))]"/>
+            <field name="description">This project is used as a template for projects created from sales orders.</field>
+        </record>
+
         <!-- Projects and Analytic Account -->
         <record id="account_analytic_account_project_support" model="account.analytic.account">
             <field name="name">After-Sales Services</field>
@@ -21,9 +29,18 @@
         <record id="project_support" model="project.project">
             <field name="date_start" eval="time.strftime('%Y-%m-01 10:00:00')"/>
             <field name="name">After-Sales Services</field>
+            <field name="description">Services provided to customers who have purchased products.</field>
+            <field name="user_id" eval="ref('base.user_demo')"/>
             <field name="analytic_account_id" ref="account_analytic_account_project_support"/>
             <field name="allow_billable" eval="True"/>
             <field name="type_ids" eval="[(4, ref('project.project_stage_0')), (4, ref('project.project_stage_1')), (4, ref('project.project_stage_2'))]"/>
+            <field name="label_tasks">Services</field>
+        </record>
+
+        <record id="support_follower_admin" model="mail.followers">
+            <field name="res_model">project.project</field>
+            <field name="res_id" ref="project_support"/>
+            <field name="partner_id" ref="base.partner_admin"/>
         </record>
 
         <!-- Project Task -->
@@ -56,6 +73,7 @@
             <field name="service_policy">ordered_timesheet</field>
             <field name="service_tracking">task_global_project</field>
             <field name="project_id" ref="project_support"/>
+            <field name="service_upsell_threshold">0.8</field>
         </record>
 
         <record id="product_service_deliver_timesheet_1" model="product.product">
@@ -68,6 +86,7 @@
             <field name="uom_po_id" ref="uom.product_uom_hour"/>
             <field name="service_policy">delivered_timesheet</field>
             <field name="service_tracking">task_in_project</field>
+            <field name="project_template_id" ref="so_template_project"/>
         </record>
 
         <record id="product_service_deliver_timesheet_2" model="product.product">
@@ -80,6 +99,7 @@
             <field name="uom_po_id" ref="uom.product_uom_hour"/>
             <field name="service_policy">delivered_timesheet</field>
             <field name="service_tracking">task_in_project</field>
+            <field name="project_template_id" ref="so_template_project"/>
         </record>
 
         <record id="product_service_deliver_manual" model="product.product">
@@ -94,14 +114,13 @@
             <field name="service_tracking">no</field>
         </record>
 
-        <!-- Sales orders -->
+        <!-- Sales order 'sale_order_1' (AGR) -->
         <record id="sale_order_1" model="sale.order">
             <field name="partner_id" ref="base.res_partner_2"/>
             <field name="client_order_ref">AGR</field>
             <field name="user_id" ref="base.user_admin"/>
             <field name="tag_ids" eval="[(4, ref('sales_team.categ_oppor6'))]"/>
         </record>
-
         <record id="sale_line_11" model="sale.order.line">
             <field name="order_id" ref="sale_order_1"/>
             <field name="sequence" eval="1"/>
@@ -127,7 +146,7 @@
             <field name="partner_id" ref="base.res_partner_4"/>
             <field name="client_order_ref">DPC</field>
             <field name="user_id" ref="base.user_admin"/>
-            <field name="tag_ids" eval="[(4, ref('sales_team.categ_oppor4')), (4, ref('sales_team.categ_oppor7'))]"/>
+            <field name="tag_ids" eval="[(4, ref('sales_team.categ_oppor3')), (4, ref('sales_team.categ_oppor5'))]"/>
         </record>
 
         <record id="sale_line_21" model="sale.order.line">
@@ -140,12 +159,12 @@
             <field name="order_id" ref="sale_timesheet.sale_order_2"/>
             <field name="sequence" eval="2"/>
             <field name="product_id" ref="product_service_deliver_timesheet_2"/>
-            <field name="product_uom_qty">10</field>
+            <field name="product_uom_qty">20</field>
         </record>
 
         <!-- Activity of sales order -->
         <record id="sale_timesheet_activity_1" model="mail.activity">
-            <field name="res_id" ref="sale_timesheet.sale_order_1"/>
+            <field name="res_id" ref="sale_timesheet.sale_order_2"/>
             <field name="res_model_id" ref="sale.model_sale_order"/>
             <field name="activity_type_id" ref="mail.mail_activity_data_call"/>
             <field name="date_deadline" eval="(DateTime.today() + relativedelta(days=5)).strftime('%Y-%m-%d %H:%M')"/>
@@ -158,16 +177,131 @@
         <function model="sale.order" name="action_confirm" eval="[[ref('sale_order_1')]]"/>
         <function model="sale.order" name="action_confirm" eval="[[ref('sale_order_2')]]"/>
 
+        <!-- Change order dates -->
+        <record id="sale_order_1" model="sale.order">
+            <field name="date_order" eval="datetime.now() + relativedelta(weekday=0,weeks=-3)"/>
+        </record>
+        <record id="sale_order_2" model="sale.order">
+            <field name="date_order" eval="datetime.now() + relativedelta(weekday=0,weeks=-5)"/>
+        </record>
+
+        <!-- Make DPC project off-track -->
+        <record id="project_update_dpc" model="project.update">
+            <field name="project_id" search="[('sale_line_id', '=', ref('sale_line_22'))]"/>
+            <field name="name">Weekly review</field>
+            <field name="user_id" eval="ref('base.user_admin')"/>
+            <field name="progress" eval="5"/>
+            <field name="status">off_track</field>
+        </record>
+
+        <!-- Share AGR in portal -->
+        <record id="project_agr_share_wizard" model="project.share.wizard">
+            <field name="res_model">project.project</field>
+            <field name="res_id" model="project.project" search="[('sale_line_id', '=', ref('sale_line_13'))]"/>
+            <field name="access_mode">edit</field>
+            <field name="display_access_mode">True</field>
+            <field name="partner_ids" eval="[(4, ref('base.partner_demo_portal'))]"/>
+        </record>
+        <function model="project.share.wizard" eval="[ref('project_agr_share_wizard')]" name="action_send_mail"/>
+
+        <!-- SOL tasks -->
+        <record id="arg_task_1" model="project.task">
+            <field name="name">Kitchen Assembly</field>
+            <field name="sale_line_id" ref="sale_line_12"/>
+            <field name="project_id" search="[('sale_line_id', '=', ref('sale_line_13'))]"/>
+            <field name="user_ids" eval="[(4, ref('base.user_admin')), (4, ref('base.user_demo'))]"/>
+        </record>
+
+        <!-- Assign projects to admin, clear description and set dates -->
+        <function model="project.project" name="write">
+            <value model="project.project" eval="obj().search([('sale_line_id', '=', ref('sale_line_13'))]).ids"/>
+            <value eval="{
+                'user_id': ref('base.user_admin'), 
+                'description': None,
+                'date_start': datetime.now() + relativedelta(weekday=0,weeks=-3),
+                'date': datetime.now() + relativedelta(weekday=0,weeks=5),
+                'sale_line_employee_ids': [(0, 0, {
+                    'employee_id': ref('hr.employee_admin'),
+                    'sale_line_id': ref('sale_line_13'),
+                })],
+            }"/>
+        </function>
+
+        <function model="project.project" name="write">
+            <value model="project.project" eval="obj().search([('sale_line_id', '=', ref('sale_line_22'))]).ids"/>
+            <value eval="{
+                'user_id': ref('base.user_admin'), 
+                'description': None,
+                'date_start': datetime.now() + relativedelta(weekday=0,weeks=-5),
+                'date': datetime.now() + relativedelta(weekday=0,weeks=3),
+            }"/>
+        </function>
+
         <!-- Add project to favorite list of admin -->
         <function model="project.project" name="write">
             <value model="project.project" eval="obj().search([('sale_line_id', '=', ref('sale_line_13'))]).ids"/>
             <value eval="{'favorite_user_ids': [(4, ref('base.user_admin'))]}"/>
         </function>
 
-        <!-- Assign sale order's task to admin -->
+        <!-- Assign sale order 1's task to admin -->
         <function model="project.task" name="write">
             <value model="project.task" eval="obj().search([('sale_line_id', '=', ref('sale_line_13'))]).ids"/>
             <value eval="{'user_ids': [(4, ref('base.user_admin'))]}"/>
+        </function>
+
+        <!-- Assign sale order 2's task to demo -->
+        <function model="project.task" name="write">
+            <value model="project.task" eval="obj().search([('sale_line_id', '=', ref('sale_line_22'))]).ids"/>
+            <value eval="{'user_ids': [(4, ref('base.user_demo'))]}"/>
+        </function>
+
+        <!-- Tasks progress -->
+        <function model="project.task" name="write">
+            <value model="project.task" search="[('sale_line_id', '=', ref('sale_line_11'))]"/>
+            <value eval="{'stage_id': ref('project.project_stage_1')}"/>
+        </function>
+        <function model="project.task" name="write">
+            <value model="project.task" search="[('sale_line_id', '=', ref('sale_line_13'))]"/>
+            <value eval="{'stage_id': ref('project.project_stage_1')}"/>
+        </function>
+        <function model="project.task" name="write">
+            <value model="project.task" search="[('sale_line_id', '=', ref('sale_line_21'))]"/>
+            <value eval="{'stage_id': ref('project.project_stage_1')}"/>
+        </function>
+        <function model="project.task" name="write">
+            <value model="project.task" search="[('sale_line_id', '=', ref('sale_line_22'))]"/>
+            <value eval="{'stage_id': ref('project.project_stage_1')}"/>
+        </function>
+
+        <!-- Personal stages for SOL tasks -->
+        <function model="project.task.stage.personal" name="write">
+            <value model="project.task.stage.personal" search="[('task_id', '=', obj().env['project.task'].search([('sale_line_id', '=', ref('sale_line_13'))]).id), ('user_id', '=', ref('base.user_admin'))]"/>
+            <value eval="{'stage_id': ref('project.project_personal_stage_admin_2')}"/>
+        </function>
+        <function model="project.task.stage.personal" name="write">
+            <value model="project.task.stage.personal" search="[('task_id', '=', obj().env['project.task'].search([('sale_line_id', '=', ref('sale_line_22'))]).id), ('user_id', '=', ref('base.user_demo'))]"/>
+            <value eval="{'stage_id': ref('project.project_personal_stage_demo_1')}"/>
+        </function>
+
+        <!-- Activities for SOL tasks -->
+        <record id="project_task_agr_activity_1" model="mail.activity">
+            <field name="res_id" model="project.task" search="[('sale_line_id', '=', ref('sale_line_13'))]"/>
+            <field name="res_model_id" ref="project.model_project_task"/>
+            <field name="activity_type_id" ref="mail.mail_activity_data_upload_document"/>
+            <field name="date_deadline" eval="(DateTime.today() + relativedelta(days=2)).strftime('%Y-%m-%d %H:%M')"/>
+            <field name="summary">Upload new plans</field>
+            <field name="create_uid" ref="base.user_admin"/>
+            <field name="user_id" ref="base.user_admin"/>
+        </record>
+
+        <!-- Assign Support tasks to Marc Demo -->
+        <function model="project.task" name="write">
+            <value model="project.task" search="[('sale_line_id', '=', ref('sale_line_11'))]"/>
+            <value eval="{'user_ids': [(4, ref('base.user_demo'))]}" />
+        </function>
+        <function model="project.task" name="write">
+            <value model="project.task" search="[('sale_line_id', '=', ref('sale_line_21'))]"/>
+            <value eval="{'user_ids': [(4, ref('base.user_demo'))]}" />
         </function>
 
         <!-- Timesheets on sale_order_1 -->
@@ -224,7 +358,7 @@
             <field name="name">Requirements check</field>
             <field name="employee_id" ref="hr.employee_qdp"/>
             <field name="date" eval="(DateTime.now() + relativedelta(weekday=2,weeks=-2)).strftime('%Y-%m-%d')"/>
-            <field name="unit_amount">1.00</field>
+            <field name="unit_amount">3.00</field>
             <field name="project_id" ref="project_support"/>
             <field name="task_id" search="[('sale_line_id', '=', ref('sale_line_11'))]"/>
         </record>
@@ -240,7 +374,7 @@
             <field name="name">Building</field>
             <field name="employee_id" ref="hr.employee_admin"/>
             <field name="date" eval="(DateTime.now() + relativedelta(weekday=4,weeks=-2)).strftime('%Y-%m-%d')"/>
-            <field name="unit_amount">1.00</field>
+            <field name="unit_amount">2.00</field>
             <field name="project_id" ref="project_support"/>
             <field name="task_id" search="[('sale_line_id', '=', ref('sale_line_11'))]"/>
         </record>
@@ -248,7 +382,7 @@
             <field name="name">Research</field>
             <field name="employee_id" ref="hr.employee_admin"/>
             <field name="date" eval="(DateTime.now() + relativedelta(weekday=0,weeks=-3)).strftime('%Y-%m-%d')"/>
-            <field name="unit_amount">1.00</field>
+            <field name="unit_amount">3.00</field>
             <field name="project_id" ref="project_support"/>
             <field name="task_id" search="[('sale_line_id', '=', ref('sale_line_11'))]"/>
         </record>
@@ -256,7 +390,7 @@
             <field name="name">Assembling</field>
             <field name="employee_id" ref="hr.employee_admin"/>
             <field name="date" eval="(DateTime.now() + relativedelta(weekday=1,weeks=-3)).strftime('%Y-%m-%d')"/>
-            <field name="unit_amount">1.00</field>
+            <field name="unit_amount">2.00</field>
             <field name="project_id" ref="project_support"/>
             <field name="task_id" search="[('sale_line_id', '=', ref('sale_line_11'))]"/>
         </record>
@@ -264,7 +398,7 @@
             <field name="name">Quality  check</field>
             <field name="employee_id" ref="hr.employee_qdp"/>
             <field name="date" eval="(DateTime.now() + relativedelta(weekday=2,weeks=-3)).strftime('%Y-%m-%d')"/>
-            <field name="unit_amount">1.00</field>
+            <field name="unit_amount">2.00</field>
             <field name="project_id" ref="project_support"/>
             <field name="task_id" search="[('sale_line_id', '=', ref('sale_line_11'))]"/>
         </record>
@@ -280,7 +414,7 @@
             <field name="name">Wood chopping</field>
             <field name="employee_id" ref="hr.employee_admin"/>
             <field name="date" eval="(DateTime.now() + relativedelta(weekday=4,weeks=-3)).strftime('%Y-%m-%d')"/>
-            <field name="unit_amount">1.00</field>
+            <field name="unit_amount">2.00</field>
             <field name="project_id" ref="project_support"/>
             <field name="task_id" search="[('sale_line_id', '=', ref('sale_line_11'))]"/>
         </record>
@@ -290,7 +424,7 @@
             <field name="name">Research and Development</field>
             <field name="employee_id" ref="hr.employee_qdp"/>
             <field name="date" eval="(DateTime.now() + relativedelta(weekday=1,weeks=-2)).strftime('%Y-%m-%d')"/>
-            <field name="unit_amount">8.00</field>
+            <field name="unit_amount">4.00</field>
             <field name="task_id" search="[('sale_line_id', '=', ref('sale_line_22'))]"/>
             <field name="project_id" search="[('sale_line_id', '=', ref('sale_line_22'))]"/>
         </record>
@@ -298,7 +432,7 @@
             <field name="name">Quality analysis</field>
             <field name="employee_id" ref="hr.employee_qdp"/>
             <field name="date" eval="(DateTime.now() + relativedelta(weekday=2,weeks=-2)).strftime('%Y-%m-%d')"/>
-            <field name="unit_amount">8.00</field>
+            <field name="unit_amount">2.00</field>
             <field name="task_id" search="[('sale_line_id', '=', ref('sale_line_22'))]"/>
             <field name="project_id" search="[('sale_line_id', '=', ref('sale_line_22'))]"/>
         </record>
@@ -306,7 +440,7 @@
             <field name="name">Repair</field>
             <field name="employee_id" ref="hr.employee_qdp"/>
             <field name="date" eval="(DateTime.now() + relativedelta(days=0)).strftime('%Y-%m-%d')"/>
-            <field name="unit_amount">8.00</field>
+            <field name="unit_amount">1.00</field>
             <field name="task_id" search="[('sale_line_id', '=', ref('sale_line_22'))]"/>
             <field name="project_id" search="[('sale_line_id', '=', ref('sale_line_22'))]"/>
         </record>
@@ -314,7 +448,7 @@
             <field name="name">Initial design improvement</field>
             <field name="employee_id" ref="hr.employee_qdp"/>
             <field name="date" eval="(DateTime.now() + relativedelta(weekday=4,weeks=-2)).strftime('%Y-%m-%d')"/>
-            <field name="unit_amount">8.00</field>
+            <field name="unit_amount">2.00</field>
             <field name="task_id" search="[('sale_line_id', '=', ref('sale_line_22'))]"/>
             <field name="project_id" search="[('sale_line_id', '=', ref('sale_line_22'))]"/>
         </record>
@@ -434,23 +568,15 @@
             <field name="unit_amount">1.00</field>
         </record>
 
-        <record id="project.project_stage_1" model="project.task.type">
-            <field name="project_ids" model="project.project" eval="[(4, obj().search([('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))], limit=1).id)]"/>
-        </record>
-
-        <record id="project.project_stage_2" model="project.task.type">
-            <field name="project_ids" model="project.project" eval="[(4, obj().search([('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))], limit=1).id)]"/>
-        </record>
-
+        <!-- SO1 project tasks -->
         <record id="project_task_1" model="project.task">
             <field name="name">Decoration</field>
             <field name="sale_line_id" ref="sale_timesheet.sale_line_13"/>
             <field name="sale_order_id" ref="sale_timesheet.sale_order_1"/>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="stage_id" ref="project.project_stage_2"/>
-            <field name="sale_line_id" ref="sale_timesheet.sale_line_13"/>
-            <field name="sale_order_id" ref="sale_timesheet.sale_order_1"/>
             <field name="partner_id" ref="base.res_partner_2"/>
+            <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
         </record>
 
         <record id="project_task_2" model="project.task">
@@ -459,9 +585,8 @@
             <field name="sale_order_id" ref="sale_timesheet.sale_order_1"/>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="stage_id" ref="project.project_stage_2"/>
-            <field name="sale_line_id" ref="sale_timesheet.sale_line_13"/>
-            <field name="sale_order_id" ref="sale_timesheet.sale_order_1"/>
             <field name="partner_id" ref="base.res_partner_2"/>
+            <field name="user_ids" eval="[(4, ref('base.user_admin')), (4, ref('base.user_demo'))]"/>
         </record>
 
         <record id="project_task_3" model="project.task">
@@ -469,20 +594,160 @@
             <field name="sale_line_id" ref="sale_timesheet.sale_line_13"/>
             <field name="sale_order_id" ref="sale_timesheet.sale_order_1"/>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
-            <field name="stage_id" ref="project.project_stage_2"/>
-            <field name="sale_line_id" ref="sale_timesheet.sale_line_13"/>
-            <field name="sale_order_id" ref="sale_timesheet.sale_order_1"/>
+            <field name="stage_id" ref="project.project_stage_1"/>
             <field name="partner_id" ref="base.res_partner_2"/>
+            <field name="user_ids" eval="[(4, ref('base.user_demo'))]"/>
         </record>
 
         <record id="project_task_4" model="project.task">
             <field name="name">Furniture Delivery</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="stage_id" ref="project.project_stage_1"/>
+            <field name="kanban_state">done</field>
             <field name="sale_line_id" ref="sale_timesheet.sale_line_13"/>
             <field name="sale_order_id" ref="sale_timesheet.sale_order_1"/>
             <field name="partner_id" ref="base.res_partner_2"/>
             <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+        </record>
+
+        <!-- SO2 project tasks -->
+        <record id="project_task_5" model="project.task">
+            <field name="name">Plastering</field>
+            <field name="sale_line_id" ref="sale_timesheet.sale_line_22"/>
+            <field name="sale_order_id" ref="sale_timesheet.sale_order_2"/>
+            <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_2'))]"/>
+            <field name="stage_id" ref="project.project_stage_1"/>
+            <field name="kanban_state">done</field>
+            <field name="partner_id" ref="base.res_partner_4"/>
+            <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+        </record>
+
+        <record id="project_task_6" model="project.task">
+            <field name="name">Project Planning</field>
+            <field name="sale_line_id" ref="sale_timesheet.sale_line_22"/>
+            <field name="sale_order_id" ref="sale_timesheet.sale_order_2"/>
+            <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_2'))]"/>
+            <field name="stage_id" ref="project.project_stage_2"/>
+            <field name="partner_id" ref="base.res_partner_4"/>
+            <field name="user_ids" eval="[(4, ref('base.user_admin')), (4, ref('base.user_demo'))]"/>
+        </record>
+
+        <record id="project_task_7" model="project.task">
+            <field name="name">Wall Painting</field>
+            <field name="sale_line_id" ref="sale_timesheet.sale_line_22"/>
+            <field name="sale_order_id" ref="sale_timesheet.sale_order_2"/>
+            <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_2'))]"/>
+            <field name="stage_id" ref="project.project_stage_1"/>
+            <field name="partner_id" ref="base.res_partner_4"/>
+            <field name="user_ids" eval="[(4, ref('base.user_demo'))]"/>
+        </record>
+        <record id="project_task_7_activity_1" model="mail.activity">
+            <field name="res_id" ref="project_task_7"/>
+            <field name="res_model_id" ref="project.model_project_task"/>
+            <field name="activity_type_id" ref="mail.mail_activity_data_todo"/>
+            <field name="date_deadline" eval="(DateTime.today() + relativedelta(hours=4)).strftime('%Y-%m-%d %H:%M')"/>
+            <field name="summary">Order paint</field>
+            <field name="create_uid" ref="base.user_demo"/>
+            <field name="user_id" ref="base.user_demo"/>
+        </record>
+
+        <record id="project_task_8" model="project.task">
+            <field name="name">Carpet fitting</field>
+            <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_2'))]"/>
+            <field name="stage_id" ref="project.project_stage_0"/>
+            <field name="kanban_state">blocked</field>
+            <field name="sale_line_id" ref="sale_timesheet.sale_line_22"/>
+            <field name="sale_order_id" ref="sale_timesheet.sale_order_2"/>
+            <field name="partner_id" ref="base.res_partner_4"/>
+            <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+        </record>
+        <record id="project_task_8_message_1" model="mail.message">
+            <field name="model">project.task</field>
+            <field name="res_id" ref="project_task_8"/>
+            <field name="body">Hello Admin,
+                I know you wanted my help to fit the carpet, but I unfortunately won't be available.
+                Sorry for the short notice. 
+            </field>
+            <field name="message_type">comment</field>
+            <field name="author_id" ref="base.partner_demo"/>
+            <field name="date" eval="(DateTime.now() - relativedelta(days=2)).strftime('%Y-%m-%d 14:09:16')"/>
+        </record>
+        <record id="project_task_8_message_2" model="mail.message">
+            <field name="model">project.task</field>
+            <field name="res_id" ref="project_task_8"/>
+            <field name="parent_id" ref="project_task_8_message_1"/>
+            <field name="body">Demo, I did not expect you to pull the rug out from under me like that!</field>
+            <field name="message_type">comment</field>
+            <field name="author_id" ref="base.partner_admin"/>
+            <field name="date" eval="(DateTime.now() - relativedelta(days=2)).strftime('%Y-%m-%d 14:45:52')"/>
+        </record>
+
+        <record id="project_task_9" model="project.task">
+            <field name="name">Electricity</field>
+            <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_2'))]"/>
+            <field name="stage_id" ref="project.project_stage_2"/>
+            <field name="sale_line_id" ref="sale_timesheet.sale_line_22"/>
+            <field name="sale_order_id" ref="sale_timesheet.sale_order_2"/>
+            <field name="partner_id" ref="base.res_partner_4"/>
+            <field name="user_ids" eval="[(4, ref('base.user_demo'))]"/>
+        </record>
+        <record id="project_task_9_message_1" model="mail.message">
+            <field name="model">project.task</field>
+            <field name="res_id" ref="project_task_9"/>
+            <field name="body">Demo, I'm shocked to see this negative review, what happened with the cables? </field>
+            <field name="message_type">comment</field>
+            <field name="author_id" ref="base.partner_admin"/>
+            <field name="date" eval="(DateTime.now() - relativedelta(days=1)).strftime('%Y-%m-%d 10:26:23')"/>
+        </record>
+        <record id="project_task_9_message_2" model="mail.message">
+            <field name="model">project.task</field>
+            <field name="res_id" ref="project_task_9"/>
+            <field name="parent_id" ref="project_task_9_message_1"/>
+            <field name="body">Hello Admin, I'm currently investigating the problem with the client.</field>
+            <field name="message_type">comment</field>
+            <field name="author_id" ref="base.partner_demo"/>
+            <field name="date" eval="(DateTime.now() - relativedelta(days=1)).strftime('%Y-%m-%d 10:37:56')"/>
+        </record>
+        <record id="project_task_9_message_3" model="mail.message">
+            <field name="model">project.task</field>
+            <field name="res_id" ref="project_task_9"/>
+            <field name="parent_id" ref="project_task_9_message_2"/>
+            <field name="body">Hopefully, this will help throw some light over this situation. Please do not charge the customer any extra time spent on this.</field>
+            <field name="message_type">comment</field>
+            <field name="author_id" ref="base.partner_admin"/>
+            <field name="date" eval="(DateTime.now() - relativedelta(days=1)).strftime('%Y-%m-%d 10:41:14')"/>
+        </record>
+        <record id="project_task_9_activity_1" model="mail.activity">
+            <field name="res_id" ref="project_task_9"/>
+            <field name="res_model_id" ref="project.model_project_task"/>
+            <field name="activity_type_id" ref="mail.mail_activity_data_call"/>
+            <field name="date_deadline" eval="(DateTime.today() + relativedelta(hours=1)).strftime('%Y-%m-%d %H:%M')"/>
+            <field name="summary">Call customer</field>
+            <field name="create_uid" ref="base.user_demo"/>
+            <field name="user_id" ref="base.user_demo"/>
+        </record>
+
+        <record id="project_task_10" model="project.task">
+            <field name="name">Ceiling fan</field>
+            <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_2'))]"/>
+            <field name="stage_id" ref="project.project_stage_0"/>
+            <field name="kanban_state">blocked</field>
+            <field name="sale_line_id" ref="sale_timesheet.sale_line_22"/>
+            <field name="sale_order_id" ref="sale_timesheet.sale_order_2"/>
+            <field name="partner_id" ref="base.res_partner_4"/>
+            <field name="user_ids" eval="[(4, ref('base.user_demo'))]"/>
+        </record>
+
+        <record id="project_task_11" model="project.task">
+            <field name="name">Plumbing</field>
+            <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_2'))]"/>
+            <field name="stage_id" ref="project.project_stage_0"/>
+            <field name="kanban_state">blocked</field>
+            <field name="sale_line_id" ref="sale_timesheet.sale_line_22"/>
+            <field name="sale_order_id" ref="sale_timesheet.sale_order_2"/>
+            <field name="partner_id" ref="base.res_partner_4"/>
+            <field name="user_ids" eval="[(4, ref('base.user_demo'))]"/>
+            <field name="active" eval="False"/>
         </record>
 
         <!-- Personal stages for those tasks -->
@@ -495,13 +760,67 @@
             <value eval="{'stage_id': ref('project.project_personal_stage_admin_5')}"/>
         </function>
         <function model="project.task.stage.personal" name="write">
+            <value model="project.task.stage.personal" search="[('task_id', '=', ref('project_task_2')), ('user_id', '=', ref('base.user_demo'))]"/>
+            <value eval="{'stage_id': ref('project.project_personal_stage_demo_5')}"/>
+        </function>
+        <function model="project.task.stage.personal" name="write">
             <value model="project.task.stage.personal" search="[('task_id', '=', ref('project_task_3')), ('user_id', '=', ref('base.user_admin'))]"/>
-            <value eval="{'stage_id': ref('project.project_personal_stage_admin_5')}"/>
+            <value eval="{'stage_id': ref('project.project_personal_stage_admin_1')}"/>
+        </function>
+        <function model="project.task.stage.personal" name="write">
+            <value model="project.task.stage.personal" search="[('task_id', '=', ref('project_task_3')), ('user_id', '=', ref('base.user_demo'))]"/>
+            <value eval="{'stage_id': ref('project.project_personal_stage_demo_1')}"/>
         </function>
         <function model="project.task.stage.personal" name="write">
             <value model="project.task.stage.personal" search="[('task_id', '=', ref('project_task_4')), ('user_id', '=', ref('base.user_admin'))]"/>
             <value eval="{'stage_id': ref('project.project_personal_stage_admin_2')}"/>
         </function>
+        <function model="project.task.stage.personal" name="write">
+            <value model="project.task.stage.personal" search="[('task_id', '=', ref('project_task_5')), ('user_id', '=', ref('base.user_admin'))]"/>
+            <value eval="{'stage_id': ref('project.project_personal_stage_admin_3')}"/>
+        </function>
+        <function model="project.task.stage.personal" name="write">
+            <value model="project.task.stage.personal" search="[('task_id', '=', ref('project_task_6')), ('user_id', '=', ref('base.user_admin'))]"/>
+            <value eval="{'stage_id': ref('project.project_personal_stage_admin_5')}"/>
+        </function>
+        <function model="project.task.stage.personal" name="write">
+            <value model="project.task.stage.personal" search="[('task_id', '=', ref('project_task_6')), ('user_id', '=', ref('base.user_demo'))]"/>
+            <value eval="{'stage_id': ref('project.project_personal_stage_demo_5')}"/>
+        </function>
+        <function model="project.task.stage.personal" name="write">
+            <value model="project.task.stage.personal" search="[('task_id', '=', ref('project_task_7')), ('user_id', '=', ref('base.user_demo'))]"/>
+            <value eval="{'stage_id': ref('project.project_personal_stage_demo_3')}"/>
+        </function>
+        <function model="project.task.stage.personal" name="write">
+            <value model="project.task.stage.personal" search="[('task_id', '=', ref('project_task_8')), ('user_id', '=', ref('base.user_admin'))]"/>
+            <value eval="{'stage_id': ref('project.project_personal_stage_admin_3')}"/>
+        </function>
+        <function model="project.task.stage.personal" name="write">
+            <value model="project.task.stage.personal" search="[('task_id', '=', ref('project_task_9')), ('user_id', '=', ref('base.user_demo'))]"/>
+            <value eval="{'stage_id': ref('project.project_personal_stage_demo_5')}"/>
+        </function>
+        <function model="project.task.stage.personal" name="write">
+            <value model="project.task.stage.personal" search="[('task_id', '=', ref('project_task_10')), ('user_id', '=', ref('base.user_demo'))]"/>
+            <value eval="{'stage_id': ref('project.project_personal_stage_demo_2')}"/>
+        </function>
+
+        <!-- Rating Demo Data -->
+        <record id="rating_task_1" model="rating.rating">
+            <field name="res_model_id" ref="project.model_project_task"/>
+            <field name="rated_partner_id" ref="base.partner_admin"/>
+            <field name="partner_id" ref="base.res_partner_2"/>
+            <field name="res_id" ref="project_task_1"/>
+        </record>
+        <function model="project.task" name="rating_apply" eval="([ref('project_task_1')], 5, None, 'This is already looking very promising, thanks for the good work! 😃')"/>
+
+        <record id="rating_task_2" model="rating.rating">
+            <field name="res_model_id" ref="project.model_project_task"/>
+            <field name="rated_partner_id" ref="base.partner_admin"/>
+            <field name="partner_id" ref="base.res_partner_4"/>
+            <field name="res_id" ref="project_task_9"/>
+        </record>
+        <function model="project.task" name="rating_apply" eval="([ref('project_task_9')], 3, None, 'Everything is working fine, but there are some loose cables')"/>
+
 
         <!-- Timesheet for those tasks -->
         <record id="project_task_1_account_analytic_line_1" model="account.analytic.line">
@@ -511,7 +830,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_1"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_1_account_analytic_line_2" model="account.analytic.line">
@@ -521,7 +841,8 @@
             <field name="unit_amount">2</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_1"/>
-            <field name="amount">-60.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_1_account_analytic_line_3" model="account.analytic.line">
@@ -571,7 +892,8 @@
             <field name="unit_amount">2</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_1"/>
-            <field name="amount">-60.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_1_account_analytic_line_8" model="account.analytic.line">
@@ -621,7 +943,8 @@
             <field name="unit_amount">3</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_1"/>
-            <field name="amount">-90.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_1_account_analytic_line_13" model="account.analytic.line">
@@ -671,7 +994,8 @@
             <field name="unit_amount">2</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_1"/>
-            <field name="amount">-60.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_1_account_analytic_line_18" model="account.analytic.line">
@@ -681,7 +1005,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_1"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_1_account_analytic_line_19" model="account.analytic.line">
@@ -751,7 +1076,8 @@
             <field name="unit_amount">2</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_2"/>
-            <field name="amount">-60.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_2_account_analytic_line_3" model="account.analytic.line">
@@ -771,7 +1097,8 @@
             <field name="unit_amount">2</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_2"/>
-            <field name="amount">-60.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_2_account_analytic_line_5" model="account.analytic.line">
@@ -871,7 +1198,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_2"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_2_account_analytic_line_15" model="account.analytic.line">
@@ -971,7 +1299,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_2"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_2_account_analytic_line_25" model="account.analytic.line">
@@ -981,7 +1310,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_2"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_2_account_analytic_line_26" model="account.analytic.line">
@@ -1001,7 +1331,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_2"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_2_account_analytic_line_28" model="account.analytic.line">
@@ -1011,7 +1342,8 @@
             <field name="unit_amount">2</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_2"/>
-            <field name="amount">-60.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_2_account_analytic_line_29" model="account.analytic.line">
@@ -1051,7 +1383,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_2"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_2_account_analytic_line_33" model="account.analytic.line">
@@ -1061,7 +1394,8 @@
             <field name="unit_amount">3</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_2"/>
-            <field name="amount">-90.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_2_account_analytic_line_34" model="account.analytic.line">
@@ -1071,7 +1405,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_2"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_2_account_analytic_line_35" model="account.analytic.line">
@@ -1110,7 +1445,8 @@
             <field name="unit_amount">3</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-90.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_3_account_analytic_line_3" model="account.analytic.line">
@@ -1130,7 +1466,8 @@
             <field name="unit_amount">2</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-60.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_3_account_analytic_line_5" model="account.analytic.line">
@@ -1140,7 +1477,8 @@
             <field name="unit_amount">3</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-90.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_3_account_analytic_line_6" model="account.analytic.line">
@@ -1160,7 +1498,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_3_account_analytic_line_8" model="account.analytic.line">
@@ -1170,7 +1509,8 @@
             <field name="unit_amount">2</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-60.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_3_account_analytic_line_9" model="account.analytic.line">
@@ -1180,7 +1520,8 @@
             <field name="unit_amount">2</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-60.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_3_account_analytic_line_10" model="account.analytic.line">
@@ -1200,7 +1541,8 @@
             <field name="unit_amount">3</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-90.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_3_account_analytic_line_12" model="account.analytic.line">
@@ -1240,7 +1582,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_3_account_analytic_line_16" model="account.analytic.line">
@@ -1250,7 +1593,8 @@
             <field name="unit_amount">3</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-90.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_3_account_analytic_line_17" model="account.analytic.line">
@@ -1260,7 +1604,8 @@
             <field name="unit_amount">3</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-90.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_3_account_analytic_line_18" model="account.analytic.line">
@@ -1280,7 +1625,8 @@
             <field name="unit_amount">3</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-90.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_3_account_analytic_line_20" model="account.analytic.line">
@@ -1300,7 +1646,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_3_account_analytic_line_22" model="account.analytic.line">
@@ -1330,7 +1677,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_3_account_analytic_line_25" model="account.analytic.line">
@@ -1340,7 +1688,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_3_account_analytic_line_26" model="account.analytic.line">
@@ -1380,7 +1729,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_3"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_4_account_analytic_line_1" model="account.analytic.line">
@@ -1480,7 +1830,8 @@
             <field name="unit_amount">2</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_4"/>
-            <field name="amount">-60.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_4_account_analytic_line_11" model="account.analytic.line">
@@ -1560,7 +1911,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_4"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_4_account_analytic_line_19" model="account.analytic.line">
@@ -1590,7 +1942,8 @@
             <field name="unit_amount">2</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_4"/>
-            <field name="amount">-60.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_4_account_analytic_line_22" model="account.analytic.line">
@@ -1620,7 +1973,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_4"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_4_account_analytic_line_25" model="account.analytic.line">
@@ -1660,7 +2014,8 @@
             <field name="unit_amount">2</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_4"/>
-            <field name="amount">-60.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_4_account_analytic_line_29" model="account.analytic.line">
@@ -1680,7 +2035,8 @@
             <field name="unit_amount">1</field>
             <field name="project_id" search="[('sale_order_id', '=', ref('sale_timesheet.sale_order_1'))]"/>
             <field name="task_id" ref="sale_timesheet.project_task_4"/>
-            <field name="amount">-30.0</field>
+            <field name="so_line"/>
+            <field name="is_so_line_edited">True</field>
         </record>
 
         <record id="project_task_4_account_analytic_line_31" model="account.analytic.line">
