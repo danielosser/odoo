@@ -376,12 +376,27 @@
     <div data-js="VersionControl"
          data-selector="[data-snippet]"/>
 
-    <!-- Replace a media -->
+    <!-- Replace a media and Link tool -->
     <!-- TODO probably review this system once the new editor is merged to not duplicate the selector, etc -->
-    <div data-js="ReplaceMedia" data-selector="img, .media_iframe_video, span.fa, i.fa">
+    <div data-js="ReplaceMediaAndLinkTool" data-selector="img, .media_iframe_video, span.fa, i.fa">
         <we-row string="Media">
             <we-button class="o_we_bg_brand_primary" data-replace-media="true" data-no-preview="true">Replace</we-button>
+            <we-button class="fa fa-link" data-set-link="" data-no-preview="true"
+            title="Redirect the user elsewhere when he clicks on the image."></we-button>
         </we-row>
+        <we-customizeblock-option>
+            <we-input data-set-url="" name="url" title="Type '/' to search a page. '#' to link to an anchor."
+            data-name="link_on_image_opt" string="⌙ Your URL" class="o_we_large" placeholder="www.example.com"/>
+            <we-row string="⌙ Page Anchor">
+                <we-select class="select_anchor_link" data-name="page_anchor_opt" data-no-preview="true">
+                    <!-- The we-button are loaded by the JS code -->
+                </we-select>
+            </we-row>
+            <we-row>
+                <we-title class="o_long_title">⌙ Open in new window</we-title>
+                <we-checkbox data-name="link_on_image_opt" data-no-preview="true" data-set-new-window=""/>
+            </we-row>
+        </we-customizeblock-option>
     </div>
 
     <div data-js="FontawesomeTools" data-selector="span.fa, i.fa">

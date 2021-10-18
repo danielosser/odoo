@@ -10,7 +10,6 @@ const {Markup, sprintf} = require('web.utils');
 const weUtils = require('web_editor.utils');
 var options = require('web_editor.snippets.options');
 const wLinkPopoverWidget = require('@website/js/widgets/link_popover_widget')[Symbol.for("default")];
-const wUtils = require('website.utils');
 require('website.s_popup_options');
 
 var _t = core._t;
@@ -69,7 +68,7 @@ const UrlPickerUserValueWidget = InputUserValueWidget.extend({
                 "ui-autocomplete": 'o_website_ui_autocomplete'
             },
         }
-        wUtils.autocompleteWithPages(this, $(this.inputEl), options);
+        weUtils.autocompleteWithPages(this, $(this.inputEl), options);
     },
 
     //--------------------------------------------------------------------------

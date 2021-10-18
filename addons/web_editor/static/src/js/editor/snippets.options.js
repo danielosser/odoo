@@ -16,6 +16,8 @@ const {
     backgroundImageCssToParts,
     backgroundImagePartsToCss,
     DEFAULT_PALETTE,
+    loadAnchors,
+    autocompleteWithPages,
 } = weUtils;
 var weWidgets = require('wysiwyg.widgets');
 const {
@@ -4643,9 +4645,22 @@ registry.SnippetMove = SnippetOptionWidget.extend({
 });
 
 /**
- * Allows for media to be replaced.
+ * Allows for media to be replaced and allows the image to be a link.
  */
-registry.ReplaceMedia = SnippetOptionWidget.extend({
+registry.ReplaceMediaAndLinkTool = SnippetOptionWidget.extend({
+
+    /**
+     * @override
+     */
+    start() {
+        this.linkEl = this.$target[0].parentElement.tagName === 'A' ?
+            this.$target[0].parentElement : null;
+        this.isNewWindow = this.linkEl ?
+            this.linkEl.getAttribute('target') === '_blank' : false;
+        this.$urlInputEl = this.$el.find('we-input[data-set-url] input');
+        this._setAutoCompletionOnInput(this.$urlInputEl);
+        return this._super(...arguments);
+    },
 
     //--------------------------------------------------------------------------
     // Options
@@ -4660,6 +4675,164 @@ registry.ReplaceMedia = SnippetOptionWidget.extend({
         // TODO for now, this simulates a double click on the media,
         // to be refactored when the new editor is merged
         this.$target.dblclick();
+    },
+    /**
+     * Adds an anchor to the url.
+     * Here "anchor" means a specific section of a page.
+     *
+     * @see this.selectClass for parameters
+     */
+    setAnchor(previewMode, value) {
+        let url = this.linkEl.getAttribute('href');
+        if (url.includes('#')) {
+            url = url.split('#')[0];
+        }
+        this.linkEl.setAttribute('href', url + value);
+    },
+    /**
+     * Makes the image a clickable link by wrapping it in an <a>.
+     * This function is also called for the opposite operation.
+     *
+     * @see this.selectClass for parameters
+     */
+    setLink() {
+        if (!this.linkEl) {
+            // Wrap this.$target[0] like this: <a>this.$target[0]</a>.
+            const parentEl = this.$target[0].parentNode;
+            this.linkEl = document.createElement('a');
+            parentEl.replaceChild(this.linkEl, this.$target[0]);
+            this.linkEl.appendChild(this.$target[0]);
+            // Set focus on the URL field.
+            const $urlInputEl = this.$urlInputEl;
+            setTimeout(function () { // Wait for the URL input to appear.
+                $urlInputEl.focus();
+            }, 300);
+        } else {
+            // Remove the parent anchor.
+            this.$target[0].parentNode.replaceWith(this.$target[0]);
+            this.linkEl = null;
+            this.isNewWindow = false;
+            this.$urlInputEl.val('');
+        }
+    },
+    /**
+     * Makes that when the link (parent element of the image) is clicked, the url will open on
+     * another page. This function is also called for the opposite operation (make the url open
+     * in the current browser page).
+     *
+     * @see this.selectClass for parameters
+     */
+    setNewWindow() {
+        this.isNewWindow = !this.isNewWindow;
+        if (this.isNewWindow) {
+            this.linkEl.setAttribute('target', '_blank');
+        } else {
+            this.linkEl.removeAttribute('target');
+        }
+    },
+    /**
+     * Records the target url of the hyperlink.
+     *
+     * @see this.selectClass for parameters
+     */
+    setUrl() {
+        if (!this.linkEl) {
+            return;
+        }
+        let url = this.$urlInputEl.val();
+        if (url && !url.startsWith('/') && !url.startsWith('#') && !url.startsWith('http')) {
+            url = 'http://' + url;
+        }
+        const oldHref = this.linkEl.getAttribute('href') || '';
+        this.linkEl.setAttribute('href', url);
+        if ((oldHref.length === 0 && url.length > 0) || (oldHref.length > 0 && url.length === 0)) {
+            this.updateUIVisibility(); // Show or hide the anchors we-select.
+        }
+        this.rerender = true;
+    },
+    /**
+     * @override
+     */
+    async updateUI() {
+        if (this.rerender) {
+            this.rerender = false;
+            await this._rerenderXML();
+            this.$urlInputEl = this.$el.find('we-input[data-set-url] input');
+            this._setAutoCompletionOnInput(this.$urlInputEl);
+            return;
+        }
+        return this._super.apply(this, arguments);
+    },
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    /**
+     * @override
+     */
+    _computeWidgetState(methodName) {
+        switch (methodName) {
+            case 'setAnchor': {
+                const href = this.linkEl ? this.linkEl.getAttribute('href') : null;
+                return href ? '#' + href.split('#')[1] : '';
+            }
+            case 'setLink':
+                return this.linkEl ? '' : null;
+            case 'setUrl': {
+                const url = this.$urlInputEl.val();
+                const href = this.linkEl ? this.linkEl.getAttribute('href') : null;
+                return url || href || '';
+            }
+            case 'setNewWindow': {
+                const target = this.linkEl ? this.linkEl.getAttribute('target') : null;
+                return target && target === '_blank' ? '' : null;
+            }
+        }
+        return this._super(...arguments);
+    },
+    /**
+     * @override
+     */
+    async _computeWidgetVisibility(widgetName) {
+        switch (widgetName) {
+            case 'page_anchor_opt': {
+                const href = this.linkEl ? this.linkEl.getAttribute('href') : null;
+                return this.linkEl && href && href.startsWith('/');
+            }
+            case 'link_on_image_opt':
+                return this.linkEl;
+        }
+        return this._super(...arguments);
+    },
+    /**
+     * @override
+     */
+    async _renderCustomXML(uiFragment) {
+        if (!this.$urlInputEl) {
+            return;
+        }
+        const $select = $(uiFragment.querySelector('.select_anchor_link'));
+        const anchors = await loadAnchors(this.$urlInputEl.val());
+        for (const anchor of anchors) {
+            $select.append(`<we-button data-set-anchor="${anchor}">${anchor}</we-button>`);
+        }
+    },
+    /**
+     * Displays suggestions when the input value starts with '/' or '#'.
+     *
+     * @param  {jQueryElement} $inputEl
+     */
+    _setAutoCompletionOnInput($inputEl) {
+        const options = {
+            position: {
+                collision: 'flip fit',
+            },
+            classes: {
+                'ui-autocomplete': 'o_website_ui_autocomplete'
+            },
+        };
+        autocompleteWithPages(this, $inputEl, options);
     },
 });
 

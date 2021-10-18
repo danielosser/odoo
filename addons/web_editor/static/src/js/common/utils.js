@@ -330,6 +330,105 @@ function _getColorClass(el, colorNames, prefix) {
     const prefixedColorNames = _computeColorClasses(colorNames, prefix);
     return el.classList.value.split(' ').filter(cl => prefixedColorNames.includes(cl)).join(' ');
 }
+/**
+ * Allows to load anchors from a page.
+ *
+ * @param {string} url
+ * @returns {Deferred<string[]>}
+ */
+function loadAnchors(url) {
+    return new Promise(function (resolve, reject) {
+        if (url === window.location.pathname || url[0] === '#') {
+            resolve(document.body.outerHTML);
+        } else if (url.length && !url.startsWith('http')) {
+            $.get(window.location.origin + url).then(resolve, reject);
+        } else { // Avoid useless query.
+            resolve();
+        }
+    }).then(function (response) {
+        return _.map($(response).find('[id][data-anchor=true]'), function (el) {
+            return '#' + el.id;
+        });
+    }).catch(error => {
+        console.debug(error);
+        return [];
+    });
+}
+/**
+ * Allows the given input to propose existing website URLs.
+ *
+ * @param {ServicesMixin|Widget} self - an element capable to trigger an RPC
+ * @param {jQuery} $input
+ */
+function autocompleteWithPages(self, $input, options) {
+    $.widget('website.urlcomplete', $.ui.autocomplete, {
+        options: options || {},
+        _create: function () {
+            this._super();
+            this.widget().menu('option', 'items', '> :not(.ui-autocomplete-category)');
+        },
+        _renderMenu: function (ul, items) {
+            const self = this;
+            items.forEach(item => {
+                if (item.separator) {
+                    self._renderSeparator(ul, item);
+                }
+                else {
+                    self._renderItem(ul, item);
+                }
+            });
+        },
+        _renderSeparator: function (ul, item) {
+            return $("<li class='ui-autocomplete-category font-weight-bold text-capitalize p-2'>")
+                   .append(`<div>${item.separator}</div>`)
+                   .appendTo(ul);
+        },
+        _renderItem: function (ul, item) {
+            return $('<li>')
+                   .data('ui-autocomplete-item', item)
+                   .append(`<div>${item.label}</div>`)
+                   .appendTo(ul);
+        },
+    });
+    $input.urlcomplete({
+        source: function (request, response) {
+            if (request.term[0] === '#') {
+                loadAnchors(request.term).then(function (anchors) {
+                    response(anchors);
+                });
+            } else if (request.term.startsWith('http') || request.term.length === 0) {
+                // Avoid useless call to /website/get_suggested_links.
+                response();
+            } else {
+                return self._rpc({
+                    route: '/website/get_suggested_links',
+                    params: {
+                        needle: request.term,
+                        limit: 15,
+                    }
+                }).then(function (res) {
+                    let choices = res.matching_pages;
+                    res.others.forEach(other => {
+                        if (other.values.length) {
+                            choices = choices.concat(
+                                [{separator: other.title}],
+                                other.values,
+                            );
+                        }
+                    });
+                    response(choices);
+                });
+            }
+        },
+        select: function (ev, ui) {
+            // Choose url in dropdown with arrow change ev.target.value without trigger_up
+            // so cannot check here if value has been updated.
+            ev.target.value = ui.item.value;
+            self.trigger_up('website_url_chosen');
+            ev.preventDefault();
+        },
+    });
+}
 
 return {
     CSS_SHORTHANDS: CSS_SHORTHANDS,
@@ -349,5 +448,7 @@ return {
     backgroundImageCssToParts: _backgroundImageCssToParts,
     backgroundImagePartsToCss: _backgroundImagePartsToCss,
     getColorClass: _getColorClass,
+    loadAnchors: loadAnchors,
+    autocompleteWithPages: autocompleteWithPages,
 };
 });

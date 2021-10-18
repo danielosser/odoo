@@ -819,6 +819,18 @@ const Wysiwyg = Widget.extend({
         }
     },
     /**
+     * Activates the link tool for the image.
+     */
+    toggleLinkOnImage() {
+        const buttonEl = document.querySelectorAll('we-button[data-set-link]')[1];
+        if (!buttonEl.classList.contains('active')) {
+            buttonEl.click();
+        }
+        setTimeout(function () { // Wait for the URL input to appear.
+            document.querySelectorAll('we-input[data-set-url]')[1].querySelector('input').focus();
+        }, 300);
+    },
+    /**
      * Toggle the Link tools/dialog to edit links. If a snippet menu is present,
      * use the link tools, otherwise use the dialog.
      *
@@ -1234,6 +1246,11 @@ const Wysiwyg = Widget.extend({
         // Open the link modal / tool when CTRL+K is pressed.
         if (e && e.key === 'k' && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
+            const targetEl = this.odooEditor.document.getSelection().baseNode;
+            if (targetEl instanceof HTMLElement &&
+                (targetEl.tagName === 'IMG' || targetEl.querySelectorAll('img').length === 1)) {
+                return this.toggleLinkOnImage();
+            }
             this.toggleLinkTools();
         }
         // Override selectAll (CTRL+A) to restrict it to the editable zone / current snippet and prevent traceback.

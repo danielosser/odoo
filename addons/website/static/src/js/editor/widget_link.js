@@ -2,7 +2,7 @@ odoo.define('website.editor.link', function (require) {
 'use strict';
 
 var weWidgets = require('wysiwyg.widgets');
-var wUtils = require('website.utils');
+const weUtils = require('web_editor.utils');
 
 weWidgets.LinkTools.include({
     xmlDependencies: (weWidgets.LinkTools.prototype.xmlDependencies || []).concat(
@@ -39,7 +39,7 @@ weWidgets.LinkTools.include({
                 "ui-autocomplete": 'o_website_ui_autocomplete'
             },
         }
-        wUtils.autocompleteWithPages(this, this.$('input[name="url"]'), options);
+        weUtils.autocompleteWithPages(this, this.$('input[name="url"]'), options);
         this._adaptPageAnchor();
         return def;
     },
@@ -61,7 +61,7 @@ weWidgets.LinkTools.include({
             $pageAnchor.toggleClass('d-none', !isFromWebsite);
             $selectMenu.empty();
             const always = () => $pageAnchor.find('we-toggler').text('\u00A0');
-            wUtils.loadAnchors(urlInputValue).then(anchors => {
+            weUtils.loadAnchors(urlInputValue).then(anchors => {
                 for (const anchor of anchors) {
                     const $option = $('<we-button class="dropdown-item">');
                     $option.text(anchor);
