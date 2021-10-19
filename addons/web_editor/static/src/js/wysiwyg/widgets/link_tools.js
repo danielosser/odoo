@@ -33,7 +33,7 @@ const LinkTools = Link.extend({
      * @override
      */
     init: function (parent, options, editable, data, $button, node) {
-        if (node && !$(node).is('a')) {
+        if (node && !($(node).is('a') || $(node).is('button'))) {
             $(node).wrap('<a href="#"/>');
             node = node.parentElement;
         }

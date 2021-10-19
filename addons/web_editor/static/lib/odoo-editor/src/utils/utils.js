@@ -941,7 +941,7 @@ export function isUnremovable(node) {
         isEditableRoot ||
         (node.nodeType === Node.ELEMENT_NODE &&
             (node.getAttribute('t-set') || node.getAttribute('t-call'))) ||
-        (node.classList && node.classList.contains('oe_unremovable'))
+        (node.matches && node.matches('.oe_unremovable, .o_submit, [data-toggle="tab"], [data-toggle="collapse"]'))
     );
 }
 

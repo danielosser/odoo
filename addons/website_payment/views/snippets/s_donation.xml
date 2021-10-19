@@ -21,7 +21,7 @@
                 <input type="hidden" class="o_translatable_input_hidden d-block mb-1 w-100" name="donation_descriptions" value="One year in elementary school."/>
                 <input type="hidden" class="o_translatable_input_hidden d-block mb-1 w-100" name="donation_descriptions" value="One year in high school."/>
             </span>
-            <a href="#" type="button" class="s_donation_donate_btn btn btn-secondary btn-lg mb-2">Donate Now</a>
+            <a href="#" type="button" class="s_donation_donate_btn btn btn-secondary btn-lg mb-2 o_submit">Donate Now</a>
         </form>
     </div>
 </template>
