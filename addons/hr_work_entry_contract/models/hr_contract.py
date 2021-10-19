@@ -316,8 +316,8 @@ class HrContract(models.Model):
     def _cron_generate_missing_work_entries(self):
         # retrieve contracts for the current month
         today = fields.Date.today()
-        start = today + relativedelta(day=1)
-        stop = today + relativedelta(day=31)
+        start = today + relativedelta(day=1, hour=0)
+        stop = today + relativedelta(day=31, hour=23, minute=59, second=59)
         contracts = self.env['hr.employee']._get_all_contracts(
             start, stop, states=['open', 'close'])
         # determine contracts to do (the ones whose generated dates have open periods this month)
