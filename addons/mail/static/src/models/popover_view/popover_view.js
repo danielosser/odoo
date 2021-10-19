@@ -14,11 +14,11 @@ function factory(dependencies) {
 
         _created() {
             this._onClickCaptureGlobal = this._onClickCaptureGlobal.bind(this);
-            document.addEventListener('click', this._onClickCaptureGlobal, true);
+            // document.addEventListener('click', this._onClickCaptureGlobal, true);
         }
 
         _willDelete() {
-            document.removeEventListener('click', this._onClickCaptureGlobal, true);
+            // document.removeEventListener('click', this._onClickCaptureGlobal, true);
         }
 
         //----------------------------------------------------------------------

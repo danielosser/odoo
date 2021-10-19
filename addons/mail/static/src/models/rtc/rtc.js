@@ -68,41 +68,41 @@ function factory(dependencies) {
              */
             this._pushToTalkTimeoutId = undefined;
 
-            this._onKeyDown = this._onKeyDown.bind(this);
-            this._onKeyUp = this._onKeyUp.bind(this);
-            browser.addEventListener('keydown', this._onKeyDown);
-            browser.addEventListener('keyup', this._onKeyUp);
-            // Disconnects the RTC session if the page is closed or reloaded.
-            this._onBeforeUnload = this._onBeforeUnload.bind(this);
-            browser.addEventListener('beforeunload', this._onBeforeUnload);
-            /**
-             * Call all sessions for which no peerConnection is established at
-             * a regular interval to try to recover any connection that failed
-             * to start.
-             *
-             * This is distinct from this._recoverConnection which tries to restores
-             * connection that were established but failed or timed out.
-             */
-            this._intervalId = browser.setInterval(async () => {
-                if (!this.currentRtcSession || !this.channel) {
-                    return;
-                }
-                await this._pingServer();
-                if (!this.currentRtcSession || !this.channel) {
-                    return;
-                }
-                this._callSessions();
-            }, 30000); // 30 seconds
+            // this._onKeyDown = this._onKeyDown.bind(this);
+            // this._onKeyUp = this._onKeyUp.bind(this);
+            // browser.addEventListener('keydown', this._onKeyDown);
+            // browser.addEventListener('keyup', this._onKeyUp);
+            // // Disconnects the RTC session if the page is closed or reloaded.
+            // this._onBeforeUnload = this._onBeforeUnload.bind(this);
+            // browser.addEventListener('beforeunload', this._onBeforeUnload);
+            // /**
+            //  * Call all sessions for which no peerConnection is established at
+            //  * a regular interval to try to recover any connection that failed
+            //  * to start.
+            //  *
+            //  * This is distinct from this._recoverConnection which tries to restores
+            //  * connection that were established but failed or timed out.
+            //  */
+            // this._intervalId = browser.setInterval(async () => {
+            //     if (!this.currentRtcSession || !this.channel) {
+            //         return;
+            //     }
+            //     await this._pingServer();
+            //     if (!this.currentRtcSession || !this.channel) {
+            //         return;
+            //     }
+            //     this._callSessions();
+            // }, 30000); // 30 seconds
         }
 
         /**
          * @override
          */
         async _willDelete() {
-            browser.removeEventListener('beforeunload', this._onBeforeUnload);
-            browser.removeEventListener('keydown', this._onKeyDown);
-            browser.removeEventListener('keyup', this._onKeyUp);
-            browser.clearInterval(this._intervalId);
+            // browser.removeEventListener('beforeunload', this._onBeforeUnload);
+            // browser.removeEventListener('keydown', this._onKeyDown);
+            // browser.removeEventListener('keyup', this._onKeyUp);
+            // browser.clearInterval(this._intervalId);
             return super._willDelete(...arguments);
         }
 
@@ -349,25 +349,7 @@ function factory(dependencies) {
                 this.currentRtcSession.update({ isTalking: false });
                 return;
             }
-            try {
-                this._disconnectAudioMonitor = await monitorAudio(this.audioTrack, {
-                    onThreshold: async (isAboveThreshold) => {
-                        this._setSoundBroadcast(isAboveThreshold);
-                    },
-                    volumeThreshold: this.messaging.userSetting.voiceActivationThreshold,
-                });
-            } catch (e) {
-                /**
-                 * The browser is probably missing audioContext,
-                 * in that case, voice activation is not enabled
-                 * and the microphone is always 'on'.
-                 */
-                this.env.services.notification.notify({
-                    message: this.env._t("Your browser does not support voice activation"),
-                    type: 'warning',
-                });
-                this.currentRtcSession.update({ isTalking: true });
-            }
+
         }
 
         //----------------------------------------------------------------------

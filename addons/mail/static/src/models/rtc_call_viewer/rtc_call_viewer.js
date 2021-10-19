@@ -25,7 +25,7 @@ function factory(dependencies) {
             this.onMouseMoveOverlay = this.onMouseMoveOverlay.bind(this);
             this.onRtcSettingsDialogClosed = this.onRtcSettingsDialogClosed.bind(this);
             this._onFullScreenChange = this._onFullScreenChange.bind(this);
-            browser.addEventListener('fullscreenchange', this._onFullScreenChange);
+            // browser.addEventListener('fullscreenchange', this._onFullScreenChange);
         }
 
         /**
@@ -33,7 +33,7 @@ function factory(dependencies) {
          */
         _willDelete() {
             browser.clearTimeout(this._timeoutId);
-            browser.removeEventListener('fullscreenchange', this._onFullScreenChange);
+            // browser.removeEventListener('fullscreenchange', this._onFullScreenChange);
             return super._willDelete(...arguments);
         }
 

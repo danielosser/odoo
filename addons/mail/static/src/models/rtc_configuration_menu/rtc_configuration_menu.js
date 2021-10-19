@@ -16,8 +16,8 @@ function factory(dependencies) {
             const res = super._created(...arguments);
             this._onKeyDown = this._onKeyDown.bind(this);
             this._onKeyUp = this._onKeyUp.bind(this);
-            browser.addEventListener('keydown', this._onKeyDown);
-            browser.addEventListener('keyup', this._onKeyUp);
+            // browser.addEventListener('keydown', this._onKeyDown);
+            // browser.addEventListener('keyup', this._onKeyUp);
             return res;
         }
 
@@ -25,8 +25,8 @@ function factory(dependencies) {
          * @override
          */
         _willDelete() {
-            browser.removeEventListener('keydown', this._onKeyDown);
-            browser.removeEventListener('keyup', this._onKeyUp);
+            // browser.removeEventListener('keydown', this._onKeyDown);
+            // browser.removeEventListener('keyup', this._onKeyUp);
             return super._willDelete(...arguments);
         }
 

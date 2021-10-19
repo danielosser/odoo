@@ -13,7 +13,7 @@ function factory(dependencies) {
         _created() {
             const res = super._created(...arguments);
             this._refresh();
-            this._onResize = _.debounce(() => this._refresh(), 100);
+            // this._onResize = _.debounce(() => this._refresh(), 100);
             return res;
         }
 
@@ -21,7 +21,7 @@ function factory(dependencies) {
          * @override
          */
         _willDelete() {
-            window.removeEventListener('resize', this._onResize);
+            // window.removeEventListener('resize', this._onResize);
             return super._willDelete(...arguments);
         }
 
@@ -35,7 +35,7 @@ function factory(dependencies) {
         start() {
             // TODO FIXME Not using this.env.browser because it's proxified, and
             // addEventListener does not work on proxified window. task-2234596
-            window.addEventListener('resize', this._onResize);
+            // window.addEventListener('resize', this._onResize);
         }
 
         //----------------------------------------------------------------------

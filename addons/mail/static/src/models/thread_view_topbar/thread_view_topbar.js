@@ -34,7 +34,7 @@ function factory(dependencies) {
             this.onKeyDownThreadDescriptionInput = this.onKeyDownThreadDescriptionInput.bind(this);
             this.onMouseEnterTopbarThreadDescription = this.onMouseEnterTopbarThreadDescription.bind(this);
             this.onMouseLeaveTopbarThreadDescription = this.onMouseLeaveTopbarThreadDescription.bind(this);
-            document.addEventListener('click', this._onClickCaptureGlobal, true);
+            // document.addEventListener('click', this._onClickCaptureGlobal, true);
             return super._created();
         }
 
@@ -42,7 +42,7 @@ function factory(dependencies) {
          * @override
          */
         _willDelete() {
-            document.removeEventListener('click', this._onClickCaptureGlobal, true);
+            // document.removeEventListener('click', this._onClickCaptureGlobal, true);
             return super._willDelete();
         }
 
