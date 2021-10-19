@@ -1,20 +1,7 @@
 #!/usr/bin/env python
 """
-Checks versions from the requirements files against distribution-provided
-versions, taking distribution's Python version in account e.g. if checking
-against a release which bundles Python 3.5, checks the 3.5 version of
-requirements.
-
-* only shows requirements for which at least one release diverges from the
-  matching requirements version
-* empty cells mean that specific release matches its requirement (happens when
-  checking multiple releases: one of the other releases may mismatch the its
-  requirements necessating showing the row)
-
-Only handles the subset of requirements files we're currently using:
-* no version spec or strict equality
-* no extras
-* only sys_platform and python_version environment markers
+Checks versions from the requirements files, either against a Debian/Ubuntu specific distribution
+or against accessible locally installed versions.
 """
 
 import argparse
@@ -22,6 +9,7 @@ import gzip
 import itertools
 import json
 import operator
+import pkg_resources
 import re
 import string
 
@@ -30,6 +18,14 @@ from pathlib import Path
 from urllib.request import urlopen
 from sys import stdout, stderr
 from typing import Dict, List, Set, Optional, Any, Tuple
+
+def print_table(table, widthes):
+   # format table
+    for row in table:
+        stdout.write('| ')
+        for cell, width in zip(row, widthes):
+            stdout.write(f'{str(cell):<{width}} | ')
+        stdout.write('\n')
 
 Version = Tuple[int, ...]
 def parse_version(vstring: str) -> Optional[Version]:
@@ -282,7 +278,23 @@ def parse_requirements(reqpath: Path) -> Dict[str, List[Tuple[str, Markers]]]:
         reqs.setdefault(name, []).append((version, markers))
     return reqs
 
-def main(args):
+def check_distros(args):
+    """ Checks versions from the requirements files against distribution-provided
+    versions, taking distribution's Python version in account e.g. if checking
+    against a release which bundles Python 3.5, checks the 3.5 version of
+    requirements.
+
+    * only shows requirements for which at least one release diverges from the
+    matching requirements version
+    * empty cells mean that specific release matches its requirement (happens when
+    checking multiple releases: one of the other releases may mismatch the its
+    requirements necessating showing the row)
+
+    Only handles the subset of requirements files we're currently using:
+    * no version spec or strict equality
+    * no extras
+    * only sys_platform and python_version environment markers
+    """
     checkers = [
         Distribution.get(distro)(release)
         for version in args.release
@@ -357,21 +369,69 @@ def main(args):
             for s, cell in zip(sizes, row)
         ]
 
-    # format table
-    for row in table:
-        stdout.write('| ')
-        for cell, width in zip(row, sizes):
-            stdout.write(f'{cell:<{width}} | ')
-        stdout.write('\n')
+    print_table(table, sizes)
+
+def location_to_source(distrib):
+    """ returns a string that describes the source of the Python package based on its location
+    :param distrib: a pkg_resources.Distribution instance
+    :rtype: string
+    """
+    naive_kw =  {
+        'Debian': r'/usr/lib/.+/dist-packages',
+        'pip global': r'/usr/local/lib/.+dist-packages',
+        'Pyenv': r'pyenv',
+        'User': str(Path.home())}
+    for source, keyword in naive_kw.items():
+        if re.search(keyword, distrib.location):
+            return source
+    return 'Other'
+
+def check_local(args):
+    results = [('Project', 'Expected', 'Installed', 'Source', 'Location')]
+    with ((Path.cwd() / __file__).parent.parent / 'requirements.txt').open() as req_file:
+        for requirement in pkg_resources.parse_requirements(req_file):
+            if requirement.marker and not requirement.marker.evaluate():
+                # skipping requirement that marker does not match
+                continue
+            try:
+                distrib = pkg_resources.get_distribution(requirement)
+            except pkg_resources.DistributionNotFound:
+                results.append((requirement.project_name, requirement.specifier, 'Not found', '--', '--'))
+            except pkg_resources.VersionConflict as e:
+                results.append((requirement.project_name, requirement.specifier, e.dist.version, location_to_source(e.dist), e.dist.location))
+            else:
+                results.append((requirement.project_name, requirement.specifier, '✔', location_to_source(distrib), distrib.location))
+
+    widthes = [0] * 5
+    for row in results:
+        for i,c in enumerate(row):
+            widthes[i] = max(widthes[i], len(str(c)))
+
+    print_table(results, widthes)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
+
+    def print_help(args):
+        # hack to set a default func that prints help when no command is chosen
+        parser.print_help()
+
+    parser.set_defaults(func=print_help)
+
+    subparsers = parser.add_subparsers()
+
+    parser_distro_check = subparsers.add_parser('distro', help='Check requirements against distributions')
+    parser_distro_check.add_argument(
         'release', nargs='+',
         help="Release to check against, should use the format '{distro}:{release}' e.g. 'debian:sid'"
     )
+    parser_distro_check.set_defaults(func=check_distros)
+
+    parser_local_check = subparsers.add_parser('local', help='Check requirements against local modules')
+    parser_local_check.set_defaults(func=check_local)
+
     args = parser.parse_args()
-    main(args)
+    args.func(args)
