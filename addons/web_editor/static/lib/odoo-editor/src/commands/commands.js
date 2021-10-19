@@ -502,7 +502,20 @@ export const editorCommands = {
         if (!range) return;
         const restoreCursor = preserveCursor(editor.document);
         // Get the <font> nodes to color
-        const selectedNodes = getSelectedNodes(editor.editable);
+        let selectedNodes = getSelectedNodes(editor.editable);
+        // When applying gradient, if first and last nodes are siblings, wrap in a single font.
+        if (isColorGradient(color) && selectedNodes.length > 1 &&
+                selectedNodes[0].parentNode.nodeName !== 'FONT' &&
+                selectedNodes[0].parentNode === selectedNodes[selectedNodes.length - 1].parentNode) {
+            const font = document.createElement('font');
+            selectedNodes[0].parentNode.insertBefore(font, selectedNodes[0]);
+            for (const node of selectedNodes) {
+                if (node.parentNode === font.parentNode) {
+                    font.appendChild(node);
+                }
+            }
+            selectedNodes = [font];
+        }
         const fonts = selectedNodes.flatMap(node => {
             let font = closestElement(node, 'font');
             const children = font && [...font.childNodes];
