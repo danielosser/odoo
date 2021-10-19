@@ -266,6 +266,9 @@ class MrpProduction(models.Model):
     show_lot_ids = fields.Boolean('Display the serial number shortcut on the moves', compute='_compute_show_lot_ids')
     forecasted_issue = fields.Boolean(compute='_compute_forecasted_issue')
     show_serial_mass_produce = fields.Boolean('Display the serial mass product wizard action moves', compute='_compute_show_serial_mass_produce')
+    show_allocation = fields.Boolean(
+        compute='_compute_show_allocation',
+        help='Technical Field used to decide whether the button "Allocation" should be displayed.')
 
     @api.depends('procurement_group_id.stock_move_ids.created_production_id.procurement_group_id.mrp_production_ids')
     def _compute_mrp_production_child_count(self):
@@ -543,6 +546,27 @@ class MrpProduction(models.Model):
                 have_serial_components, dummy, dummy, dummy = order._check_serial_mass_produce_components()
                 if not have_serial_components:
                     order.show_serial_mass_produce = True
+
+    @api.depends('state', 'move_finished_ids')
+    def _compute_show_allocation(self):
+        self.show_allocation = False
+        if not self.picking_type_id or not self.user_has_groups('mrp.group_mrp_reception_report'):
+            return
+        lines = self.move_finished_ids.filtered(lambda m: m.product_id.type == 'product' and m.state != 'cancel')
+        if lines:
+            allowed_states = ['confirmed', 'partially_available', 'waiting']
+            if self.state == 'done':
+                allowed_states += ['assigned']
+            wh_location_ids = self.env['stock.location']._search([('id', 'child_of', self.picking_type_id.warehouse_id.view_location_id.id), ('usage', '!=', 'supplier')])
+            if self.env['stock.move'].search([
+                ('state', 'in', allowed_states),
+                ('product_qty', '>', 0),
+                ('location_id', 'in', wh_location_ids),
+                ('raw_material_production_id', '!=', self.id),
+                ('product_id', 'in', lines.product_id.ids),
+                '|', ('move_orig_ids', '=', False),
+                     ('move_orig_ids', 'in', lines.ids)], limit=1):
+                self.show_allocation = True
 
     _sql_constraints = [
         ('name_uniq', 'unique(name, company_id)', 'Reference must be unique per Company!'),
@@ -1584,6 +1608,21 @@ class MrpProduction(models.Model):
                     'res_id': self.id,
                     'target': 'main',
                 }
+            if self.user_has_groups('mrp.group_mrp_reception_report') and self.picking_type_id.auto_show_reception_report:
+                lines = self.move_finished_ids.filtered(lambda m: m.product_id.type == 'product' and m.state != 'cancel' and m.quantity_done and not m.move_dest_ids)
+                if lines:
+                    # don't show reception report if all already assigned/nothing to assign
+                    wh_location_ids = self.env['stock.location'].search([('id', 'child_of', self.picking_type_id.warehouse_id.view_location_id.id), ('usage', '!=', 'supplier')]).ids
+                    if self.env['stock.move'].search([
+                            ('state', 'in', ['confirmed', 'partially_available', 'waiting', 'assigned']),
+                            ('product_qty', '>', 0),
+                            ('location_id', 'in', wh_location_ids),
+                            ('move_orig_ids', '=', False),
+                            ('raw_material_production_id', 'not in', self.ids),
+                            ('product_id', 'in', lines.product_id.ids)], limit=1):
+                        action = self.action_view_reception_report()
+                        action['context'] = {'default_production_ids': self.ids}
+                        return action
             return True
         context = self.env.context.copy()
         context = {k: v for k, v in context.items() if not k.startswith('default_')}
@@ -1657,6 +1696,9 @@ class MrpProduction(models.Model):
         action['domain'] = [('production_id', '=', self.id)]
         action['context'] = dict(self._context, default_origin=self.name)
         return action
+
+    def action_view_reception_report(self):
+        return self.env["ir.actions.actions"]._for_xml_id("stock.stock_reception_action")
 
     @api.model
     def get_empty_list_help(self, help):
