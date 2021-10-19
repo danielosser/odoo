@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_lang_tree" model="ir.ui.view">
+        <field name="name">res_lang_tree.inherit</field>
+        <field name="model">res.lang</field>
+        <field name="inherit_id" ref="base.res_lang_tree" />
+        <field name="arch" type="xml">
+            <!-- replace everything inside <header> -->
+            <xpath expr="//header" position="replace">
+                <header>
+                    <button name="%(base.action_view_base_language_install)d" type="action" string="Activate" />
+                </header>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
