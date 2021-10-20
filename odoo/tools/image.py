@@ -49,7 +49,7 @@ IMAGE_MAX_RESOLUTION = 45e6
 
 class ImageProcess():
 
-    def __init__(self, base64_source, verify_resolution=True):
+    def __init__(self, base64_source=False, source=False, verify_resolution=True):
         """Initialize the `base64_source` image for processing.
 
         :param base64_source: the original image base64 encoded
@@ -69,9 +69,13 @@ class ImageProcess():
         :raise: UserError if the base64 is incorrect or the image can't be identified by PIL
         """
         self.base64_source = base64_source or False
+        self.source = source
         self.operationsCount = 0
 
-        if not base64_source or base64_source[:1] in (b'P', 'P'):
+        if self.source:
+            self.image = Image.open(io.BytesIO(self.source))
+            self.original_format = (self.image.format or '').upper()
+        elif not base64_source or base64_source[:1] in (b'P', 'P'):
             # don't process empty source or SVG
             self.image = False
         else:
@@ -300,16 +304,16 @@ class ImageProcess():
         return self
 
 
-def image_process(base64_source, size=(0, 0), verify_resolution=False, quality=0, crop=None, colorize=False, output_format=''):
+def image_process(base64_source=False, source=False, size=(0, 0), verify_resolution=False, quality=0, crop=None, colorize=False, output_format=''):
     """Process the `base64_source` image by executing the given operations and
     return the result as a base64 encoded image.
     """
-    if not base64_source or ((not size or (not size[0] and not size[1])) and not verify_resolution and not quality and not crop and not colorize and not output_format):
+    if not base64_source and not source or ((not size or (not size[0] and not size[1])) and not verify_resolution and not quality and not crop and not colorize and not output_format):
         # for performance: don't do anything if the image is falsy or if
         # no operations have been requested
         return base64_source
 
-    image = ImageProcess(base64_source, verify_resolution)
+    image = ImageProcess(base64_source, source, verify_resolution)
     if size:
         if crop:
             center_x = 0.5

@@ -104,7 +104,7 @@ class IrAttachment(models.Model):
         ]
         if page.headers['Content-Type'] in image_mimetype:
             image = image_process(
-                base64.b64encode(page.content),
+                source=page.content,
                 size=(300, 300),
                 verify_resolution=True
             )
@@ -126,7 +126,7 @@ class IrAttachment(models.Model):
                 if image:
                     request_image = requests.get(image[0], timeout=1)
                     image = image_process(
-                        base64.b64encode(request_image.content),
+                        source=request_image.content,
                         size=(300, 300),
                         verify_resolution=True
                     )
