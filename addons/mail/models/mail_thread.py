@@ -1810,7 +1810,7 @@ class MailThread(models.AbstractModel):
         attachement_values = self._message_post_process_attachments(attachments, attachment_ids, values)
         values.update(attachement_values)  # attachement_ids, [body]
 
-        new_message = self._message_create(values)
+        new_message = self._message_create([values])
 
         # Set main attachment field if necessary
         self._message_set_main_attachment_id(values['attachment_ids'])
@@ -1942,7 +1942,7 @@ class MailThread(models.AbstractModel):
             'message_id': tools.generate_tracking_message_id('message-notify'),
         }
         values.update(msg_kwargs)
-        new_message = MailThread._message_create(values)
+        new_message = MailThread._message_create([values])
         MailThread._notify_thread(new_message, values, **notif_kwargs)
         return new_message
 
@@ -1975,7 +1975,7 @@ class MailThread(models.AbstractModel):
             'message_id': tools.generate_tracking_message_id('message-notify'),  # why? this is all but a notify
         }
         message_values.update(kwargs)
-        return self.sudo()._message_create(message_values)
+        return self.sudo()._message_create([message_values])
 
     def _message_log_batch(self, bodies, author_id=None, email_from=None, subject=False, message_type='notification'):
         """ Shortcut allowing to post notes on a batch of documents. It achieve the
@@ -2046,8 +2046,6 @@ class MailThread(models.AbstractModel):
         return parent_id
 
     def _message_create(self, values_list):
-        if not isinstance(values_list, (list)):
-            values_list = [values_list]
         create_values_list = []
         for values in values_list:
             create_values = dict(values)
@@ -2056,8 +2054,11 @@ class MailThread(models.AbstractModel):
                 create_values.pop(x, None)
             create_values['partner_ids'] = [Command.link(pid) for pid in create_values.get('partner_ids', [])]
             create_values_list.append(create_values)
+
+        # protect against default values
         if 'default_child_ids' in self._context:
-            ctx = {key: val for key, val in self._context.items() if key != 'default_child_ids'}
+            ctx = dict(self._context)
+            ctx.pop('default_child_ids')
             self = self.with_context(ctx)
         return self.env['mail.message'].create(create_values_list)
 
