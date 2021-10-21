@@ -158,6 +158,7 @@ def load_module_graph(cr, graph, status=None, perform_checks=True,
         module_cursor_query_count = cr.sql_log_count
         module_extra_query_count = odoo.sql_db.sql_counter
 
+        new_install = package.state == 'to install'
         needs_update = (
             hasattr(package, "init")
             or hasattr(package, "update")
@@ -169,19 +170,19 @@ def load_module_graph(cr, graph, status=None, perform_checks=True,
         _logger.log(module_log_level, 'Loading module %s (%d/%d)', module_name, index, module_count)
 
         if needs_update:
-            if package.name != 'base':
-                registry.setup_models(cr)
-            migrations.migrate_module(package, 'pre')
+            if not new_install:
+                if package.name != 'base':
+                    registry.setup_models(cr)
+                migrations.migrate_module(package, 'pre')
+
             if package.name != 'base':
                 env = api.Environment(cr, SUPERUSER_ID, {})
                 env['base'].flush()
 
         load_openerp_module(package.name)
-
-        new_install = package.state == 'to install'
         if new_install:
-            py_module = sys.modules['odoo.addons.%s' % (module_name,)]
             pre_init = package.info.get('pre_init_hook')
+            py_module = sys.modules['odoo.addons.%s' % (module_name,)]
             if pre_init:
                 getattr(py_module, pre_init)(cr)
 
