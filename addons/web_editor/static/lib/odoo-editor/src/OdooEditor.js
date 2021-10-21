@@ -733,6 +733,20 @@ export class OdooEditor extends EventTarget {
         this._toRollback = false;
     }
     /**
+     * Undo the current non-recorded draft step.
+     */
+    historyRevertDraft() {
+        const draftStep = this._currentStep;
+        this.observerFlush();
+        this.historyRevert(draftStep, {sideEffect: false});
+        this.observerFlush();
+        // Clear draft step from all previous changes.
+        draftStep.mutations = [];
+
+        this._activateContenteditable();
+        this.historySetSelection(draftStep);
+    }
+    /**
      * Undo a step of the history.
      *
      * this._historyStepsState is a map from it's location (index) in this.history to a state.
