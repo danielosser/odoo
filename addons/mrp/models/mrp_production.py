@@ -974,7 +974,6 @@ class MrpProduction(models.Model):
                 '%s - ' % (self.orderpoint_id.display_name), '')
             origin = '%s,%s' % (origin, self.name)
         data = {
-            'sequence': bom_line.sequence if bom_line else 10,
             'name': self.name,
             'date': self.date_planned_start,
             'date_deadline': self.date_planned_start,
