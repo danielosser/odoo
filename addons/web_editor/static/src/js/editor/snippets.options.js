@@ -5258,9 +5258,20 @@ registry.ImageTools = ImageHandlerOption.extend({
         // Force natural width & height (note: loading the original image is
         // needed for Safari where natural width & height of SVG does not return
         // the correct values).
-        const originalImage = await loadImage(img.src);
-        svg.setAttribute('width', originalImage.naturalWidth);
-        svg.setAttribute('height', originalImage.naturalHeight);
+        const originalImage = await loadImage(imgDataURL, img);
+        // If the svg forces the size of the shape we still want to have the resized
+        // width
+        if (!svg.dataset.forcedSize) {
+            svg.setAttribute('width', originalImage.naturalWidth);
+            svg.setAttribute('height', originalImage.naturalHeight);
+        } else {
+            if (img.dataset.resizeWidth) {
+                const svgAspectRatio = parseInt(svg.getAttribute('width')) / parseInt(svg.getAttribute('height'));
+                const newHeight = parseInt(img.dataset.resizeWidth) / svgAspectRatio;
+                svg.setAttribute('width', img.dataset.resizeWidth);
+                svg.setAttribute('height', newHeight);
+            }
+        }
         // Transform the current SVG in a base64 file to be saved by the server
         const blob = new Blob([svg.outerHTML], {
             type: 'image/svg+xml',

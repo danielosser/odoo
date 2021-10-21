@@ -641,7 +641,9 @@ class Web_Editor(http.Controller):
         image = base64_to_image(image_base64)
         width, height = tuple(str(size) for size in image.size)
         root = etree.fromstring(svg)
-        root.attrib.update({'width': width, 'height': height})
+        forced_size = root.attrib.get('data-forced-size')
+        if not forced_size:
+            root.attrib.update({'width': width, 'height': height})
         # Update default color palette on shape SVG.
         svg, _ = self._update_svg_colors(kwargs, etree.tostring(root, pretty_print=True).decode('utf-8'))
         # Add image in base64 inside the shape.
