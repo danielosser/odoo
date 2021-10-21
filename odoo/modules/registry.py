@@ -71,6 +71,10 @@ class Registry(Mapping):
         """ Create and return a new registry for the given database name. """
         t0 = time.time()
         with cls._lock:
+          profiling_enabled = odoo.tools.config.options['init'] and not odoo.tools.config.options['test_enable']
+          db = db_name if profiling_enabled else None
+          collectors = ['traces_async'] if profiling_enabled else None
+          with odoo.tools.profiler.Profiler(collectors=collectors, db=db):
             registry = object.__new__(cls)
             registry.init(db_name)
 
