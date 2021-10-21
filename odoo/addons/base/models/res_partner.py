@@ -33,9 +33,32 @@ ADDRESS_FIELDS = ('street', 'street2', 'zip', 'city', 'state_id', 'country_id')
 def _lang_get(self):
     return self.env['res.lang'].get_installed()
 
+def timezone_offset(tz):
+    """Take the timezone in a string format and return the hour offset.
 
-# put POSIX 'Etc/*' entries at the end to avoid confusing users - see bug 1086728
-_tzs = [(tz, tz) for tz in sorted(pytz.all_timezones, key=lambda tz: tz if not tz.startswith('Etc/') else '_')]
+    e.g.
+        'Africa/Cairo' -> '+0200'
+    """
+    utcnow = datetime.datetime.utcnow()
+    localized_datetime = pytz.timezone(tz).localize(utcnow)
+    return localized_datetime.strftime('%z')
+
+def format_timezone(tz):
+    """Format the given timezone to add the offset.
+
+    e.g.
+        'Africa/Cairo' -> '(UTC+02:00) Africa/Cairo'
+    """
+    offset = timezone_offset(tz)
+    return f'(UTC{offset[:3]}:{offset[3:]}) {tz}'
+
+_tzs = [
+    (tz, format_timezone(tz))
+    for tz in sorted(
+        pytz.all_timezones,
+        key=lambda tz: int(timezone_offset(tz)))
+]
+
 def _tz_get(self):
     return _tzs
 
