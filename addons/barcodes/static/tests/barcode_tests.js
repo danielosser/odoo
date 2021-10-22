@@ -277,7 +277,7 @@ QUnit.test('widget field_float_scannable', async function (assert) {
     assert.strictEqual(form.$('.o_field_widget[name=int_field]').get(0), document.activeElement,
         "int field should still be focused");
 
-    setTimeout(async function () {
+    testUtils.nextTick().then(async function () {
         assert.strictEqual(form.$('.o_field_widget[name=int_field]').val(), '426',
             "should display the correct value in edit");
         assert.strictEqual(form.$('.o_field_widget[name=int_field]').get(0), document.activeElement,
