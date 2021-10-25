@@ -299,7 +299,7 @@ class PaymentTransaction(models.Model):
             raise ValidationError(_("Only authorized transactions can be captured."))
 
         for tx in self:
-            tx._send_capture_request()
+            tx.sudo()._send_capture_request()
 
     def action_void(self):
         """ Check the state of the transaction and request to have them voided. """
@@ -307,7 +307,7 @@ class PaymentTransaction(models.Model):
             raise ValidationError(_("Only authorized transactions can be voided."))
 
         for tx in self:
-            tx._send_void_request()
+            tx.sudo()._send_void_request()
 
     def action_refund(self, amount_to_refund=None):
         """ Check the state of the transactions and request their refund.

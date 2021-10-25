@@ -1049,10 +1049,10 @@ class SaleOrder(models.Model):
                 line.qty_to_invoice = 0
 
     def payment_action_capture(self):
-        self.authorized_transaction_ids._send_capture_request()
+        self.authorized_transaction_ids.sudo()._send_capture_request()
 
     def payment_action_void(self):
-        self.authorized_transaction_ids._send_void_request()
+        self.authorized_transaction_ids.sudo()._send_void_request()
 
     def get_portal_last_transaction(self):
         self.ensure_one()
