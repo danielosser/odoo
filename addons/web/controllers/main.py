@@ -1447,6 +1447,19 @@ class Binary(http.Controller):
             download=download, width=width, height=height, crop=crop,
             quality=int(kwargs.get('quality', 0)), access_token=access_token)
 
+    @http.route(['/web/video',
+                 '/web/video/<int:att_id>',
+                 '/web/video/<int:att_id>/<string:filename>',
+                 '/web/video/<int:att_id>-<string:unique>',
+                 '/web/video/<int:att_id>-<string:unique>/<string:filename>'], type='http', auth="public")
+    def content_video(self, att_id=None, filename_field='name', unique=None, filename=None, mimetype="video/mp4",
+                      download=None, access_token=None,
+                      **kwargs):
+        # other kwargs are ignored on purpose
+        return request.env['ir.http']._content_video(res_id=att_id, filename_field=filename_field, unique=unique,
+                                                     filename=filename, mimetype=mimetype,
+                                                     download=download, access_token=access_token)
+
     # backward compatibility
     @http.route(['/web/binary/image'], type='http', auth="public")
     def content_image_backward_compatibility(self, model, id, field, resize=None, **kw):

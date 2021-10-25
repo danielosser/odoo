@@ -1691,7 +1691,22 @@ def set_safe_image_headers(headers, content):
     if content_type in safe_types:
         headers = set_header_field(headers, 'Content-Type', content_type)
     headers = set_header_field(headers, 'X-Content-Type-Options', 'nosniff')
-    set_header_field(headers, 'Content-Length', len(content))
+    headers = set_header_field(headers, 'Content-Length', str(len(content)))
+    return headers
+
+
+def set_safe_video_headers(headers, content):
+    """Return new headers based on `headers` but with `Content-Length` and
+    `Content-Type` set appropriately depending on the given `content` only if it
+    is safe to do, as well as `X-Content-Type-Options: nosniff` so that if the
+    file is of an unsafe type, it is not interpreted as that type if the
+    `Content-type` header was already set to a different mimetype"""
+    content_type = guess_mimetype(content)
+    safe_types = ['video/mp4']
+    if content_type in safe_types:
+        headers = set_header_field(headers, 'Content-Type', content_type)
+    headers = set_header_field(headers, 'X-Content-Type-Options', 'nosniff')
+    headers = set_header_field(headers, 'Content-Length', str(len(content)))
     return headers
 
 

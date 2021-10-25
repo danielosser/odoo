@@ -130,7 +130,9 @@ var FileWidget = SearchableMediaWidget.extend({
     existingAttachmentsTemplate: undefined,
 
     IMAGE_MIMETYPES: ['image/jpg', 'image/jpeg', 'image/jpe', 'image/png', 'image/svg+xml', 'image/gif'],
+    VIDEO_MIMETYPES: ['video/mp4'],
     IMAGE_EXTENSIONS: ['.jpg', '.jpeg', '.jpe', '.png', '.svg', '.gif'],
+    VIDEO_EXTENSIONS: ['.mp4'],
     NUMBER_OF_ATTACHMENTS_TO_DISPLAY: 30,
     MAX_DB_ATTACHMENTS: 5,
 
@@ -187,8 +189,8 @@ var FileWidget = SearchableMediaWidget.extend({
         return this.search('').then(async () => {
             await this._renderThumbnails();
             if (o.url) {
-                self._selectAttachement(_.find(self.attachments, function (attachment) {
-                    return o.url === attachment.image_src;
+                self._selectAttachment(_.find(self.attachments, function (attachment) {
+                    return o.url === attachment.src;
                 }) || o);
             }
             return def;
@@ -237,7 +239,7 @@ var FileWidget = SearchableMediaWidget.extend({
             args: [],
             kwargs: {
                 domain: this._getAttachmentsDomain(this.needle),
-                fields: ['name', 'mimetype', 'description', 'checksum', 'url', 'type', 'res_id', 'res_model', 'public', 'access_token', 'image_src', 'image_width', 'image_height', 'original_id'],
+                fields: ['name', 'mimetype', 'description', 'checksum', 'url', 'type', 'res_id', 'res_model', 'public', 'access_token', 'src', 'width', 'height', 'original_id', 'thumbnail'],
                 order: [{name: 'id', asc: false}],
                 context: this.options.context,
                 // Try to fetch first record of next page just to know whether there is a next page.
@@ -333,7 +335,7 @@ var FileWidget = SearchableMediaWidget.extend({
         this.attachments = this.attachments.filter(att => att.id !== attachment.id);
         this.attachments.unshift(attachment);
         this._renderThumbnails();
-        this._selectAttachement(attachment);
+        this._selectAttachment(attachment);
     },
     /**
      * @private
@@ -393,6 +395,7 @@ var FileWidget = SearchableMediaWidget.extend({
                 query: media.query || '',
                 is_dynamic_svg: !!media.isDynamicSVG,
                 dynamic_colors: media.dynamicColors,
+                thumbnail: media.thumbnail,
             }
         ]));
         let mediaAttachments = [];
@@ -406,15 +409,15 @@ var FileWidget = SearchableMediaWidget.extend({
         }
         const selected = this.selectedAttachments.concat(mediaAttachments).map(attachment => {
             // Color-customize dynamic SVGs with the theme colors
-            if (attachment.image_src && attachment.image_src.startsWith('/web_editor/shape/')) {
-                const colorCustomizedURL = new URL(attachment.image_src, window.location.origin);
+            if (attachment.src && attachment.src.startsWith('/web_editor/shape/')) {
+                const colorCustomizedURL = new URL(attachment.src, window.location.origin);
                 colorCustomizedURL.searchParams.forEach((value, key) => {
                     const match = key.match(/^c([1-5])$/);
                     if (match) {
                         colorCustomizedURL.searchParams.set(key, getCSSVariableValue(`o-color-${match[1]}`))
                     }
                 })
-                attachment.image_src = colorCustomizedURL.pathname + colorCustomizedURL.search;
+                attachment.src = colorCustomizedURL.pathname + colorCustomizedURL.search;
             }
             return attachment;
         });
@@ -423,7 +426,7 @@ var FileWidget = SearchableMediaWidget.extend({
         }
 
         const img = selected[0];
-        if (!img || !img.id || this.$media.attr('src') === img.image_src) {
+        if (!img || !img.id || this.$media.attr('src') === img.src) {
             return this.media;
         }
 
@@ -437,8 +440,8 @@ var FileWidget = SearchableMediaWidget.extend({
             });
         }
 
-        if (img.image_src) {
-            var src = img.image_src;
+        if (img.src) {
+            var src = img.src;
             if (!img.public && img.access_token) {
                 src += _.str.sprintf('?access_token=%s', img.access_token);
             }
@@ -477,7 +480,7 @@ var FileWidget = SearchableMediaWidget.extend({
             delete this.media.dataset[attr];
         });
         // Add mimetype for documents
-        if (!img.image_src) {
+        if (!img.src) {
             this.media.dataset.mimetype = img.mimetype;
         }
         this.media.classList.remove('o_modified_image_to_save');
@@ -490,7 +493,7 @@ var FileWidget = SearchableMediaWidget.extend({
      *  and to close the media dialog
      * @private
      */
-    _selectAttachement: function (attachment, save, {type = 'attachment'} = {}) {
+    _selectAttachment: function (attachment, save, {type = 'attachment'} = {}) {
         const possibleProps = {
             'attachment': 'selectedAttachments',
             'media': 'selectedMedia'
@@ -548,10 +551,10 @@ var FileWidget = SearchableMediaWidget.extend({
         const {id: attachmentID, mediaId} = attachment.dataset;
         if (attachmentID) {
             const attachment = this.attachments.find(attachment => attachment.id === parseInt(attachmentID));
-            this._selectAttachement(attachment, !this.options.multiImages);
+            this._selectAttachment(attachment, !this.options.multiImages);
         } else if (mediaId) {
             const media = this.libraryMedia.find(media => media.id === parseInt(mediaId));
-            this._selectAttachement(media, !this.options.multiImages, {type: 'media'});
+            this._selectAttachment(media, !this.options.multiImages, {type: 'media'});
         }
     },
     /**
@@ -591,14 +594,15 @@ var FileWidget = SearchableMediaWidget.extend({
             // limited by bandwidth.
             uploadMutex.exec(async () => {
                 const dataURL = await utils.getDataURLFromFile(file);
+                const data = dataURL.split(',')[1];
                 const attachment = await this.uploader.rpcShowProgress({
                     route: '/web_editor/attachment/add_data',
                     params: {
                         'name': file.name,
-                        'data': dataURL.split(',')[1],
+                        'data': data,
                         'res_id': this.options.res_id,
                         'res_model': this.options.res_model,
-                        'is_image': this.widgetType === 'image',
+                        'filetype': this.widgetType,
                         'width': 0,
                         'quality': 0,
                     }
@@ -610,6 +614,9 @@ var FileWidget = SearchableMediaWidget.extend({
         });
 
         return uploadMutex.getUnlockedDef().then(() => {
+            if (this.widgetType === "video") {
+                return;
+            }
             if (!this.uploader.hasError) {
                 this.uploader.close(3000);
             }
@@ -617,6 +624,7 @@ var FileWidget = SearchableMediaWidget.extend({
                 this.trigger_up('save_request');
             }
             this.noSave = false;
+
         });
     },
     /**
@@ -793,10 +801,10 @@ var ImageWidget = FileWidget.extend({
             primaryColors[color] = getCSSVariableValue('o-color-' + color);
         }
         this.attachments.forEach(attachment => {
-            if (attachment.image_src.startsWith('/')) {
-                const newURL = new URL(attachment.image_src, window.location.origin);
+            if (attachment.src.startsWith('/')) {
+                const newURL = new URL(attachment.src, window.location.origin);
                 // Set the main colors of dynamic SVGs to o-color-1~5
-                if (attachment.image_src.startsWith('/web_editor/shape/')) {
+                if (attachment.src.startsWith('/web_editor/shape/')) {
                     newURL.searchParams.forEach((value, key) => {
                         const match = key.match(/^c([1-5])$/);
                         if (match) {
@@ -1206,9 +1214,10 @@ var IconWidget = SearchableMediaWidget.extend({
 /**
  * Let users choose a video, support embed iframe.
  */
-var VideoWidget = MediaWidget.extend({
+var VideoWidget = FileWidget.extend({
     template: 'wysiwyg.widgets.video',
-    events: _.extend({}, MediaWidget.prototype.events || {}, {
+    existingAttachmentsTemplate: 'wysiwyg.widgets.video.existing.attachments',
+    events: Object.assign({}, FileWidget.prototype.events, {
         'change .o_video_dialog_options input': '_onUpdateVideoOption',
         'input textarea#o_video_text': '_onVideoCodeInput',
         'change textarea#o_video_text': '_onVideoCodeChange',
@@ -1219,11 +1228,16 @@ var VideoWidget = MediaWidget.extend({
      * @constructor
      */
     init: function (parent, media, options) {
-        this._super.apply(this, arguments);
+        this.widgetType = 'video';
+        options = _.extend({
+            accept: 'video/mp4',
+            mimetypeDomain: [['mimetype', 'in', this.VIDEO_MIMETYPES]],
+        }, options || {});
         this.isForBgVideo = !!options.isForBgVideo;
         this._onVideoCodeInput = _.debounce(this._onVideoCodeInput, 1000);
         // list of videoIds from vimeo.
         this._vimeoPreviewIds = options.vimeoPreviewIds;
+        this._super(parent, media, options);
     },
     /**
      * @override
@@ -1244,8 +1258,6 @@ var VideoWidget = MediaWidget.extend({
             this.$('input#o_video_hide_yt_logo').prop('checked', src.indexOf('modestbranding=1') >= 0);
             this.$('input#o_video_hide_dm_logo').prop('checked', src.indexOf('ui-logo=0') >= 0);
             this.$('input#o_video_hide_dm_share').prop('checked', src.indexOf('sharing-enable=0') >= 0);
-
-            await this._updateVideo();
         }
 
         // loads the thumbnail of vimeo video previews.
@@ -1265,7 +1277,9 @@ var VideoWidget = MediaWidget.extend({
                 });
         });
 
-        return _super(...arguments);
+        return _super(...arguments).then(widget => {
+            this._updateVideo();
+        });
     },
 
     //--------------------------------------------------------------------------
@@ -1276,13 +1290,13 @@ var VideoWidget = MediaWidget.extend({
      * @override
      */
     save: async function () {
-        await this._updateVideo();
         const videoSrc = this.$content.attr('src');
         if (this.isForBgVideo) {
             return Promise.resolve({bgVideoSrc: videoSrc});
         }
-        if (this.$('.o_video_dialog_iframe').is('iframe') && videoSrc) {
-            this.$media = this.getWrappedIframe(videoSrc);
+        const videoFrame = this.$('.o_video_dialog_iframe');
+        if (videoFrame.is('iframe')) {
+            this.$media = videoFrame.hasClass('o_user_upload') ? this.getWrappedVideo(videoFrame) : this.getWrappedIframe(videoSrc);
             this.media = this.$media[0];
         }
         return Promise.resolve(this.media);
@@ -1302,11 +1316,58 @@ var VideoWidget = MediaWidget.extend({
             '</div>'
         );
     },
+    /**
+     * Get a video element wrapped for the website builder.
+     *
+     * @param video The video element.
+     */
+    getWrappedVideo: function (video) {
+        return $(
+            '<div class="media_iframe_video" data-oe-expression="' + video.attr('src') + '">' +
+                '<div class="css_editable_mode_display">&nbsp;</div>' +
+                '<div class="media_iframe_video_size" contenteditable="false">&nbsp;</div>' +
+                video.get(0).outerHTML +
+            '</div>'
+        );
+    },
 
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
 
+    _showUpload: function () {
+        this.$("#o_video_form_group").hide();
+        this.$("#video-suggestion").attr("style", "display: none !important;");
+        this.$(".o_video_user_upload").show();
+    },
+    _showURL: function () {
+        this.$("#o_video_form_group").show();
+        this.$(".o_video_user_upload").hide();
+        this.$("#video-suggestion").attr("style", "display: flex !important;");
+    },
+    _resetVideo: function () {
+        this.$("#o_video_form_group").show();
+        this.$(".o_video_user_upload").show();
+        this.$("#video-suggestion").attr("style", "display: flex !important;");
+        this.$(".o_video_dialog_iframe").attr("src", "");
+    },
+    /**
+     * @override
+     */
+    _selectAttachment: async function (attachment, save, {type = 'attachment'} = {}) {
+        if (this.selectedAttachments.indexOf(attachment) === -1) {
+            this._super(attachment, false, {type: type});
+            await this._updateVideo();
+        } else {
+            this.selectedAttachments = [];
+            this.$('#o_video_text').val("");
+            this.$('.o_we_attachment_selected').each(function () {
+                this.classList.remove("o_we_attachment_selected");
+            });
+            await this._updateVideo();
+        }
+
+    },
     /**
      * @override
      */
@@ -1334,25 +1395,74 @@ var VideoWidget = MediaWidget.extend({
      * @param {Object} options
      * @returns {Object}
      *          $video -> the created video jQuery node
-     *          type -> the type of the created video
+     *          platform -> the type of the created video
      *          errorCode -> if defined, either '0' for invalid URL or '1' for
      *              unsupported video provider
      */
     _createVideoNode: async function (url, options) {
         options = options || {};
-        const videoData = await this._getVideoURLData(url, options);
-        if (videoData.error) {
-            return {errorCode: 0};
-        }
-        if (!videoData.platform) {
-            return {errorCode: 1};
-        }
-        const $video = $('<iframe>').width(1280).height(720)
-            .attr('frameborder', 0)
-            .attr('src', videoData.embed_url)
-            .addClass('o_video_dialog_iframe');
+        if (options["uploaded"]) {
+            const video = document.createElement('video');
+            video.muted = options["muted"];
+            video.defaultMuted = options["muted"];
+            video.autoplay = options["autoplay"];
+            video.controls = !(options["controls"]);
+            video.loop = options["loop"];
+            video.style.width = "100%";
+            video.style.height = "90vh";
+            // Store selected options as part of the src URL
+            const autoplay = video.autoplay ? '?autoplay=1&mute=1' : '?autoplay=0';
+            const controls = video.controls ? '&controls=1' : '&controls=0';
+            const loop = video.loop ? '&loop=1' : '&loop=0';
+            const source = url + autoplay + controls + loop;
+            video.src = source;
+            // Set to 0.01 for canvas thumbnail generation, otherwise thumbnail is black
+            video.currentTime = 0.01;
+            let thumbnail = document.createElement("canvas");
+            const frame = document.createElement("iframe");
+            frame.src = source;
+            frame.srcdoc = video.outerHTML;
+            frame.frameBorder = "0";
+            frame.allowFullscreen = true;
+            frame.contentEditable = "false";
+            frame.classList.add("o_video_dialog_iframe");
+            frame.classList.add("o_user_upload");
+            video.onloadeddata = () => {
+                if (!(frame.hasAttribute("thumbnail")) && this.selectedAttachments.length && !(this.selectedAttachments[0].thumbnail)) {
+                    // Reduce storage used in DB for thumbnail data
+                    thumbnail.height = 120;
+                    thumbnail.width = video.videoWidth / video.videoHeight * thumbnail.height;
+                    const thumbnailContext = thumbnail.getContext("2d");
+                    thumbnailContext.drawImage(video, 0, 0, thumbnail.width, thumbnail.height);
+                    thumbnail = thumbnail.toDataURL("image/png");
+                    this.attachments[this.attachments.indexOf(this.selectedAttachments[0])].thumbnail = thumbnail;
+                    this._rpc({
+                        route: '/web_editor/attachment/add_thumbnail',
+                        params: {
+                            attachment_id: this.selectedAttachments[0].id,
+                            thumbnail_data: thumbnail,
+                        },
+                    }).then(this._renderThumbnails());
+                }
+            };
+            const $frameContainer = $('<div>').attr('src', source);
+            $frameContainer.append($(frame));
+            return {$video: $frameContainer, platform: "user_upload"};
+        } else {
+            const videoData = await this._getVideoURLData(url, options);
+            if (videoData.error) {
+                return {errorCode: 0};
+            }
+            if (!videoData.platform) {
+                return {errorCode: 1};
+            }
+            const $video = $('<iframe>').width(1280).height(720)
+                .attr('frameborder', 0)
+                .attr('src', videoData.embed_url)
+                .addClass('o_video_dialog_iframe');
 
-        return {$video: $video, platform: videoData.platform};
+            return {$video: $video, platform: videoData.platform};
+        }
     },
     /**
      * Updates the video preview according to video code and enabled options.
@@ -1364,33 +1474,58 @@ var VideoWidget = MediaWidget.extend({
         this.$content.empty();
         this.$('#o_video_form_group').removeClass('o_has_error o_has_success').find('.form-control, .custom-select').removeClass('is-invalid is-valid');
         this.$('.o_video_dialog_options div').addClass('d-none');
-
+        this._resetVideo();
         // Check video code
-        var $textarea = this.$('textarea#o_video_text');
-        var code = $textarea.val().trim();
-        if (!code) {
+        const $textarea = this.$('textarea#o_video_text');
+        const code = $textarea.val().trim();
+        const uploadedVideo = this.$('.o_we_attachment_selected');
+        let query;
+        if (uploadedVideo.length && this.selectedAttachments.length) {
+            this._showUpload();
+            query = await this._createVideoNode(this.selectedAttachments[0].src, {
+                'uploaded': true,
+                'autoplay': this.isForBgVideo || this.$('input#o_video_autoplay').is(':checked'),
+                'muted': this.isForBgVideo || this.$('input#o_video_autoplay').is(':checked'),
+                'controls': this.isForBgVideo || this.$('input#o_video_hide_controls').is(':checked'),
+                'loop': this.isForBgVideo || this.$('input#o_video_loop').is(':checked')
+            });
+        } else if (code) {
+            if (code.includes("/web/video/")) {
+                for (const attachment of this.attachments) {
+                    if (code.includes(attachment["src"])) {
+                        await this._selectAttachment(attachment, false);
+                    }
+                }
+                if (!(this.selectedAttachments.length)) {
+                    // /web/video URL provided but no such resource in attachments
+                    this.$('#o_video_text').val("");
+                    await this._updateVideo();
+                }
+            } else {
+                this._showURL();
+                this.$(".o_video_user_upload").hide();
+                // Detect if we have an embed code rather than an URL
+                const embedMatch = code.match(/(src|href)=["']?([^"']+)?/);
+                if (embedMatch && embedMatch[2].length > 0 && embedMatch[2].indexOf('instagram')) {
+                    embedMatch[1] = embedMatch[2]; // Instagram embed code is different
+                }
+                const url = embedMatch ? embedMatch[1] : code;
+
+                query = await this._createVideoNode(url, {
+                    'autoplay': this.isForBgVideo || this.$('input#o_video_autoplay').is(':checked'),
+                    'hide_controls': this.isForBgVideo || this.$('input#o_video_hide_controls').is(':checked'),
+                    'loop': this.isForBgVideo || this.$('input#o_video_loop').is(':checked'),
+                    'hide_fullscreen': this.isForBgVideo || this.$('input#o_video_hide_fullscreen').is(':checked'),
+                    'hide_yt_logo': this.isForBgVideo || this.$('input#o_video_hide_yt_logo').is(':checked'),
+                    'hide_dm_logo': this.isForBgVideo || this.$('input#o_video_hide_dm_logo').is(':checked'),
+                    'hide_dm_share': this.isForBgVideo || this.$('input#o_video_hide_dm_share').is(':checked'),
+                });
+            }
+        }
+        if (!query) {
             return;
         }
-
-        // Detect if we have an embed code rather than an URL
-        var embedMatch = code.match(/(src|href)=["']?([^"']+)?/);
-        if (embedMatch && embedMatch[2].length > 0 && embedMatch[2].indexOf('instagram')) {
-            embedMatch[1] = embedMatch[2]; // Instagram embed code is different
-        }
-        var url = embedMatch ? embedMatch[1] : code;
-
-        const query = await this._createVideoNode(url, {
-            'autoplay': this.isForBgVideo || this.$('input#o_video_autoplay').is(':checked'),
-            'hide_controls': this.isForBgVideo || this.$('input#o_video_hide_controls').is(':checked'),
-            'loop': this.isForBgVideo || this.$('input#o_video_loop').is(':checked'),
-            'hide_fullscreen': this.isForBgVideo || this.$('input#o_video_hide_fullscreen').is(':checked'),
-            'hide_yt_logo': this.isForBgVideo || this.$('input#o_video_hide_yt_logo').is(':checked'),
-            'hide_dm_logo': this.isForBgVideo || this.$('input#o_video_hide_dm_logo').is(':checked'),
-            'hide_dm_share': this.isForBgVideo || this.$('input#o_video_hide_dm_share').is(':checked'),
-        });
-
-        var $optBox = this.$('.o_video_dialog_options');
-
+        const $optBox = this.$('.o_video_dialog_options');
         // Show / Hide preview elements
         this.$el.find('.o_video_dialog_preview_text, .media_iframe_video_size').add($optBox).toggleClass('d-none', !query.$video);
         // Toggle validation classes
@@ -1411,8 +1546,7 @@ var VideoWidget = MediaWidget.extend({
             // and 'youtube logo' options too
             this.$('input#o_video_hide_fullscreen, input#o_video_hide_yt_logo').closest('div').toggleClass('d-none', this.$('input#o_video_hide_controls').is(':checked'));
         }
-
-        var $content = query.$video;
+        let $content = query.$video;
         if (!$content) {
             switch (query.errorCode) {
                 case 0:

@@ -488,6 +488,12 @@ body .modal {
                 min-height: 300px;
             }
 
+            .o_we_video_thumbnail {
+                display: flex;
+                align-items: center;
+                flex-direction: column;
+            }
+
             .o_we_images > .o_existing_attachment_cell .o_we_media_dialog_img_wrapper {
                 @extend %o-preview-alpha-background;
 

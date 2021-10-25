@@ -148,6 +148,15 @@ class Http(models.AbstractModel):
             status, headers, image_base64, model=model, field=field, download=download,
             width=width, height=height, crop=crop, quality=quality)
 
+
+    @api.model
+    def _content_video(self, res_id=None, filename_field='name', unique=None, filename=None, mimetype="video/mp4", download=None,
+                       access_token=None, **kwargs):
+        status, headers, video_base64 = self.binary_content(id=res_id, unique=unique, filename=filename,
+                                                            filename_field=filename_field, download=download, mimetype=mimetype,
+                                                            default_mimetype='video/mp4', access_token=access_token)
+        return self._content_video_get_response(status, headers, video_base64, download=download)
+
     @api.model
     def _content_image_get_response(self, status, headers, image_base64, model='ir.attachment',
             field='datas', download=None, width=0, height=0, crop=False, quality=0):
@@ -176,6 +185,24 @@ class Http(models.AbstractModel):
         return response
 
     @api.model
+    def _content_video_get_response(self, status, headers, video_base64, download=None):
+        if status in [301, 304] or (status != 200 and download):
+            return self._response_by_status(status, headers, video_base64)
+        placeholder_content = None
+        if not video_base64:
+            # Show placeholder video if video should've 404'd
+            placeholder_content = self._video_placeholder()
+            status = 200
+            placeholder_content = base64.b64encode(placeholder_content)
+            placeholder_content = image_process(placeholder_content)
+
+        content = base64.b64decode(video_base64 or placeholder_content)
+        headers = http.set_safe_video_headers(headers, content)
+        response = request.make_response(content, headers)
+        response.status_code = status
+        return response
+
+    @api.model
     def _placeholder_image_get_response(self, placeholder_base64):
         content = base64.b64decode(placeholder_base64)
         headers = http.set_safe_image_headers([], content)
@@ -188,4 +215,9 @@ class Http(models.AbstractModel):
         if not image:
             image = 'web/static/img/placeholder.png'
         with file_open(image, 'rb', filter_ext=('.png', '.jpg')) as fd:
+            return fd.read()
+
+    @api.model
+    def _video_placeholder(self):
+        with file_open('web/static/video/placeholder.mp4', 'rb', filter_ext=('.mp4')) as fd:
             return fd.read()
