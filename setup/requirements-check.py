@@ -188,11 +188,6 @@ def check_distros(args):
         + [f'{checker._release} ({version})' for checker, version in zip(checkers, pyvers)]
     ]
 
-    ## table looks like [['', 'req 3.9', 'bullseye (3.9)']] for debian:bullseye
-
-    # reqs = parse_requirements((Path.cwd() / __file__).parent.parent / 'requirements.txt')
-
-    #############
     with ((Path.cwd() / __file__).parent.parent / 'requirements.txt').open() as req_file:
         reqs = [r for r in pkg_resources.parse_requirements(req_file)]
 
