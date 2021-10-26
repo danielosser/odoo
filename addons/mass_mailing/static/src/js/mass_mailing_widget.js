@@ -229,16 +229,16 @@ var MassMailingFieldHtml = FieldHtml.extend({
                 return;
             }
 
-            var file = m[1];
-            var img_info = themeParams.get_image_info(file);
+            if (themeParams.get_image_info) {
+                const file = m[1];
+                const imgInfo = themeParams.get_image_info(file);
 
-            if (img_info.format) {
-                src = "/" + img_info.module + "/static/src/img/theme_" + themeParams.name + "/s_default_image_" + file + "." + img_info.format;
-            } else {
-                src = "/web/image/" + img_info.module + ".s_default_image_theme_" + themeParams.name + "_" + file;
+                const src = imgInfo.format
+                    ? `/${imgInfo.module}/static/src/img/theme_${file}.${imgInfo.format}`
+                    : `/web/image/${imgInfo.module}.s_default_image_theme_${themeParams.name}_${file}`;
+
+                $img.attr('src', src);
             }
-
-            $img.attr("src", src);
         });
         $container.find('.o_mail_block_cover .oe_img_bg').each(function () {
             $(this).css('background-image', `url('/mass_mailing_themes/static/src/img/theme_${themeParams.name}/s_default_image_block_banner.jpg')`);
@@ -370,7 +370,7 @@ var MassMailingFieldHtml = FieldHtml.extend({
      * @private
      * @param {OdooEvent} ev
      */
-    _onSnippetsLoaded: function (ev) {
+    _onSnippetsLoaded: async function (ev) {
         var self = this;
         if (this.wysiwyg.snippetsMenu && $(window.top.document).find('.o_mass_mailing_form_full_width')[0]) {
             // In full width form mode, ensure the snippets menu's scrollable is
@@ -442,6 +442,21 @@ var MassMailingFieldHtml = FieldHtml.extend({
         });
         $themes.parent().remove();
 
+        const result = await this._rpc({
+            model: 'mailing.mailing',
+            method: 'get_last_used_templates',
+        });
+
+        // Templates taken from old mailings
+        const templatesParams = result.map(values => {
+            return {
+                name: `template_${values.id}`,
+                template: values.body_arch,
+                bodyHtml: values.body_html,
+                nowrap: true,
+            };
+        });
+
         /**
          * Create theme selection screen and check if it must be forced opened.
          * Reforce it opened if the last snippet is removed.
@@ -450,7 +465,8 @@ var MassMailingFieldHtml = FieldHtml.extend({
             themes: themesParams
         }));
         const $themeSelectorNew = $(core.qweb.render("mass_mailing.theme_selector_new", {
-            themes: themesParams
+            themes: themesParams,
+            templates: templatesParams,
         }));
 
 
@@ -503,10 +519,7 @@ var MassMailingFieldHtml = FieldHtml.extend({
             }
         });
 
-        const selectTheme = (e) => {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            const themeParams = themesParams[$(e.currentTarget).index()];
+        const selectTheme = (themeParams) => {
             self._switchImages(themeParams, $snippets);
 
             selectedTheme = themeParams;
@@ -516,11 +529,23 @@ var MassMailingFieldHtml = FieldHtml.extend({
             $themeSelector.find('.dropdown-item:eq(' + themesParams.indexOf(selectedTheme) + ')').addClass('selected');
         };
 
-        $themeSelector.on("click", ".dropdown-item", selectTheme);
-        $themeSelectorNew.on("click", ".dropdown-item", async (e) => {
+        $themeSelector.on('click', '.dropdown-item', (e) => {
             e.preventDefault();
             e.stopImmediatePropagation();
             const themeParams = themesParams[$(e.currentTarget).index()];
+            selectTheme(themeParams);
+        });
+        $themeSelectorNew.on('click', '.dropdown-item', async (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            const themeName = $(e.currentTarget).attr('id');
+
+            let themeParams = themesParams.find(theme => theme.name === themeName);
+            if (!themeParams) {
+                // search a template instead of a theme
+                themeParams = templatesParams.find(template => template.name === themeName);
+            }
 
             if (themeParams.name === "basic") {
                 await this._restartWysiwygIntance(false);
@@ -534,7 +559,7 @@ var MassMailingFieldHtml = FieldHtml.extend({
                 $snippets_menu.empty();
             }
 
-            selectTheme(e);
+            selectTheme(themeParams);
             // Wait the next tick because some mutation have to be processed by
             // the Odoo editor before resetting the history.
             setTimeout(() => {

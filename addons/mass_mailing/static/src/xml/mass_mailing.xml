@@ -8,6 +8,19 @@
         </t>
     </div>
     <div t-name="mass_mailing.theme_selector_new" class="o_mail_theme_selector_new">
+        <h2 t-if="templates.length" class="text-primary px-5 pt-4 w-100 d-inline-block">
+            Recently Used
+        </h2>
+        <t t-foreach="templates" t-as="template">
+            <a t-att-id="template.name" role="menuitem" href="#"
+                class="dropdown-item o_mail_template_preview">
+                <iframe t-att-srcdoc="template.bodyHtml" class="bg-white" scrolling="no"
+                    loading="lazy" referrerpolicy="no-referrer" sandbox=""/>
+            </a>
+        </t>
+        <h2 t-if="templates.length" class="text-primary px-5 py-4 w-100 d-inline-block">
+            Standard Templates
+        </h2>
         <t t-foreach="themes" t-as="theme">
             <a t-att-id="theme.name" role="menuitem" href="#" class="dropdown-item">
                 <div class="o_thumb small"  t-attf-style="background-image: url(#{theme.img}_small.png)"/>

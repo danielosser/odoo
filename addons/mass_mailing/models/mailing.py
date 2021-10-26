@@ -3,6 +3,7 @@
 
 import hashlib
 import hmac
+import itertools
 import logging
 import lxml
 import random
@@ -581,6 +582,33 @@ class MassMailing(models.Model):
                 record_lists = opt_out_records.filtered(lambda rec: rec.contact_id.id == record.id)
                 if len(record_lists) > 0:
                     record.sudo().message_post(body=message % ', '.join(str(list.name) for list in record_lists.mapped('list_id')))
+
+    @api.model
+    def get_last_used_templates(self):
+        """Return the 8 last non-empty templates of the mailings sent."""
+        mailings = self.search(
+            [
+                ('body_html', '!=', False),
+                ('body_arch', '!=', False),
+                ('state', '=', 'done'),
+            ],
+            order='create_date DESC, id DESC',
+        )
+
+        # Do not use "filtered" to not iterate on the entire recordset
+        mailings = itertools.islice(
+            (mailing
+             for mailing in mailings
+             if not tools.is_html_empty(mailing.body_arch)
+                and not tools.is_html_empty(mailing.body_html)),
+            8,
+        )
+
+        return [{
+            'id': mailing.id,
+            'body_arch': mailing.body_arch,
+            'body_html': mailing.body_html,
+        } for mailing in mailings]
 
     # ------------------------------------------------------
     # A/B Test

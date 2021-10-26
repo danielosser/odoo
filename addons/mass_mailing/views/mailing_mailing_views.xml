@@ -64,6 +64,8 @@
                             confirm="This will send the email to all recipients. Do you still want to proceed ?"/>
                         <button name="action_schedule" type="object" class="btn-secondary" string="Schedule"
                             attrs="{'invisible': [('state', 'in', ('in_queue',  'sending', 'done'))]}" data-hotkey="x"/>
+                        <button name="action_duplicate" type="object" class="btn-secondary" string="Duplicate"
+                            data-hotkey="d" attrs="{'invisible': [('state', '!=', 'done')]}"/>
                         <button name="action_test" type="object" class="btn-secondary" string="Test" data-hotkey="k"/>
                         <button name="action_cancel" type="object" attrs="{'invisible': [('state', '!=', 'in_queue')]}" class="btn-secondary" string="Cancel" data-hotkey="z"/>
                         <button name="action_retry_failed" type="object" attrs="{'invisible': ['|', ('state', '!=', 'done'), ('failed', '=', 0)]}" class="oe_highlight" string="Retry" data-hotkey="y"/>
