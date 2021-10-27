@@ -2,7 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 from odoo.tools import mute_logger
 from odoo.tools.translate import quote, unquote, xml_translate, html_translate
-from odoo.tests.common import TransactionCase, BaseCase
+from odoo.tests.common import TransactionCase, BaseCase, new_test_user
 from psycopg2 import IntegrityError
 
 
@@ -569,6 +569,27 @@ class TestTranslationWrite(TransactionCase):
             "Did not fallback to source when reset"
         )
 
+    def test_delete_orphan(self):
+        """ One should be able to delete orphan translations. """
+        self.env['res.lang'].load_lang('fr_FR')
+        translation = self.env['ir.translation'].create({
+            'type': 'model',
+            'name': 'res.partner.category,name',
+            'lang': 'fr_FR',
+            'res_id': self.category.id,
+            'src': 'Reblochon',
+            'value': 'Translated Name',
+            'state': 'translated',
+        })
+
+        # delete the record from the database
+        translation.flush()
+        translation.invalidate_cache()
+        self.cr.execute(f"DELETE FROM {self.category._table} WHERE id=%s", [self.category.id])
+
+        # deleting the translation should be possible
+        user = new_test_user(self.env, 'deleter')
+        translation.with_user(user).unlink()
 
     def test_field_selection(self):
         """ Test translations of field selections. """
