@@ -394,6 +394,17 @@ class TestTranslation(TransactionCase):
         ])
         self.assertEqual(translation_fr.src, 'Customers', "Did not set English version as source")
 
+    def test_108_delete_record(self):
+        domain = [
+            ('type', '=', 'model'),
+            ('name', '=like', 'res.partner.category,%'),
+            ('res_id', '=', self.customers.id),
+        ]
+        self.assertTrue(self.env['ir.translation'].search_count(domain))
+        self.customers.unlink()
+        self.assertFalse(self.env['ir.translation'].search_count(domain))
+
+
 class TestTranslationWrite(TransactionCase):
 
     def setUp(self):

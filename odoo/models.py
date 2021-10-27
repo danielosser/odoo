@@ -3383,8 +3383,12 @@ Fields:
             Defaults = self.env['ir.default'].sudo()
             Property = self.env['ir.property'].sudo()
             Attachment = self.env['ir.attachment'].sudo()
+            Translation = self.env['ir.translation'].sudo()
             ir_model_data_unlink = Data
             ir_attachment_unlink = Attachment
+            ir_translation_unlink = Translation
+
+            translated_fnames = [name for name, field in self._fields.items() if field.translate]
 
             # TOFIX: this avoids an infinite loop when trying to recompute a
             # field, which triggers the recomputation of another field using the
@@ -3430,6 +3434,14 @@ Fields:
                 if attachments:
                     ir_attachment_unlink |= attachments.sudo()
 
+                if translated_fnames:
+                    translation_domain = [
+                        ('type', 'in', ('model', 'model_terms')),
+                        ('name', 'in', [f"{self._name},{name}" for name in translated_fnames]),
+                        ('res_id', 'in', sub_ids),
+                    ]
+                    ir_translation_unlink |= Translation.search(translation_domain)
+
             # invalidate the *whole* cache, since the orm does not handle all
             # changes made in the database, like cascading delete!
             self.invalidate_cache()
@@ -3437,6 +3449,8 @@ Fields:
                 ir_model_data_unlink.unlink()
             if ir_attachment_unlink:
                 ir_attachment_unlink.unlink()
+            if ir_translation_unlink:
+                ir_translation_unlink.unlink()
             # DLE P93: flush after the unlink, for recompute fields depending on
             # the modified of the unlink
             self.flush()
