@@ -7,6 +7,7 @@ from odoo.exceptions import ValidationError
 from odoo.tools import mute_logger
 
 from dateutil.relativedelta import relativedelta
+from freezegun import freeze_time
 from functools import reduce
 import json
 import psycopg2
@@ -394,3 +395,17 @@ class TestSequenceMixin(AccountTestInvoicingCommon):
             journal.unlink()
             account.unlink()
             env0.cr.commit()
+
+    @freeze_time('2021-10-01 00:00:00')
+    def test_change_journal_on_first_account_move(self):
+
+        journal = self.env['account.journal'].create({'name': 'awesome journal', 'type': 'sale', 'code': 'INV'})
+
+        invoice = self.env['account.move'].create({
+            "partner_id": self.env['res.partner'].create({"name": "Toto"})
+        })
+
+        with Form(invoice) as move_form:
+            move_form.journal_id = journal
+
+        self.assertEqual(invoice.journal_id, journal)
