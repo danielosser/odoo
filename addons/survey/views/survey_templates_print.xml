@@ -40,8 +40,10 @@
                                             <t t-if="question.is_scored_question and answer_lines">
                                                 <div class="row no-gutters o_survey_scored_question">
                                                     <t t-set="is_question_skipped" t-value="not answer_lines[0]['value_%s' % question.question_type]"/>
-                                                    <t t-set="answer_bg_class" t-value="'bg-success' if answer_lines[0].answer_is_correct else 'bg-danger'"/>
-                                                    <div t-attf-class="'col-12 col-md-6 col-lg-4 rounded pl-4 {{answer_bg_class}} {{'o_survey_question_skipped' if is_question_skipped else ''}}">
+                                                    <t t-set="answer_bg_class" t-if="is_question_skipped" t-value="'bg-warning'"/>
+                                                    <t t-set="answer_bg_class" t-elif="answer_lines[0].answer_is_correct" t-value="'bg-success'"/>
+                                                    <t t-set="answer_bg_class" t-else="" t-value="'bg-danger'"/>
+                                                    <div t-attf-class="'col-12 col-md-6 col-lg-4 rounded pl-4 {{answer_bg_class}}">
                                                         <t t-if="is_question_skipped">
                                                             <input type="text" t-attf-class="form-control font-italic o_survey_question_{{question.question_type}} bg-transparent rounded-0 p-0" name="skipped_answers" value="Skipped"/>
                                                         </t>
