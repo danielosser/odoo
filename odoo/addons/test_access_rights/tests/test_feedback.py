@@ -334,6 +334,8 @@ Contact your administrator to request access if necessary.""" % (self.record.dis
         """
         self.env.ref('base.group_no_one').write({'users': [Command.link(self.user.id)]})
         self.env.ref('base.group_user').write({'users': [Command.link(self.user.id)]})
+        self.record.sudo().company_id = self.env['res.company'].create({'name': 'Brosse Inc.'})
+        self.user.sudo().company_ids = [Command.link(self.record.company_id.id)]
         self._make_rule('rule 0', "[('company_id', '=', user.company_id.id)]", attr='read')
         self._make_rule('rule 1', '[("val", "=", 1)]', global_=True, attr='read')
         with self.assertRaises(AccessError) as ctx:
@@ -342,7 +344,7 @@ Contact your administrator to request access if necessary.""" % (self.record.dis
             ctx.exception.args[0],
             """Due to security restrictions, you are not allowed to access 'Object For Test Access Right' (test_access_right.some_obj) records.
 
-Records: %s (id=%s)
+Records: %s (id=%s, company=%s)
 User: %s (id=%s)
 
 This restriction is due to the following rules:
@@ -351,9 +353,8 @@ This restriction is due to the following rules:
 
 Note: this might be a multi-company issue.
 
-Contact your administrator to request access if necessary.""" % (self.record.display_name, self.record.id, self.user.name, self.user.id)
+Contact your administrator to request access if necessary.""" % (self.record.display_name, self.record.id, self.record.sudo().company_id.display_name, self.user.name, self.user.id)
         )
-
         p = self.env['test_access_right.parent'].create({'obj_id': self.record.id})
         p.flush()
         p.invalidate_cache()
