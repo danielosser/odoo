@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Checks versions from the requirements files, either against a Debian/Ubuntu specific distribution
-or against accessible locally installed versions.
+, against a windows python version or against accessible locally installed versions.
 """
 
 import argparse
@@ -130,6 +130,18 @@ class Ubuntu(Distribution):
 
 
 class Windows(Distribution):
+    """Windows `Distribution` is a special case as it does not provide a Python package.
+    The `get_python_version` method simply returns the python verion chosen in the release
+    at object instanciation.
+
+    e.g.: when release is `amd_64-cp37` it will return '3.7' as python version.
+
+    Also, when searching for a suitable version for a package, the `get_version` method
+    searches on pypi for the latest version of the package that provides a binary wheel that
+    match the platform and the python version or a simple wheel when the package is pure python.
+    :param release: The release param is used to specify the windows architecture and the python version.
+    :type release: str
+    """
 
     def __init__(self, release):
         super().__init__(release)
@@ -161,16 +173,16 @@ def check_distros(args):
     against a release which bundles Python 3.5, checks the 3.5 version of
     requirements.
 
+    Note that for the `windows` distribution, as no python is provided by the
+    dsitribution, it has to be specified iby the user in the release par of the
+    argument.
+    e.g.: `windows:win_amd_64-cp37`, here the `cp37` means python 3.7.
+
     * only shows requirements for which at least one release diverges from the
     matching requirements version
     * empty cells mean that specific release matches its requirement (happens when
     checking multiple releases: one of the other releases may mismatch the its
     requirements necessating showing the row)
-
-    Only handles the subset of requirements files we're currently using:
-    * no version spec or strict equality
-    * no extras
-    * only sys_platform and python_version environment markers
     """
     checkers = [
         Distribution.get(distro)(release)
@@ -201,8 +213,8 @@ def check_distros(args):
         row = [requirement.project_name]
         byver = {}
         for pyver in uniq:
-            environement = {'python_version': pyver, 'sys_platform': 'linux'}
-            if requirement.marker and not requirement.marker.evaluate(environment=environement):
+            environment = {'python_version': pyver, 'sys_platform': 'linux'}
+            if requirement.marker and not requirement.marker.evaluate(environment=environment):
                 continue
             byver[pyver] = requirement.specifier
             row.append(byver.get(pyver) or '')
@@ -220,14 +232,14 @@ def check_distros(args):
             try:
                 check_version = pkg_resources.packaging.version.Version(check_version_string)
             except pkg_resources.packaging.version.InvalidVersion:
-                if check_version not in req_specifier:
                     row.append(check_version_string)
                     mismatch = True
+            else:
+                if check_version not in req_specifier:
+                    mismatch = True
+                    row.append(check_version_string)
                 else:
                     row.append('')
-            else:
-                mismatch = True
-                row.append(check_version_string)
 
         # only show row if one of the items diverges from requirement
         if mismatch:
