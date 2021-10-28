@@ -316,12 +316,6 @@ function factory(dependencies) {
             inverse: 'attachments',
         }),
         checksum: attr(),
-        /**
-         * States on which composer this attachment is currently being created.
-         */
-        composer: many2one('mail.composer', {
-            inverse: 'attachments',
-        }),
         defaultSource: attr({
             compute: '_computeDefaultSource',
         }),
@@ -406,6 +400,9 @@ function factory(dependencies) {
         }),
         messages: many2many('mail.message', {
             inverse: 'attachments',
+        }),
+        pendingMessages: many2many('mail.pending_message', {
+            'inverse': 'attachments',
         }),
         mimetype: attr({
             default: '',

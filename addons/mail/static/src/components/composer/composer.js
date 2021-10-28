@@ -98,7 +98,7 @@ export class Composer extends Component {
         }
         return (
             this.props.hasThreadTyping ||
-            this.composerView.composer.attachments.length > 0 ||
+            this.composerView.composer.pendingMessage.attachments.length > 0 ||
             this.composerView.messageViewInEditing ||
             !this.props.isCompact
         );
