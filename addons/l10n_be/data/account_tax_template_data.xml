@@ -1764,7 +1764,6 @@
                     'factor_percent': 100,
                     'repartition_type': 'base',
                     'plus_report_line_ids': [ref('tax_report_line_82')],
-                    'tag_ids': [ref('account_tag_non_deductible_tax')],
                 }),
 
                 (0,0, {
