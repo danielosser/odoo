@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="account_tag_non_deductible_tax" model="account.account.tag">
+        <field name="name">Non deductible tax</field>
+        <field name="applicability">taxes</field>
+    </record>
+
+</odoo>
