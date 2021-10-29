@@ -155,17 +155,24 @@ class IrModuleModule(models.Model):
                     find = rec.copy_ids.search([('key', '=', rec.key), ('website_id', '=', website.id)])
 
                 if find:
-                    imd = self.env['ir.model.data'].search([('model', '=', find._name), ('res_id', '=', find.id)])
-                    if imd and imd.noupdate:
-                        _logger.info('Noupdate set for %s (%s)' % (find, imd))
-                    else:
-                        # at update, ignore active field
-                        if 'active' in rec_data:
-                            rec_data.pop('active')
-                        if model_name == 'ir.ui.view' and (find.arch_updated or find.arch == rec_data['arch']):
-                            rec_data.pop('arch')
-                        find.update(rec_data)
-                        self._post_copy(rec, find)
+                    # XXX
+                    # There is no flow that leads to 'find' having more than one record.
+                    # However, a user can still make it happen by duplicating an attachment and
+                    # manually setting 'theme_template_id' on it.
+                    # In saas-15.1, a unique constraint over (theme_template_id) and (key, website_id)
+                    # will be introduced, thus ensuring unicity of 'find'.
+                    for copy in find:
+                        imd = self.env['ir.model.data'].search([('model', '=', copy._name), ('res_id', '=', copy.id)])
+                        if imd and imd.noupdate:
+                            _logger.info('Noupdate set for %s (%s)' % (copy, imd))
+                        else:
+                            # at update, ignore active field
+                            if 'active' in rec_data:
+                                rec_data.pop('active')
+                            if model_name == 'ir.ui.view' and (copy.arch_updated or copy.arch == rec_data['arch']):
+                                rec_data.pop('arch')
+                            copy.update(rec_data)
+                            self._post_copy(rec, copy)
                 else:
                     new_rec = self.env[model_name].create(rec_data)
                     self._post_copy(rec, new_rec)
