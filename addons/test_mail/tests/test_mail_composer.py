@@ -295,8 +295,6 @@ class TestComposerInternals(TestMailComposer):
 
             # changing template should update its content
             composer.write({'template_id': self.template.id})
-            # currently onchange necessary
-            composer._onchange_template_id_wrapper()
 
             # values come from template
             if composition_mode == 'comment':
@@ -314,8 +312,6 @@ class TestComposerInternals(TestMailComposer):
 
             # reset template should reset values
             composer.write({'template_id': False})
-            # currently onchange necessary
-            composer._onchange_template_id_wrapper()
 
             # values are reset
             if composition_mode == 'comment':
@@ -325,8 +321,7 @@ class TestComposerInternals(TestMailComposer):
                 # self.assertFalse(composer.mail_server_id.id)
                 self.assertEqual(composer.mail_server_id, self.template.mail_server_id)
             else:
-                # values are reset TDE FIXME: strange for subject
-                self.assertEqual(composer.subject, 'Back to my amazing subject')
+                self.assertFalse(composer.subject)
                 self.assertFalse(composer.body)
                 # TDE FIXME: server id is kept, not sure why
                 # self.assertFalse(composer.mail_server_id.id)
@@ -337,8 +332,6 @@ class TestComposerInternals(TestMailComposer):
             composer = self.env['mail.compose.message'].with_context(ctx).create({
                 'template_id': self.template.id,
             })
-            # currently onchange necessary
-            composer._onchange_template_id_wrapper()
 
             # values come from template
             if composition_mode == 'comment':
@@ -355,8 +348,6 @@ class TestComposerInternals(TestMailComposer):
             composer = self.env['mail.compose.message'].with_context(ctx).create({
                 'template_id': self.template.id,
             })
-            # currently onchange necessary
-            composer._onchange_template_id_wrapper()
 
             # values come from template
             if composition_mode == 'comment':
