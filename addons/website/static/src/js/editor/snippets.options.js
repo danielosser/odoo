@@ -2476,27 +2476,56 @@ options.registry.CoverProperties = options.Class.extend({
     },
 
     //--------------------------------------------------------------------------
-    // Public
+    // Private
     //--------------------------------------------------------------------------
 
     /**
+     * @override
+     */
+    _select: async function (previewMode, widget) {
+        return this._super(...arguments).then(() => {
+            if (!previewMode) {
+                this._updateSavingDataset();
+            }
+        });
+    },
+    /**
+     * Updates the cover properties dataset used for saving.
+     *
      * @private
      */
-    updateUI: async function () {
-        await this._super(...arguments);
-
+    _updateSavingDataset: function () {
         // TODO: `o_record_has_cover` should be handled using model field, not
         // resize_class to avoid all of this.
-        let coverClass = this.$el.find('[data-cover-opt-name="size"] we-button.active').data('selectClass') || '';
+        // Get values from DOM (selected values in options are only available after updateUI)
+        const sizeOptValues = [...this.el.querySelectorAll(
+            '[data-cover-opt-name="size"] we-selection-items we-button'
+        )].map(el => el.dataset.selectClass);
+        let coverClass = [...this.$target[0].classList].filter(
+            value => sizeOptValues.includes(value)
+        ).join(' ');
         const bg = this.$image.css('background-image');
         if (bg && bg !== 'none') {
             coverClass += " o_record_has_cover";
         }
+        const textAlignOptValues = [...this.el.querySelectorAll(
+            '[data-cover-opt-name="text_align"] we-selection-items we-button'
+        )].map(el => el.dataset.selectClass);
+        const textAlignClass = [...this.$target[0].classList].filter(
+            value => textAlignOptValues.includes(value)
+        ).join(' ');
+        const filterEl = this.$target[0].querySelector('.o_record_cover_filter');
+        const filterValue = filterEl && filterEl.style.opacity;
         // Update saving dataset
         this.$target[0].dataset.coverClass = coverClass;
-        this.$target[0].dataset.textAlignClass = this.$el.find('[data-cover-opt-name="text_align"] we-button.active').data('selectClass') || '';
-        this.$target[0].dataset.filterValue = this.$filterValueOpts.filter('.active').data('filterValue') || 0.0;
+        this.$target[0].dataset.textAlignClass = textAlignClass;
+        this.$target[0].dataset.filterValue = filterValue || 0.0;
         const colorPickerWidget = this._requestUserValueWidgets('bg_color_opt')[0];
+        if (!colorPickerWidget) {
+            // Saving without closing the color palette, but the last picked color was already
+            // taken into account.
+            return;
+        }
         // TODO there is probably a better way and this should be refactored to
         // use more standard colorpicker+imagepicker structure
         const ccValue = colorPickerWidget._ccValue;
@@ -2515,11 +2544,6 @@ options.registry.CoverProperties = options.Class.extend({
             isCSSColor ? `background-color: ${colorOrGradient};` :
             isGradient ? `background-color: rgba(0, 0, 0, 0); background-image: ${colorOrGradient};` : '';
     },
-
-    //--------------------------------------------------------------------------
-    // Private
-    //--------------------------------------------------------------------------
-
     /**
      * @override
      */
