@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+
 from markupsafe import Markup
-from odoo import fields, models, _, tools
+from odoo import api, fields, models, _, tools
 
 
 class MassMailing(models.Model):
@@ -56,3 +57,12 @@ class MassMailing(models.Model):
         }
         values['kpi_data'][1]['kpi_name'] = 'lead'
         return values
+
+    @api.model
+    def default_get(self, fields_list):
+        vals = super(MassMailing, self).default_get(fields_list)
+        context = self.env.context
+        if context.get('active_model') == 'crm.lead':
+            vals['mailing_model_id'] = self.env['ir.model']._get(context.get('active_model')).id
+            vals['mailing_domain'] = [('id', 'in', context.get('active_ids'))]
+        return vals
