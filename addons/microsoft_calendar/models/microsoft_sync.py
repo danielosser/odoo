@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+import json
+
 import logging
 from contextlib import contextmanager
 from functools import wraps
 import pytz
 from dateutil.parser import parse
 
-from odoo import api, fields, models, registry, _
+from odoo import api, fields, models, registry
 from odoo.tools import ormcache_context
 from odoo.exceptions import UserError
 from odoo.osv import expression
@@ -68,7 +70,6 @@ class MicrosoftSync(models.AbstractModel):
     active = fields.Boolean(default=True)
 
     def write(self, vals):
-        microsoft_service = MicrosoftCalendarService(self.env['microsoft.service'])
         if 'ms_accross_calendars_event_id' in vals:
             self._from_uids.clear_cache(self)
         synced_fields = self._get_microsoft_synced_fields()
@@ -85,16 +86,12 @@ class MicrosoftSync(models.AbstractModel):
             if record.ms_accross_calendars_event_id:
                 if need_delete:
                     # We need to delete the event. Cancel is not sufficant. Errors may occurs
-                    record._microsoft_delete(
-                        microsoft_service, record._get_organizer(), record.ms_organizer_event_id, timeout=3
-                    )
+                    record._microsoft_delete(record._get_organizer(), record.ms_organizer_event_id, timeout=3)
                 elif fields_to_sync:
                     values = record._microsoft_values(fields_to_sync)
                     if not values:
                         continue
-                    record._microsoft_patch(
-                        microsoft_service, record._get_organizer(), record.ms_organizer_event_id, values, timeout=3
-                    )
+                    record._microsoft_patch(record._get_organizer(), record.ms_organizer_event_id, values, timeout=3)
 
         return result
 
@@ -105,13 +102,14 @@ class MicrosoftSync(models.AbstractModel):
                 vals.update({'need_sync_m': False})
         records = super().create(vals_list)
 
-        microsoft_service = MicrosoftCalendarService(self.env['microsoft.service'])
         records_to_sync = records.filtered(lambda r: r.need_sync_m and r.active)
         for record in records_to_sync:
-            record._microsoft_insert(
-                microsoft_service, record._microsoft_values(self._get_microsoft_synced_fields()), timeout=3
-            )
+            record._microsoft_insert(record._microsoft_values(self._get_microsoft_synced_fields()), timeout=3)
         return records
+
+    @api.model
+    def _get_microsoft_service(self):
+        return MicrosoftCalendarService(self.env['microsoft.service'])
 
     def _get_synced_events(self):
         """
@@ -121,9 +119,8 @@ class MicrosoftSync(models.AbstractModel):
 
     def unlink(self):
         synced = self._get_synced_events()
-        microsoft_service = MicrosoftCalendarService(self.env['microsoft.service'])
         for ev in synced:
-            ev._microsoft_delete(microsoft_service, ev._get_organizer(), ev.ms_organizer_event_id)
+            ev._microsoft_delete(ev._get_organizer(), ev.ms_organizer_event_id)
         return super().unlink()
 
     def _write_from_microsoft(self, microsoft_event, vals):
@@ -140,7 +137,7 @@ class MicrosoftSync(models.AbstractModel):
             return self.browse()
         return self.search([('ms_accross_calendars_event_id', 'in', uids)])
 
-    def _sync_odoo2microsoft(self, microsoft_service: MicrosoftCalendarService):
+    def _sync_odoo2microsoft(self):
         if not self:
             return
         if self._active_name:
@@ -154,19 +151,19 @@ class MicrosoftSync(models.AbstractModel):
         new_records = records_to_sync - updated_records
 
         for record in cancelled_records._get_synced_events():
-            record._microsoft_delete(microsoft_service, record._get_organizer(), record.ms_organizer_event_id)
+            record._microsoft_delete(record._get_organizer(), record.ms_organizer_event_id)
         for record in new_records:
             values = record._microsoft_values(self._get_microsoft_synced_fields())
             if isinstance(values, dict):
-                record._microsoft_insert(microsoft_service, values)
+                record._microsoft_insert(values)
             else:
                 for value in values:
-                    record._microsoft_insert(microsoft_service, value)
+                    record._microsoft_insert(value)
         for record in updated_records.filtered('need_sync_m'):
             values = record._microsoft_values(self._get_microsoft_synced_fields())
             if not values:
                 continue
-            record._microsoft_patch(microsoft_service, record._get_organizer(), record.ms_organizer_event_id, values)
+            record._microsoft_patch(record._get_organizer(), record.ms_organizer_event_id, values)
 
     def _cancel_microsoft(self):
         self.ms_organizer_event_id = False
@@ -338,19 +335,20 @@ class MicrosoftSync(models.AbstractModel):
         return user_id.with_user(user_id)
 
     @after_commit
-    def _microsoft_delete(self, microsoft_service: MicrosoftCalendarService, user_id, event_id, timeout=TIMEOUT):
+    def _microsoft_delete(self, user_id, event_id, timeout=TIMEOUT):
         """
         Once the event has been really removed from the Odoo database, remove it from the Outlook calendar.
 
         Note that all self attributes to use in this method must be provided as method parameters because
         'self' won't exist when this method will be really called due to @after_commit decorator.
         """
+        microsoft_service = self._get_microsoft_service()
         with microsoft_calendar_token(self._impersonate_user(user_id).sudo()) as token:
             if token:
                 microsoft_service.delete(event_id, token=token, timeout=timeout)
 
     @after_commit
-    def _microsoft_patch(self, microsoft_service: MicrosoftCalendarService, user_id, event_id, values, timeout=TIMEOUT):
+    def _microsoft_patch(self, user_id, event_id, values, timeout=TIMEOUT):
         """
         Once the event has been really modified in the Odoo database, modify it in the Outlook calendar.
 
@@ -358,6 +356,7 @@ class MicrosoftSync(models.AbstractModel):
         'self' may have been modified between the call of '_microsoft_patch' and its execution,
         due to @after_commit decorator.
         """
+        microsoft_service = self._get_microsoft_service()
         with microsoft_calendar_token(self._impersonate_user(user_id).sudo()) as token:
             if token:
                 self._ensure_attendees_have_email()
@@ -367,7 +366,7 @@ class MicrosoftSync(models.AbstractModel):
                 })
 
     @after_commit
-    def _microsoft_insert(self, microsoft_service: MicrosoftCalendarService, values, timeout=TIMEOUT):
+    def _microsoft_insert(self, values, timeout=TIMEOUT):
         """
         Once the event has been really added in the Odoo database, add it in the Outlook calendar.
 
@@ -377,6 +376,7 @@ class MicrosoftSync(models.AbstractModel):
         """
         if not values:
             return
+        microsoft_service = self._get_microsoft_service()
         with microsoft_calendar_token(self.env.user.sudo()) as token:
             if token:
                 self._ensure_attendees_have_email()
@@ -387,9 +387,10 @@ class MicrosoftSync(models.AbstractModel):
                     'need_sync_m': False,
                 })
 
-    def _microsoft_attendee_answer(self, microsoft_service: MicrosoftCalendarService, answer, params, timeout=TIMEOUT):
+    def _microsoft_attendee_answer(self, answer, params, timeout=TIMEOUT):
         if not answer:
             return
+        microsoft_service = self._get_microsoft_service()
         with microsoft_calendar_token(self.env.user.sudo()) as token:
             if token:
                 self._ensure_attendees_have_email()
