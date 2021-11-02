@@ -591,7 +591,7 @@ class MailComposer(models.TransientModel):
             multi_mode = False
             res_ids = [res_ids]
 
-        subjects = self._render_field('subject', res_ids, options={"render_safe": True})
+        subjects = self._render_field('subject', res_ids)
         bodies = self._render_field('body', res_ids, post_process=True)
         emails_from = self._render_field('email_from', res_ids)
         replies_to = self._render_field('reply_to', res_ids)
