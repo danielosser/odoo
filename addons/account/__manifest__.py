@@ -78,6 +78,7 @@ You could use this simplified accounting in case you work with an (external) acc
         'wizard/account_tour_upload_bill.xml',
         'wizard/accrued_orders.xml',
         'views/bill_preview_template.xml',
+        'data/account_reports_data.xml',
     ],
     'demo': [
         'demo/account_demo.xml',

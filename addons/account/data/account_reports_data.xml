@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="generic_tax_report" model="account.report">
+            <field name="name">Generic Tax report</field>
+            <field name="filter_multi_company" eval="True"/>
+            <!--TODO OCO fiscal_position à voir-->
+        </record>
+
+    </data>
+</odoo>
