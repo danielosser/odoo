@@ -533,7 +533,8 @@ class MailComposer(models.TransientModel):
         elif template_id:
             values = self.generate_email_for_composer(
                 template_id, [res_id],
-                ['subject', 'body_html', 'email_from', 'email_to', 'partner_to', 'email_cc',  'reply_to', 'attachment_ids', 'mail_server_id']
+                ['subject', 'body_html', 'email_from', 'email_to', 'partner_to', 'email_cc',  'reply_to',
+                 'attachments', 'attachment_ids', 'mail_server_id']
             )[res_id]
             # transform attachments into attachment_ids; not attached to the document because this will
             # be done further in the posting process, allowing to clean database if email not send
@@ -551,8 +552,18 @@ class MailComposer(models.TransientModel):
             if values.get('attachment_ids', []) or attachment_ids:
                 values['attachment_ids'] = [Command.set(values.get('attachment_ids', []) + attachment_ids)]
         else:
-            default_values = self.with_context(default_composition_mode=composition_mode, default_model=model, default_res_id=res_id).default_get(['composition_mode', 'model', 'res_id', 'parent_id', 'partner_ids', 'subject', 'body', 'email_from', 'reply_to', 'attachment_ids', 'mail_server_id'])
-            values = dict((key, default_values[key]) for key in ['subject', 'body', 'partner_ids', 'email_from', 'reply_to', 'attachment_ids', 'mail_server_id'] if key in default_values)
+            default_values = self.with_context(
+                default_composition_mode=composition_mode,
+                default_model=model,
+                default_res_id=res_id
+            ).default_get(['composition_mode', 'model', 'res_id', 'parent_id',
+                           'partner_ids', 'subject', 'body', 'email_from',
+                           'reply_to', 'attachment_ids', 'mail_server_id'
+                          ])
+            values = dict((key, default_values[key]) for key in [
+                'subject', 'body', 'partner_ids', 'email_from', 'reply_to',
+                'attachment_ids', 'mail_server_id'
+            ] if key in default_values)
 
         if values.get('body_html'):
             values['body'] = values.pop('body_html')
@@ -610,7 +621,7 @@ class MailComposer(models.TransientModel):
         if self.template_id:
             template_values = self.generate_email_for_composer(
                 self.template_id.id, res_ids,
-                ['email_to', 'partner_to', 'email_cc', 'attachment_ids', 'mail_server_id'])
+                ['email_to', 'partner_to', 'email_cc', 'attachments', 'attachment_ids', 'mail_server_id'])
         else:
             template_values = {}
 

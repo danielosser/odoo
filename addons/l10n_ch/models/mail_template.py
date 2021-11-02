@@ -17,7 +17,10 @@ class MailTemplate(models.Model):
         the mail will only contain the invoice (as defined in the mother method).
         """
         result = super(MailTemplate, self).generate_email(res_ids, fields)
+
         if self.model != 'account.move':
+            return result
+        if 'attachments' not in fields or 'attachment_ids' not in fields:
             return result
 
         multi_mode = True

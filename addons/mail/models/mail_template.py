@@ -174,7 +174,11 @@ class MailTemplate(models.Model):
 
         results = dict()
         for lang, (template, template_res_ids) in self._classify_per_lang(res_ids).items():
-            for field in fields:
+            fields_torender = [
+                field for field in fields
+                if field not in ['attachments', 'attachment_ids', 'auto_delete', 'mail_server_id', 'model', 'res_id']
+            ]
+            for field in fields_torender:
                 generated_field_values = template._render_field(
                     field, template_res_ids,
                     post_process=(field == 'body_html')
@@ -190,16 +194,19 @@ class MailTemplate(models.Model):
                 if values.get('body_html'):
                     values['body'] = tools.html_sanitize(values['body_html'])
                 # technical settings
-                values.update(
-                    mail_server_id=template.mail_server_id.id or False,
-                    auto_delete=template.auto_delete,
-                    model=template.model,
-                    res_id=res_id or False,
-                    attachment_ids=[attach.id for attach in template.attachment_ids],
-                )
+                if 'attachments' in fields or 'attachment_ids' in fields:
+                    values['attachment_ids'] = [attach.id for attach in template.attachment_ids]
+                if 'auto_delete' in fields:
+                    values['auto_delete'] = template.auto_delete
+                if 'mail_server_id' in fields:
+                    values['mail_server_id'] = template.mail_server_id.id
+                if 'model' in fields:
+                    values['model'] = template.model
+                if 'res_id' in fields:
+                    values['res_id'] = res_id or False
 
             # Add report in attachments: generate once for all template_res_ids
-            if template.report_template:
+            if ('attachments' in fields or 'attachment_ids' in fields) and template.report_template:
                 for res_id in template_res_ids:
                     attachments = []
                     report_name = template._render_field('report_name', [res_id])[res_id]
@@ -255,7 +262,12 @@ class MailTemplate(models.Model):
         Attachment = self.env['ir.attachment']  # TDE FIXME: should remove default_type from context
 
         # create a mail_mail based on values, without attachments
-        values = self.generate_email(res_id, ['subject', 'body_html', 'email_from', 'email_to', 'partner_to', 'email_cc', 'reply_to', 'scheduled_date'])
+        values = self.generate_email(
+            res_id, ['subject', 'body_html',
+                     'email_from', 'email_to', 'partner_to', 'email_cc', 'reply_to',
+                     'auto_delete', 'mail_server_id', 'scheduled_date',
+                     'model', 'res_id',
+                     'attachments', 'attachment_ids'])
         values['recipient_ids'] = [Command.link(pid) for pid in values.get('partner_ids', list())]
         values['attachment_ids'] = [Command.link(aid) for aid in values.get('attachment_ids', list())]
         values.update(email_values or {})
