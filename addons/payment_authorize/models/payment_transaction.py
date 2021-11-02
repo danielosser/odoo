@@ -95,18 +95,39 @@ class PaymentTransaction(models.Model):
                 create_refund_transaction=create_refund_transaction,
             )
 
+        authorize_API = AuthorizeAPI(self.acquirer_id)
+        tx_details = authorize_API.get_transaction_details(self.acquirer_reference)
+
+        # Avoid creating tx for validation operations.
+        create_refund_transaction = (tx_details and (not tx_details.get('err_code'))
+                                     and self.operation != 'validation')
+
         refund_tx = super()._send_refund_request(
-            amount_to_refund=amount_to_refund, create_refund_transaction=False
+            amount_to_refund=amount_to_refund, create_refund_transaction=create_refund_transaction
         )
 
-        authorize_API = AuthorizeAPI(self.acquirer_id)
-        rounded_amount = round(self.amount, self.currency_id.decimal_places)
-        res_content = authorize_API.refund(self.acquirer_reference, rounded_amount)
+        if tx_details and tx_details.get('err_code'):
+            # In the case of an error a 'res_content' must be passed back to the
+            # '_handle_feedback_data' anyways.
+            res_content = {
+                'x_response_code': AuthorizeAPI.AUTH_ERROR_STATUS,
+                'x_response_reason_text': tx_details.get('err_msg')
+            }
+        elif (tx_details.get('transaction', {}).get('transactionStatus')
+              in ['capturedPendingSettlement', 'authorizedPendingCapture']):
+            # For Authorize captured transactions are not automatically debited.
+            # Transactions with status in 'captured, pending settlement' and 'authorised,
+            # pending capture' are voided if a refund is asked, as the credit was not moved
+            # yet.
+            res_content = authorize_API.void(self.acquirer_reference)
+        else:
+            # If the transaction has been settled on the Authorize side then an actual
+            # refund can be made.
+            rounded_amount = round(amount_to_refund, self.currency_id.decimal_places)
+            res_content = authorize_API.refund(self.acquirer_reference, rounded_amount)
+
         _logger.info("refund request response:\n%s", pprint.pformat(res_content))
-        # As the API has no redirection flow, we always know the reference of the transaction.
-        # Still, we prefer to simulate the matching of the transaction by crafting dummy feedback
-        # data in order to go through the centralized `_handle_feedback_data` method.
-        feedback_data = {'reference': self.reference, 'response': res_content}
+        feedback_data = {'reference': refund_tx.reference or self.reference, 'response': res_content}
         self._handle_feedback_data('authorize', feedback_data)
 
         return refund_tx
@@ -205,8 +226,13 @@ class PaymentTransaction(models.Model):
             elif status_type == 'void':
                 if self.operation == 'validation':  # Validation txs are authorized and then voided
                     self._set_done()  # If the refund went through, the validation tx is confirmed
+                elif self.operation == 'refund':  # Refunds can be voided when settlement is pending
+                    self._set_done()  # When voiding confirm
                 else:
                     self._set_canceled()
+            elif status_type == 'refund':
+                if self.operation == 'refund':
+                    self._set_done()
         elif status_code == '2':  # Declined
             self._set_canceled()
         elif status_code == '4':  # Held for Review
