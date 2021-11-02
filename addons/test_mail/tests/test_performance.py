@@ -276,7 +276,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
             #voip module read activity_type during create leading to one less query in enterprise on action_feedback
             category = activity.activity_type_id.category
 
-        with self.assertQueryCount(__system__=17, employee=19):
+        with self.assertQueryCount(__system__=21, employee=23):
             activity.action_feedback(feedback='Zizisse Done !')
 
     @users('__system__', 'employee')
@@ -293,7 +293,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
 
         record.write({'name': 'Dupe write'})
 
-        with self.assertQueryCount(__system__=18, employee=21):
+        with self.assertQueryCount(__system__=22, employee=25):
             record.action_close('Dupe feedback')
 
         self.assertEqual(record.activity_ids, self.env['mail.activity'])
@@ -336,7 +336,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
         self._create_test_records()
         test_record = self.env['mail.test.ticket'].browse(self.test_record_full.id)
         customer_id = self.customer.id
-        with self.assertQueryCount(__system__=2, employee=2):
+        with self.assertQueryCount(__system__=4, employee=4):
             composer = self.env['mail.compose.message'].with_context({
                 'default_composition_mode': 'comment',
                 'default_model': test_record._name,
@@ -346,7 +346,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
                 'partner_ids': [(4, customer_id)],
             })
 
-        with self.assertQueryCount(__system__=32, employee=38):
+        with self.assertQueryCount(__system__=33, employee=39):
             composer._action_send_mail()
 
     @users('__system__', 'employee')
@@ -357,7 +357,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
         test_record = self.env['mail.test.ticket'].browse(self.test_record_full.id)
         customer = self.env['res.partner'].browse(self.customer.ids)
         attachments = self.env['ir.attachment'].with_user(self.env.user).create(self.attachments_vals)
-        with self.assertQueryCount(__system__=3, employee=3):
+        with self.assertQueryCount(__system__=5, employee=5):
             composer = self.env['mail.compose.message'].with_context({
                 'default_composition_mode': 'comment',
                 'default_model': test_record._name,
@@ -368,7 +368,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
                 'partner_ids': [(4, customer.id)],
             })
 
-        with self.assertQueryCount(__system__=35, employee=43):
+        with self.assertQueryCount(__system__=36, employee=44):
             composer._action_send_mail()
 
     @users('__system__', 'employee')
@@ -379,7 +379,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
         test_record = self.env['mail.test.ticket'].browse(self.test_record_full.id)
         customer = self.env['res.partner'].browse(self.customer.ids)
         attachments = self.env['ir.attachment'].with_user(self.env.user).create(self.attachments_vals)
-        with self.assertQueryCount(__system__=14, employee=14):
+        with self.assertQueryCount(__system__=17, employee=19):
             composer_form = Form(
                 self.env['mail.compose.message'].with_context({
                     'default_composition_mode': 'comment',
@@ -408,7 +408,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
         self._create_test_records()
         test_record = self.env['mail.test.ticket'].browse(self.test_record_full.id)
         customer_id = self.customer.id
-        with self.assertQueryCount(__system__=2, employee=2):
+        with self.assertQueryCount(__system__=4, employee=4):
             composer = self.env['mail.compose.message'].with_context({
                 'default_composition_mode': 'comment',
                 'default_model': test_record._name,
@@ -419,7 +419,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
                 'partner_ids': [(4, customer_id)],
             })
 
-        with self.assertQueryCount(__system__=25, employee=31):
+        with self.assertQueryCount(__system__=26, employee=32):
             composer._action_send_mail()
 
     @users('__system__', 'employee')
@@ -430,7 +430,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
         self.test_template_full.write({'attachment_ids': [(5, 0)]})
         test_record = self.env['mail.test.ticket'].browse(self.test_record_full.id)
         test_template = self.env['mail.template'].browse(self.test_template_full.id)
-        with self.assertQueryCount(__system__=11, employee=12):
+        with self.assertQueryCount(__system__=13, employee=14):
             composer = self.env['mail.compose.message'].with_context({
                 'default_composition_mode': 'comment',
                 'default_model': test_record._name,
@@ -439,7 +439,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
             }).create({})
             composer._onchange_template_id_wrapper()
 
-        with self.assertQueryCount(__system__=33, employee=39):
+        with self.assertQueryCount(__system__=34, employee=40):
             composer._action_send_mail()
 
         # notifications
@@ -456,7 +456,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
         self._create_test_records()
         test_record = self.env['mail.test.ticket'].browse(self.test_record_full.id)
         test_template = self.env['mail.template'].browse(self.test_template_full.id)
-        with self.assertQueryCount(__system__=12, employee=13):
+        with self.assertQueryCount(__system__=14, employee=15):
             composer = self.env['mail.compose.message'].with_context({
                 'default_composition_mode': 'comment',
                 'default_model': test_record._name,
@@ -465,7 +465,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
             }).create({})
             composer._onchange_template_id_wrapper()
 
-        with self.assertQueryCount(__system__=41, employee=58):
+        with self.assertQueryCount(__system__=42, employee=59):
             composer._action_send_mail()
 
         # notifications
@@ -487,7 +487,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
         test_record = self.env['mail.test.ticket'].browse(self.test_record_full.id)
         test_template = self.env['mail.template'].browse(self.test_template_full.id)
         customer = self.env['res.partner'].browse(self.customer.ids)
-        with self.assertQueryCount(__system__=32, employee=32):
+        with self.assertQueryCount(__system__=33, employee=33):
             composer_form = Form(
                 self.env['mail.compose.message'].with_context({
                     'default_composition_mode': 'comment',
@@ -518,7 +518,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
         test_record = self.env['mail.test.ticket'].browse(self.test_record_full.id)
         test_template = self.env['mail.template'].browse(self.test_template_full.id)
         customer = self.env['res.partner'].browse(self.customer.ids)
-        with self.assertQueryCount(__system__=33, employee=33):
+        with self.assertQueryCount(__system__=34, employee=34):
             composer_form = Form(
                 self.env['mail.compose.message'].with_context({
                     'default_composition_mode': 'comment',
@@ -774,7 +774,7 @@ class TestMailComplexPerformance(BaseMailPerformance):
         record = self.container.with_user(self.env.user)
         template_id = self.env.ref('test_mail.mail_test_container_tpl').id
 
-        with self.assertQueryCount(__system__=72, employee=73):
+        with self.assertQueryCount(__system__=76, employee=77):
             record.message_post_with_template(template_id, message_type='comment', composition_mode='comment')
 
         self.assertEqual(record.message_ids[0].body, '<p>Adding stuff on %s</p>' % record.name)
@@ -956,7 +956,7 @@ class TestMailComplexPerformance(BaseMailPerformance):
         rec1 = rec.with_context(active_test=False)      # to see inactive records
         self.assertEqual(rec1.message_partner_ids, self.partners | self.env.user.partner_id | self.user_portal.partner_id)
 
-        with self.assertQueryCount(__system__=29, employee=30):
+        with self.assertQueryCount(__system__=33, employee=34):
             rec.write({
                 'name': 'Test2',
                 'customer_id': customer_id,
