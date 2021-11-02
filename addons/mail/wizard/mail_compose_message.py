@@ -86,11 +86,9 @@ class MailComposer(models.TransientModel):
     subject = fields.Char('Subject', compute=False)
     body = fields.Html('Contents', render_engine='qweb', compute=False, default='', sanitize_style=True)
     parent_id = fields.Many2one(
-        'mail.message', 'Parent Message', index=True, ondelete='set null',
+        'mail.message', 'Parent Message', ondelete='set null',
         help="Initial thread message.")
-    template_id = fields.Many2one(
-        'mail.template', 'Use template', index=True,
-        domain="[('model', '=', model)]")
+    template_id = fields.Many2one('mail.template', 'Use template', domain="[('model', '=', model)]")
     attachment_ids = fields.Many2many(
         'ir.attachment', 'mail_compose_message_ir_attachments_rel',
         'wizard_id', 'attachment_id', 'Attachments')
@@ -99,15 +97,15 @@ class MailComposer(models.TransientModel):
     # origin
     email_from = fields.Char('From', help="Email address of the sender. This field is set when no matching partner is found and replaces the author_id field in the chatter.")
     author_id = fields.Many2one(
-        'res.partner', 'Author', index=True,
+        'res.partner', 'Author',
         help="Author of the message. If not set, email_from may hold an email address that did not match any partner.")
     # composition
     composition_mode = fields.Selection(selection=[
         ('comment', 'Post on a document'),
         ('mass_mail', 'Email Mass Mailing'),
         ('mass_post', 'Post on Multiple Documents')], string='Composition mode', default='comment')
-    model = fields.Char('Related Document Model', index=True)
-    res_id = fields.Integer('Related Document ID', index=True)
+    model = fields.Char('Related Document Model')
+    res_id = fields.Integer('Related Document ID')
     record_name = fields.Char('Message Record Name', help="Name get of the related document.")
     use_active_domain = fields.Boolean('Use active domain')
     active_domain = fields.Text('Active domain', readonly=True)
@@ -119,11 +117,9 @@ class MailComposer(models.TransientModel):
         help="Message type: email for email message, notification for system "
              "message, comment for other messages such as user replies")
     subtype_id = fields.Many2one(
-        'mail.message.subtype', 'Subtype', ondelete='set null', index=True,
+        'mail.message.subtype', 'Subtype', ondelete='set null',
         default=lambda self: self.env['ir.model.data']._xmlid_to_res_id('mail.mt_comment'))
-    mail_activity_type_id = fields.Many2one(
-        'mail.activity.type', 'Mail Activity Type',
-        index=True, ondelete='set null')
+    mail_activity_type_id = fields.Many2one('mail.activity.type', 'Mail Activity Type', ondelete='set null')
     # destination
     reply_to = fields.Char('Reply To', help='Reply email address. Setting the reply_to bypasses the automatic thread creation.')
     reply_to_force_new = fields.Boolean(
