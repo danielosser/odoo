@@ -54,6 +54,7 @@ This module provides the core of the Odoo Web Client.
             'web/static/src/legacy/xml/graph.xml',
             'web/static/src/legacy/xml/search_panel.xml',
             'web/static/src/legacy/xml/week_days.xml',
+            'web/static/src/legacy/xml/pill.xml',
         ],
         'web.assets_common_minimal': [
             'web/static/lib/es6-promise/es6-promise-polyfill.js',
@@ -183,6 +184,7 @@ This module provides the core of the Odoo Web Client.
             'web/static/src/legacy/js/widgets/ribbon.js',
             'web/static/src/legacy/js/widgets/week_days.js',
             'web/static/src/legacy/js/widgets/signature.js',
+            'web/static/src/legacy/js/widgets/pill.js',
             'web/static/src/legacy/js/widgets/attach_document.js',
             'web/static/src/legacy/js/apps.js',
             'web/static/src/legacy/js/env.js',
