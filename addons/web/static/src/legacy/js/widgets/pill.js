@@ -35,5 +35,5 @@ odoo.define('web.pill', function (require) {
 
     widgetRegistry.add('web_pill', PillWidget);
 
-    return RibbonWidget;
+    return PillWidget;
 });
