@@ -2,6 +2,7 @@ odoo.define("website.tour.edit_megamenu", function (require) {
 "use strict";
 
 const tour = require('web_tour.tour');
+const wTourUtils = require('website.tour_utils');
 
 tour.register('edit_megamenu', {
     test: true,
@@ -40,6 +41,39 @@ tour.register('edit_megamenu', {
     {
         content: "Menu should have a new megamenu item",
         trigger: '#top_menu .nav-item a.o_mega_menu_toggle:contains("Megaaaaa!")',
+        run: function () {}, // it's a check
+    },
+    // Edit a menu item
+    wTourUtils.clickOnEdit(),
+    {
+        content: "Toggles the mega menu.",
+        trigger: '#top_menu .o_mega_menu_toggle',
+        extra_trigger: '#oe_snippets.o_loaded',
+    },
+    {
+        content: "Clicks on the first title item.",
+        trigger: '.o_mega_menu h4',
+    },
+    {
+        content: "Press enter.",
+        trigger: '.o_mega_menu.show h4',
+        run: function (actions) {
+            this.$anchor[0].dispatchEvent(new window.InputEvent('input', {bubbles: true, inputType: 'insertParagraph'}));
+        },
+    },
+    {
+        content: "The menu should still be visible. Edit a menu item.",
+        trigger: '.o_mega_menu.show h4',
+        run: 'text New Menu Item',
+    },
+    ...wTourUtils.clickOnSave(),
+    {
+        content: "Toggles the mega menu.",
+        trigger: '#top_menu .o_mega_menu_toggle',
+    },
+    {
+        content: "The menu item should have been renamed.",
+        trigger: '.o_mega_menu h4:contains("New Menu Item")',
         run: function () {}, // it's a check
     },
 ]);

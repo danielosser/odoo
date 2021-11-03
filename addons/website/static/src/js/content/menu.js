@@ -32,7 +32,7 @@ const BaseAnimatedHeader = animations.Animation.extend({
     start: function () {
         this.$main = this.$el.next('main');
         this.isOverlayHeader = !!this.$el.closest('.o_header_overlay, .o_header_overlay_theme').length;
-        this.$dropdowns = this.$el.find('.dropdown, .dropdown-menu');
+        this.$dropdowns = this.$el.find('.dropdown:not(:has(> .o_mega_menu)), .dropdown-menu:not(.o_mega_menu)');
         this.$navbarCollapses = this.$el.find('.navbar-collapse');
 
         // While scrolling through navbar menus on medium devices, body should not be scrolled with it
