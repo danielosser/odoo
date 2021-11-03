@@ -1289,6 +1289,10 @@ class Application(object):
             server that this application must call in order to send the
             HTTP response status line and the response headers.
         """
+        if environ['REQUEST_METHOD'] == 'GET' and '//' in environ['PATH_INFO']:
+            return werkzeug.utils.redirect(
+                environ['PATH_INFO'].replace('//', '/'), 301)
+
         if odoo.tools.config['proxy_mode'] and environ.get("HTTP_X_FORWARDED_HOST"):
             # The ProxyFix middleware has a side effect of updating the
             # environ, see https://github.com/pallets/werkzeug/pull/2184
