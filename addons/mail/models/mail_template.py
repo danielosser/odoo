@@ -156,6 +156,44 @@ class MailTemplate(models.Model):
             results[res_id]['partner_ids'] = partner_ids
         return results
 
+    def _generate_attachments(self, res_ids, render_fields, render_results=None):
+        self.ensure_one()
+        if render_results is None:
+            render_results = dict()
+
+        for res_id in res_ids:
+            values = render_results.setdefault(res_id, dict())
+
+            # link template attachments directly
+            if 'attachment_ids' in render_fields:
+                values['attachment_ids'] = [attach.id for attach in self.attachment_ids]
+
+            # generate attachments (reports)
+            if 'attachments' in render_fields and self.report_template:
+                report = self.report_template
+
+                if report.report_type in ['qweb-html', 'qweb-pdf']:
+                    result, render_format = report._render_qweb_pdf([res_id])
+                else:
+                    res = report._render([res_id])
+                    if not res:
+                        raise UserError(_('Unsupported report type %s found.', report.report_type))
+                    result, render_format = res
+                # TODO in trunk, change return format to binary to match message_post expected format
+                result = base64.b64encode(result)
+
+                report_name = self._render_field('report_name', [res_id])[res_id]
+                if not report_name:
+                    report_service = report.report_name
+                    report_name = 'report.' + report_service
+                ext = "." + render_format
+                if not report_name.endswith(ext):
+                    report_name += ext
+
+                values['attachments'] = [(report_name, result)]
+
+        return render_results
+
     def generate_email(self, res_ids, fields):
         """Generates an email from the template for given the given model based on
         records given by res_ids.
@@ -194,8 +232,6 @@ class MailTemplate(models.Model):
                 if values.get('body_html'):
                     values['body'] = tools.html_sanitize(values['body_html'])
                 # technical settings
-                if 'attachments' in fields or 'attachment_ids' in fields:
-                    values['attachment_ids'] = [attach.id for attach in template.attachment_ids]
                 if 'auto_delete' in fields:
                     values['auto_delete'] = template.auto_delete
                 if 'mail_server_id' in fields:
@@ -205,31 +241,9 @@ class MailTemplate(models.Model):
                 if 'res_id' in fields:
                     values['res_id'] = res_id or False
 
-            # Add report in attachments: generate once for all template_res_ids
-            if ('attachments' in fields or 'attachment_ids' in fields) and template.report_template:
-                for res_id in template_res_ids:
-                    attachments = []
-                    report_name = template._render_field('report_name', [res_id])[res_id]
-                    report = template.report_template
-                    report_service = report.report_name
-
-                    if report.report_type in ['qweb-html', 'qweb-pdf']:
-                        result, format = report._render_qweb_pdf([res_id])
-                    else:
-                        res = report._render([res_id])
-                        if not res:
-                            raise UserError(_('Unsupported report type %s found.', report.report_type))
-                        result, format = res
-
-                    # TODO in trunk, change return format to binary to match message_post expected format
-                    result = base64.b64encode(result)
-                    if not report_name:
-                        report_name = 'report.' + report_service
-                    ext = "." + format
-                    if not report_name.endswith(ext):
-                        report_name += ext
-                    attachments.append((report_name, result))
-                    results[res_id]['attachments'] = attachments
+            # generate attachments if requested
+            if 'attachments' in fields or 'attachment_ids' in fields:
+                template._generate_attachments(template_res_ids, fields, render_results=results)
 
         return multi_mode and results or results[res_ids[0]]
 
