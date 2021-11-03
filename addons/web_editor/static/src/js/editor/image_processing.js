@@ -213,6 +213,8 @@ async function applyModifications(img, dataOptions = {}) {
         originalSrc,
         glFilter,
         filterOptions,
+        perspective,
+        svgAspectRatio,
     } = data;
     [width, height, resizeWidth] = [width, height, resizeWidth].map(s => parseFloat(s));
     quality = parseInt(quality);
@@ -228,14 +230,30 @@ async function applyModifications(img, dataOptions = {}) {
     // Width
     const result = document.createElement('canvas');
     result.width = resizeWidth || croppedImg.width;
-    result.height = croppedImg.height * result.width / croppedImg.width;
+    result.height = perspective ? result.width / svgAspectRatio : croppedImg.height * result.width / croppedImg.width;
     const ctx = result.getContext('2d');
     ctx.imageSmoothingQuality = "high";
     ctx.mozImageSmoothingEnabled = true;
     ctx.webkitImageSmoothingEnabled = true;
     ctx.msImageSmoothingEnabled = true;
     ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(croppedImg, 0, 0, croppedImg.width, croppedImg.height, 0, 0, result.width, result.height);
+
+    // Perspective 3D
+    if (perspective) {
+        // x, y coordinates of the corners of the image as a percentage
+        // (relative to the width or height of the image) needed to apply
+        // the 3D effect.
+        const points = JSON.parse(perspective);
+        const p = new window.Perspective(ctx, croppedImg);
+        p.draw([
+            [(result.width / 100) * points[0][0], (result.height / 100) * points[0][1]], // Top-left [x, y]
+            [(result.width / 100) * points[1][0], (result.height / 100) * points[1][1]], // Top-right [x, y]
+            [(result.width / 100) * points[2][0], (result.height / 100) * points[2][1]], // bottom-right [x, y]
+            [(result.width / 100) * points[3][0], (result.height / 100) * points[3][1]] // bottom-left [x, y]
+        ]);
+    } else {
+        ctx.drawImage(croppedImg, 0, 0, croppedImg.width, croppedImg.height, 0, 0, result.width, result.height);
+    }
 
     // GL filter
     if (glFilter) {

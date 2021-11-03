@@ -5249,10 +5249,16 @@ registry.ImageTools = ImageHandlerOption.extend({
         const img = this._getImg();
 
         const svg = new DOMParser().parseFromString(svgText, 'image/svg+xml').documentElement;
+        const svgAspectRatio = parseInt(svg.getAttribute('width')) / parseInt(svg.getAttribute('height'));
         // We will store the image in base64 inside the SVG.
         // applyModifications will return a dataURL with the current filters
         // and size options.
-        const imgDataURL = await applyModifications(img, {mimetype: this._getImageMimetype(img)});
+        const options = {
+            mimetype: this._getImageMimetype(img),
+            perspective: svg.dataset.imgPerspective || null,
+            svgAspectRatio: svgAspectRatio,
+        };
+        const imgDataURL = await applyModifications(img, options);
         svg.removeChild(svg.querySelector('#preview'));
         svg.querySelector('image').setAttribute('xlink:href', imgDataURL);
         // Force natural width & height (note: loading the original image is
@@ -5266,7 +5272,6 @@ registry.ImageTools = ImageHandlerOption.extend({
             svg.setAttribute('height', originalImage.naturalHeight);
         } else {
             if (img.dataset.resizeWidth) {
-                const svgAspectRatio = parseInt(svg.getAttribute('width')) / parseInt(svg.getAttribute('height'));
                 const newHeight = parseInt(img.dataset.resizeWidth) / svgAspectRatio;
                 svg.setAttribute('width', img.dataset.resizeWidth);
                 svg.setAttribute('height', newHeight);

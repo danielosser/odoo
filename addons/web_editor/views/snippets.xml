@@ -524,6 +524,7 @@
                         <we-button data-set-img-shape="web_editor/devices/browser_01" data-select-label="Browser n°1"/>
                         <we-button data-set-img-shape="web_editor/devices/browser_02" data-select-label="Browser n°2"/>
                         <we-button data-set-img-shape="web_editor/devices/browser_03" data-select-label="Browser n°3"/>
+                        <we-button data-set-img-shape="web_editor/devices/test_perspective" data-select-label="test"/>
                     </we-select-page>
                 </we-select-pager>
                 <we-button data-set-img-shape="" data-no-preview="true" data-label="None" data-dependencies="shape_img_opt" class="o_we_image_shape_remove fa fa-fw fa-times"/>
