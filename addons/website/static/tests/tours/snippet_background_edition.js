@@ -69,7 +69,7 @@ function checkAndUpdateBackgroundColor({
 
     if (changeType) {
         steps.push(switchTo(changeType));
-        steps.push(wTourUtils.changeOption('ColoredLevelBackground', `.o_we_color_btn[data-color="${change}"]`));
+        steps.push(wTourUtils.changeOption('ColoredLevelBackground', `.o_we_color_btn[data-color="${change}"]`, 'background color', 'top', true));
         steps.push({
             trigger: finalSelector,
             content: "The selected colors have been applied (CC AND (BG or GRADIENT))",
@@ -90,6 +90,11 @@ function updateAndCheckCustomGradient({updateStep, checkGradient}) {
     addCheck(steps, checkGradient, checkGradient !== gradients[0] && gradients[0], 'gradient', true);
     return steps;
 }
+
+const closePalette = {
+    trigger: '.snippet-option-ColoredLevelBackground we-title',
+    content: 'Close palette',
+};
 
 tour.register('snippet_background_edition', {
     test: true,
@@ -182,6 +187,7 @@ wTourUtils.clickOnSnippet(snippets[0]),
 }),
 
 // Now, add an image on top of that color combination + gradient
+closePalette,
 wTourUtils.changeOption('ColoredLevelBackground', '[data-name="bg_image_toggle_opt"]'),
 {
     trigger: '.o_existing_attachment_cell img',
@@ -343,7 +349,7 @@ switchTo('gradient'),
     checkNoBg: 'black-75',
     checkGradient: gradients[1],
 }),
-wTourUtils.changeOption('ColoredLevelBackground', '[data-name="bg_image_toggle_opt"]'),
+wTourUtils.changeOption('ColoredLevelBackground', '[data-name="bg_image_toggle_opt"]', 'image toggle', 'top', true),
 {
     trigger: `.${snippets[0].id}.o_cc.o_cc1[style*="background-image: ${gradients[1]}"]`,
     run: () => null,
