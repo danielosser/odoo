@@ -77,3 +77,6 @@ class AccountAnalyticLine(models.Model):
     _inherit = 'account.analytic.line'
 
     category = fields.Selection(selection_add=[('manufacturing_order', 'Manufacturing Order')])
+
+    def write(self, vals):
+        return super().write(vals)

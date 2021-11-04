@@ -25,9 +25,9 @@ class StockMoveLine(models.Model):
             if float_is_zero(diff, precision_rounding=rounding):
                 continue
             self._create_correction_svl(move, diff)
-        if analytic_move_to_recompute:
-            self.env['stock.move'].browse(
-                analytic_move_to_recompute)._account_analytic_entry_move()
+        # if analytic_move_to_recompute:
+        #     self.env['stock.move'].browse(
+        #         analytic_move_to_recompute)._account_analytic_entry_move()
         return move_lines
 
     def write(self, vals):
@@ -47,14 +47,14 @@ class StockMoveLine(models.Model):
                     continue
                 self._create_correction_svl(move, diff)
         res = super(StockMoveLine, self).write(vals)
-        if analytic_move_to_recompute:
-            self.env['stock.move'].browse(analytic_move_to_recompute)._account_analytic_entry_move()
+        # if analytic_move_to_recompute:
+        #     self.env['stock.move'].browse(analytic_move_to_recompute)._account_analytic_entry_move()
         return res
 
     def unlink(self):
         analytic_move_to_recompute = self.move_id.filtered(lambda m: m.state not in ['draft', 'cancel'])
         res = super().unlink()
-        analytic_move_to_recompute._account_analytic_entry_move()
+        # analytic_move_to_recompute._account_analytic_entry_move()
         return res
 
     # -------------------------------------------------------------------------
