@@ -300,6 +300,37 @@ class TestMailAPIPerformance(BaseMailPerformance):
 
     @users('__system__', 'employee')
     @warmup
+    @mute_logger('odoo.models.unlink')
+    def test_adv_activity_mixin_w_attachments(self):
+        record = self.env['mail.test.activity'].create({'name': 'Test'})
+
+        attachments = self.env['ir.attachment'].create([
+            dict(values,
+                 res_model='mail.activity',
+                 res_id=0)
+            for values in self.attachments_vals
+        ])
+
+        with self.assertQueryCount(__system__=8, employee=8):
+            activity = record.action_start('Test Start')
+            #read activity_type to normalize cache between enterprise and community
+            #voip module read activity_type during create leading to one less query in enterprise on action_close
+            category = activity.activity_type_id.category
+
+        record.write({'name': 'Dupe write'})
+
+        with self.assertQueryCount(__system__=20, employee=24):
+            record.action_close('Dupe feedback', attachment_ids=attachments.ids)
+
+        # notifications
+        message = record.message_ids[0]
+        self.assertEqual(
+            set(message.attachment_ids.mapped('name')),
+            set(['fileText_test2.txt', 'fileText_test1.txt', 'fileText_test0.txt'])
+        )
+
+    @users('__system__', 'employee')
+    @warmup
     @mute_logger('odoo.addons.mail.models.mail_mail', 'odoo.models.unlink', 'odoo.tests')
     def test_mail_composer(self):
         self._create_test_records()
