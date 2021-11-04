@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<record id="tax_vat20" model="account.tax.template">
+    <field name="name">НДС 20%</field>
+
+    <!-- [Required] Set the CoA owning this tax. -->
+    <field name="chart_template_id" ref="l10n_XX_chart_template"/>
+
+    <!-- [Optional] Define a tax group used to display the sums of taxes in the invoices. -->
+    <field name="tax_group_id" ref="tax_group_XXX"/>
+
+    <!-- [Required] Specify the amount.
+    E.g. 7 with fixed amount_type means v + 7 if v is the amount on which the tax is applied.
+     If amount_type is 'percent', the tax amount is v * 0.07. -->
+    <field name="amount" eval="7"/>
+
+    <!-- [Optional] Define the type of amount:
+    * 'percent' for a classic percentage of price (default)
+    * 'division' for percentage of Price Tax Included.
+    * 'fixed' for a tax with a fixed amount,
+    * 'group' for a group of taxes,
+    By default, the type of amount is percentage. -->
+    <field name="amount_type">percent</field>
+
+    <!-- [Optional] Define some children taxes.
+    /!\ Should be used only with an amount_type with 'group' set. -->
+    <field name="children_tax_ids" eval="[(6,0,[ref('tax_XXX'), ref('tax_YYY')])]"/>
+
+    <!-- [Optional] Define the tax's type:
+    * 'sale' (default)
+    * 'purchase'
+    * 'none' - if tax can't be used by itself, but only in a group.
+    -->
+    <field name="type_tax_use">sale</field>
+
+    <!-- [Optional] The sequence field is used to define order in which the tax lines are applied.
+    By default, sequence = 1. -->
+    <field name="sequence" eval="1"/>
+
+    <!-- [Optional] Specify a short text to be displayed on invoices.
+    For example, a tax named "15% on Services" can have the following label on invoice "15%". -->
+    <field name="description">VAT 20%</field>
+
+    <!-- [Optional] Boolean that indicates if the amount should be considered as included in price. False by default.
+    E.g. Suppose v = 132 and a tax amount of 20.
+    If price_include = False, the computed tax amount will be 132 * 0.2 = 26.4.
+    If price_include = True, the computed tax amount will be 132 - (132 / 1.2) = 132 - 110 = 22. -->
+    <field name="price_include" eval="False"/>
+
+    <!-- [Optional] Boolean to set to include the amount to the base. False by default.
+     If True, the subsequent taxes will be computed based on the base tax amount plus the amount of this tax.
+     E.g. suppose v = 100, t1, a tax of 10% and another tax t2 with 20%.
+     If t1 doesn't affects the base,
+     t1 amount = 100 * 0.1 = 10 and t2 amount = 100 * 0.2 = 20.
+     If t1 affects the base,
+     t1 amount = 100 * 0.1 = 10 and t2 amount = 110 * 0.2 = 22.  -->
+    <field name="include_base_amount" eval="False"/>
+
+    <!-- [Optional] Boolean false by default.
+     If set, the amount computed by this tax will be assigned to the same analytic account as the invoice line (if any). -->
+    <field name="analytic" eval="False"/>
+
+    <!-- [Optional] Define the tax exigibility:
+      * 'on_invoice' - based on invoice (default value)
+      * 'on_payment' - based on payment
+    -->
+    <field name="tax_exigibility">on_invoice</field>
+
+    <!-- [Optional] Define a cash basis account in case of tax exigibility 'on_payment'.
+      The account will contain the tax amount as long as the original invoice has not been reconciled;
+      at reconciliation, this amount cancelled on this account and put on the regular tax account
+      -->
+    <field name="cash_basis_transition_account_id" ref="..."/>
+
+    <!-- [Optional] Distribution when the tax is used on an invoice / a refund.
+      Each distribution has following parameters:
+      * `factor_percent` - Factor to apply on the account move lines generated from this distribution line, in percents
+      * `repartition_type` - either 'base' or 'tax'
+      * `account_id` - Account on which to post the tax amount
+      * `plus_report_line_ids` - Tax report lines whose '+' tag will be assigned to move lines by this repartition line
+      * `minus_report_line_ids` - Tax report lines whose '-' tag will be assigned to move lines by this repartition line
+      -->
+    <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+        (0,0, {
+            'factor_percent': 100,
+            'repartition_type': 'base',
+            'plus_report_line_ids': [ref('tax_XXX'), ref('tax_YYY')],
+        }),
+    ]"/>
+    <field name="refund_repartition_line_ids" eval="..."/>
+</record>
+</odoo>
