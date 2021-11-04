@@ -989,7 +989,24 @@ class Request:
         be delivered and that the request ``Content-Type`` was not json.
 
         :param exc Exception: the exception that occured.
+        :return werkzeug.wrapper.Response: an HTTP response.
         """
+        if isinstance(exc, SessionExpiredException):
+            redirect = self.redirect_query('/web/login', {
+                'redirect': (
+                    f'/web/proxy/post{self.httprequest.full_path}'
+                    if self.httprequest.method == 'POST'
+                    else self.httprequest.url
+                ),
+            })
+            redirect.set_cookie('session_id', f'.{self.db}', max_age=SESSION_LIFETIME, httponly=True)
+            return redirect
+
+        return (exc if isinstance(exc, HTTPException)
+           else Forbidden(exc.args[0]) if isinstance(exc, (AccessDenied, AccessError))
+           else BadRequest(exc.args[0]) if isinstance(exc, UserError)
+           else InternalServerError()  # hide the real error
+        )
 
     #------------------------------------------------------
     # JSON-RPC2 Controllers
@@ -1066,7 +1083,25 @@ class Request:
         be delivered and that the request ``Content-Type`` was json.
 
         :param exc Exception: the exception that occured.
+        :return Response: an HTTP response
         """
+        error = {
+            'code': 200,  # this code is the JSON-RPC level code, it is
+                          # distinct from the HTTP status code. This
+                          # code is ignored and the value 200 (while
+                          # misleading) is totally arbitrary.
+            'message': "Odoo Server Error",
+            'data': serialize_exception(exc),
+        }
+        if isinstance(exc, NotFound):
+            error['http_status'] = 404
+            error['code'] = 404
+            error['message'] = "404: Not Found"
+        elif isinstance(exc, SessionExpiredException):
+            error['code'] = 100
+            error['message'] = "Odoo Session Expired"
+
+        return self._json_response(error=error, request_id=getattr(self, 'jsonrequest', {}).get('id'))
 
     #------------------------------------------------------
     # Routing
@@ -1159,7 +1194,20 @@ class Request:
                 threading.current_thread().uid = self.env.uid
                 if 'lang' not in self.env.context:
                     self.update_context(lang=self.default_lang())
-                return service_model.retrying(self._serve_ir_http, self.env)
+
+                try:
+                    return service_model.retrying(self._serve_ir_http, self.env)
+                except Exception as exc:
+                    if isinstance(exc, HTTPException) and exc.code is None:
+                        raise  # bubble up to odoo.http.Application.__call__
+                    if 'werkzeug' in config['dev_mode']:
+                        raise  # bubble up to werkzeug.debug.DebuggedApplication
+
+                    if request.type == 'json':
+                        exc.error_response = self.env['ir.http']._json_handle_error(exc)
+                    else:
+                        exc.error_response = self.env['ir.http']._http_handle_error(exc)
+                    raise
 
     def _serve_ir_http(self):
         """
@@ -1265,18 +1313,54 @@ class Application(object):
         if self.statics is None:
             self.load_statics()
 
-        segments = httprequest.path.split('/')
-        if len(segments) >= 4 and segments[2] == 'static':
-            response = request._serve_static()
-        else:
-            sid, dbname = request._get_session_id()
-            if dbname is None:
-                response = request._serve_nodb()
+        try:
+            segments = httprequest.path.split('/')
+            if len(segments) >= 4 and segments[2] == 'static':
+                response = request._serve_static()
             else:
-                response = request._serve_db(dbname, sid)
+                sid, dbname = request._get_session_id()
+                if dbname is None:
+                    response = request._serve_nodb()
+                else:
+                    response = request._serve_db(dbname, sid)
+            return response(environ, start_response)
 
-        _request_stack.pop()
-        return response(environ, start_response)
+        except Exception as exc:
+            # Valid (2xx/3xx) response returned via werkzeug.exceptions.abort.
+            if isinstance(exc, HTTPException) and exc.code is None:
+                response = exc.get_response()
+                return response(environ, start_response)
+
+            # Logs the error here so the traceback starts with ``__call__``.
+            if isinstance(exc, HTTPException):
+                pass
+            elif isinstance(exc, SessionExpiredException):
+                _logger.info(exc)
+            elif exc.args and exc.args[0] == "bus.Bus not available in test mode":
+                _logger.info(exc)
+            elif isinstance(exc, (UserError, AccessError, NotFound)):
+                _logger.warning(exc)
+            else:
+                _logger.error("Exception during request handling.", exc_info=True)
+
+            # Server is running with --dev=werkzeug, bubble the error up
+            # to werkzeug so he can fire up a debugger.
+            if 'werkzeug' in config['dev_mode']:
+                raise
+
+            # Ensure there is always a Response attached to the exception.
+            if not hasattr(exc, 'error_response'):
+                if request.type == 'json':
+                    exc.error_response = request._json_handle_error(exc)
+                else:
+                    exc.error_response = request._http_handle_error(exc)
+
+            return exc.error_response(environ, start_response)
+
+
+        finally:
+            _request_stack.pop()
+
 
 
 app = application = root = Application()
