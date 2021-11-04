@@ -1853,7 +1853,7 @@ class MailThread(models.AbstractModel):
 
         :return: posted messages
         """
-        render_values, views = self._message_post_with_view_common(views_or_xmlid, values=values)
+        render_values, views = self._message_with_view_common(views_or_xmlid, values=values)
         if not views:
             return
 
@@ -1875,7 +1875,7 @@ class MailThread(models.AbstractModel):
         ir.qweb engine. This method is stand alone because there is nothing in
         template and composer that allows to handle views in batch.
         """
-        render_values, views = self._message_post_with_view_common(views_or_xmlid, values=values)
+        render_values, views = self._message_with_view_common(views_or_xmlid, values=values)
         if not views:
             return
 
@@ -1884,9 +1884,9 @@ class MailThread(models.AbstractModel):
             render_values['object'] = record
             rendered_templates[record.id] = views._render(render_values, engine='ir.qweb', minimal_qcontext=True)
 
-        self._message_log_batch(bodies=rendered_templates, message_type=message_type)
+        return self._message_log_batch(bodies=rendered_templates, message_type=message_type)
 
-    def _message_post_with_view_common(self, views_or_xmlid, values=None):
+    def _message_with_view_common(self, views_or_xmlid, values=None):
         render_values = values if values is not None else dict()
         try:
             from odoo.addons.http_routing.models.ir_http import slug
