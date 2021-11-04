@@ -20,18 +20,39 @@ class AccountReport(models.Model):
     filter_fiscal_position = fields.Boolean(string="Use Foreign VAT Fiscal Positions", default=False) # TODO OCO renommer ce truc serait bien
     #TODO OCO order_selected_column
     strict_date = fields.Boolean(string="Strict Date", default=True) # TODO OCO remplace le strict_range ===> meilleur nom ? Peut-être en inversant le booléen ?
+    # TODO OCO le special_date changer va être chiant avec ça. Genre, très. => On pourrait en mettre un sur le rapport directement qui sert de valeur par défaut à ses lignes ? Et les lignes peuvent spécifier le leur au besoin. (champ calculé éditable sur les lignes)
     # TODO OCO  ajouter un champ default_options ou default_filters ??? Genre avec un dict en str, qui permette de dire par exemple pour le tax report qu'il s'ouvre par défaut sur le mois passé ?
     # TODO OCO attention à la gestion des tax units => le filter_multi_company, en faire un champ sélection ? (3 choix: désactivé, avec le sélecteur ou tax unit)
+    line_ids = fields.One2many(string="Lines", comodel_name='account.report.line', inverse_name='report_id')
 
 
 class AccountReportLine(models.Model):
     _name = 'account.report.line'
+    _order = 'sequence, id'
 
-    # TODO OCO
+    name = fields.Char(string="Name", required=True)
+    """
+    TODO OCO in the future, for columns:
+    cell_opt1: fields.many2One(comodel=formula)
+    cell_opt2: fields.many2One(comodel=formula)
+    cell_opt3 fields.many2One(comodel=formula)
+    TODO OCO+++> pour l'ordre des colonnes, il faudra un truc, alors. Parce que là, si cell_main est tjrs la première, on ne sait pas faire un control domain sur une des opt
+    """
+    main_expression_id = fields.Many2one(string="Main value", comodel_name='account.report.expression', required=True)
+    control_expression_id = fields.Many2one(string="Control Formula", comodel='account.report.expression')
+    report_id = fields.Many2one(string="Parent Report", comodel_name='account.report', required=True)
+    groupby = fields.Char(string="Group By") # TODO OCO la valeur du group by doit être acceptée par le moteur de la formule (en cas de multi colonnes, par les moteurs de chaque formule de la ligne => ce sera marrant ...)
+    #TODO OCO je ne mets pas de notion de ligne parente ? Ca voudrait dire qu'on fait le flatten ici. A voir.
+    sequence = fields.Integer(string="Sequence", required=True)
+
+
+    # TODO OCO ajouter le niveau de hiérarchie
+    # TODO OCO ajouter invisible ?
+    # TODO OCO ajouter la caret_option ici comme un champ, je dirais => sélection ??
 
 
 class AccountReportFormula(models.Model):
-    _name = 'account.report.formula'
+    _name = 'account.report.expression' #TODO OCO ou rebaptiser line.cell pour éviter la confusion avec le champ formula ?
 
     # TODO OCO repasser sur le phrasing
     engine = fields.Selection(
@@ -39,10 +60,12 @@ class AccountReportFormula(models.Model):
         selection = [
             ('accounts_prefix': 'Prefix of accounts'),
             ('odoo_domain': 'Domain ala Odoo'),
-            ('computation': 'Computation based on different lines'), # TODO OCO besoin ? ==> Quid du référencement des colonnes en temps utile ? (pas dans cette tâche) ==> + on doit toujours pouvoir créer des lignes invisible juste pour le calcul, alors, non ?
+            ('computation': 'Computation based on different lines'), # TODO OCO besoin ? ==> Quid du référencement des colonnes en temps utile ? (pas dans cette tâche) ==> + on doit toujours pouvoir créer des lignes invisibles juste pour le calcul, alors, non ?
             ('tax_tags': 'tax tags that could be found on aml'),
+            ('custom': 'Run custom python code'),
         ],
         required=True
     )
 
     formula = fields.Char(string="Formula")
+    date_scope = fields.Char(string="Date Scope") # TODO OCO généralisation du special_date_changer. Il faudra en faire un champ sélection (calculé depuis une valeur par défaut sur le rapport ??) :> ceci est temporaire.
