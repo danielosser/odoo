@@ -17,8 +17,14 @@
                     <t t-if="courses_completed" t-call="website_slides.display_course">
                         <t t-set="courses" t-value="courses_completed"></t>
                     </t>
+                    <div t-elif="request.env.user == user" class="text-muted d-inline-block">
+                        Go through all the content to add a Course to this section. <br />
+                        <a href="/slides/" class="btn">
+                            <i class="fa fa-arrow-right"></i> Start Learning
+                        </a>
+                    </div>
                     <div t-else="" class="text-muted d-inline-block">No completed courses yet!</div>
-                    <div class="text-right d-inline-block pull-right">
+                    <div t-if="request.env.user.id != user.id" class="text-right d-inline-block pull-right">
                         <a href="/slides/all" class="btn btn-link btn-sm"><i class="fa fa-arrow-right mr-1"/>All Courses</a>
                     </div>
                 </div>
@@ -27,6 +33,12 @@
                     <t t-if="courses_ongoing" t-call="website_slides.display_course">
                         <t t-set="courses" t-value="courses_ongoing"></t>
                     </t>
+                    <p t-elif="request.env.user == user" class="text-muted">
+                        All the courses you will be attending will appear here. <br />
+                        <a href="/slides/" class="btn">
+                            <i class="fa fa-arrow-right"></i> Start Learning
+                        </a>
+                    </p>
                     <p t-else="" class="text-muted">No followed courses yet!</p>
                 </div>
             </t>

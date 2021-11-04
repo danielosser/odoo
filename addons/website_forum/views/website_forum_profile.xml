@@ -56,7 +56,17 @@
             <t t-if="forum">
                 <div role="tabpanel" class="o_wforum_profile_tab tab-pane" id="questions">
                     <div class="mb-4">
-                        <h5 class="border-bottom pb-1">
+                        <h5 class="border-bottom pb-1 container">
+                            <t t-if="count_questions > 0">
+                                <t class="float-right" t-call="website.website_search_box_input">
+                                    <t t-set="_form_classes" t-valuef="form-inline float-right"/>
+                                    <t t-set="action" t-value="'/forum/all'"/>
+                                    <input type="hidden" name="author" t-att-value="user.id"/>
+                                    <input t-if="filters" type="hidden" name="filters" t-att-value="filters"/>
+                                    <input t-if="my" type="hidden" name="my" t-att-value="my"/>
+                                    <input t-if="sorting" type="hidden" name="sorting" t-att-value="sorting"/>
+                                </t>
+                            </t>
                             Questions
                             <t t-call="website_forum.forum_filter_tag"/>
                         </h5>
@@ -65,8 +75,16 @@
                                 <t t-call="website_forum.display_post"/>
                             </div>
                         </t>
+                        <t t-elif="request.env.user == user">
+                            <div class="text-muted">
+                                You have not asked any questions yet. <br />
+                                <a href="/forum/" class="btn">
+                                    <i class="fa fa-arrow-right"></i> Go To Forums
+                                </a>
+                            </div>
+                        </t>
                         <t t-else="">
-                            <span class="font-weight-bold">No question posted yet.</span>
+                            <span class="text-muted">No question posted yet.</span>
                         </t>
                     </div>
                     <t t-if="favourite">
@@ -90,7 +108,18 @@
                 </div>
                 <div role="tabpanel" class="o_wforum_profile_tab tab-pane" id="answers">
                     <div class="mb-4">
-                        <h5 class="border-bottom pb-1">
+                        <h5 class="border-bottom pb-1 container">
+                            <t t-if="count_questions > 0">
+                                <t class="float-right" t-call="website.website_search_box_input">
+                                    <t t-set="_form_classes" t-valuef="form-inline float-right"/>
+                                    <t t-set="action">/forum/all</t>
+                                    <input type="hidden" name="author" t-att-value="user.id"/>
+                                    <input t-if="filters" type="hidden" name="filters" t-att-value="filters"/>
+                                    <input t-if="my" type="hidden" name="my" t-att-value="my"/>
+                                    <input t-if="sorting" type="hidden" name="sorting" t-att-value="sorting"/>
+                                    <input type="hidden" name="include_answers" t-att-value="True"/>
+                                </t>
+                            </t>
                             Answers
                             <t t-call="website_forum.forum_filter_tag"/>
                         </h5>
@@ -100,14 +129,34 @@
                                 <t t-call="website_forum.display_post_answer"/>
                             </div>
                         </t>
+                        <t t-elif="request.env.user == user">
+                            <div class="text-muted">
+                                You have not answered any questions yet. <br />
+                                <a href="/forum/" class="btn">
+                                    <i class="fa fa-arrow-right"></i> Go To Forums
+                                </a>
+                            </div>
+                        </t>
                         <t t-else="">
-                            <span class="font-weight-bold">No answer posted yet.</span>
+                            <span class="text-muted">No answer posted yet.</span>
                         </t>
                     </div>
                 </div>
                 <div role="tabpanel" class="o_wforum_profile_tab tab-pane" id="votes" t-if="uid == user.id">
                     <div class="mb-4">
-                        <h5 class="border-bottom pb-1">Votes</h5>
+                        <h5 class="border-bottom pb-1 container">
+                            <t t-if="request.env.user == user">
+                                <t class="float-right" t-call="website.website_search_box_input">
+                                    <t t-set="_form_classes" t-valuef="form-inline float-right"/>
+                                    <t t-set="action">/forum/all</t>
+                                    <input type="hidden" name="my" value="upvoted"/>
+                                    <input t-if="filters" type="hidden" name="filters" t-att-value="filters"/>
+                                    <input t-if="sorting" type="hidden" name="sorting" t-att-value="sorting"/>
+                                    <input type="hidden" name="include_answers" t-att-value="True"/>
+                                </t>
+                            </t>
+                            Votes
+                        </h5>
                         <t t-call="website_forum.user_votes"/>
                     </div>
                 </div>
@@ -161,7 +210,7 @@
 
     <template id="user_votes" name="Forum User Votes">
         <div t-foreach="vote_post" t-as="vote">
-            <t t-esc="vote.post_id.create_date"/>
+            <t t-out="vote.post_id.create_date" t-options='{"widget": "datetime"}'/>
             <span t-if="vote.vote == '1'" class="fa fa-thumbs-up text-success" style="margin-left:30px" role="img" aria-label="Positive vote" title="Positive vote"/>
             <span t-if="vote.vote == '-1'" class="fa fa-thumbs-down text-warning" style="margin-left:30px" role="img" aria-label="Negative vote" title="Negative vote"/>
             <t t-if="vote.post_id.parent_id">
@@ -172,7 +221,13 @@
             </t>
         </div>
         <div class="mb16" t-if="not vote_post">
-            <p class="text-muted">No vote given by you yet!</p>
+            <div t-if="request.env.user == user" class="text-muted">
+                Help moderating the forums by upvoting and downvoting posts. <br />
+                <a href="/forum/" class="btn">
+                    <i class="fa fa-arrow-right"></i> Go To Forums
+                </a>
+            </div>
+            <p t-else="" class="text-muted">No vote given by you yet!</p>
         </div>
     </template>
 </data></odoo>
