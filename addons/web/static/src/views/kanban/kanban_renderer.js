@@ -15,7 +15,7 @@ import { View } from "@web/views/view";
 import { ViewButton } from "@web/views/view_button/view_button";
 
 const { Component, hooks } = owl;
-const { useExternalListener, useState, useSubEnv } = hooks;
+const { useExternalListener, useState } = hooks;
 
 const { RECORD_COLORS } = FieldColorPicker;
 
@@ -36,7 +36,6 @@ export class KanbanRenderer extends Component {
         this.orm = useService("orm");
         this.notification = useService("notification");
         this.colors = RECORD_COLORS;
-        useSubEnv({ model: this.props.list.model });
         useAutofocus();
         useExternalListener(window, "keydown", this.onWindowKeydown);
         useExternalListener(window, "click", this.onWindowClick);
@@ -69,7 +68,7 @@ export class KanbanRenderer extends Component {
                 const refId = previous ? previous.dataset.id : null;
                 const groupId = groupEl.dataset.id;
                 const group = this.props.list.groups.find((g) => g.id === groupId);
-                await this.env.model.moveRecord(dataRecordId, dataListId, refId, groupId);
+                await this.props.list.moveRecord(dataRecordId, dataListId, refId, groupId);
                 if (group.isFolded) {
                     await group.toggle();
                 }
@@ -96,7 +95,7 @@ export class KanbanRenderer extends Component {
     }
 
     get progress() {
-        return this.props.list.model.progress;
+        return this.props.list.progress;
     }
 
     get recordsDraggable() {
@@ -108,7 +107,7 @@ export class KanbanRenderer extends Component {
     }
 
     quickCreate(group) {
-        const [groupByField] = this.props.list.model.root.groupBy;
+        const [groupByField] = this.props.list.groupBy;
         this.state.quickCreate[group.id] = {
             [groupByField]: Array.isArray(group.value) ? group.value[0] : group.value,
         };
@@ -222,10 +221,14 @@ export class KanbanRenderer extends Component {
      * @returns {any[]}
      */
     getGroupsOrRecords() {
-        if (this.props.list.isGrouped) {
-            return this.props.list.groups.sort((a) => (a.value ? 1 : -1));
+        const { list } = this.props;
+        if (list.isGrouped) {
+            return list.groups
+                .sort((a) => (a.value ? 0 : -1))
+                .map((group) => ({ group, key: group.value }));
+        } else {
+            return list.records.map((record) => ({ record, key: record.resId }));
         }
-        return this.props.list.records;
     }
 
     getGroupName({ count, displayName, isFolded }) {
@@ -321,7 +324,7 @@ export class KanbanRenderer extends Component {
     }
 
     loadMore(group) {
-        group.loadMore();
+        group.list.loadMore();
     }
 
     onCardClicked(record, ev) {

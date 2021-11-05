@@ -6,9 +6,10 @@ import { useModel } from "@web/views/helpers/model";
 import { standardViewProps } from "@web/views/helpers/standard_view_props";
 import { useSetupView } from "@web/views/helpers/view_hook";
 import { getActiveActions, processField } from "@web/views/helpers/view_utils";
-import { KanbanModel } from "@web/views/kanban/kanban_model";
+import { KanbanDynamicGroupList } from "@web/views/kanban/kanban_datapoints";
 import { KanbanRenderer } from "@web/views/kanban/kanban_renderer";
 import { Layout } from "@web/views/layout";
+import { RelationalModel } from "@web/views/relational_model";
 import { useViewButtons } from "@web/views/view_button/hook";
 
 const KANBAN_BOX_ATTRIBUTE = "kanban-box";
@@ -253,17 +254,19 @@ class KanbanView extends owl.Component {
     setup() {
         this.archInfo = new KanbanArchParser().parse(this.props.arch, this.props.fields);
         const { resModel, fields } = this.props;
-        const { activeFields, limit, relations, defaultGroupBy } = this.archInfo;
-        this.model = useModel(KanbanModel, {
+        const { activeFields, limit, defaultGroupBy } = this.archInfo;
+        this.model = useModel(RelationalModel, {
             activeFields,
             progress: this.archInfo.progress,
             fields,
-            relations,
             resModel,
             limit,
             defaultGroupBy,
             viewMode: "kanban",
             openGroupsByDefault: true,
+            dataPointClasses: {
+                DynamicGroupList: KanbanDynamicGroupList,
+            },
         });
         useViewButtons(this.model);
         useSetupView({

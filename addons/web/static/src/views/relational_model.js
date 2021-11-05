@@ -82,15 +82,6 @@ class RequestBatcherORM extends ORM {
     }
 }
 
-/**
- * @param {Object} params
- * @param {string[]} params.groupBy
- * @returns typeof DataPoint
- */
-function getDataPointClass(params) {
-    return params.groupBy.length ? DynamicGroupList : DynamicRecordList;
-}
-
 let nextId = 0;
 class DataPoint {
     constructor(model, params) {
@@ -102,7 +93,10 @@ class DataPoint {
         this.activeFields = params.activeFields;
         this.fieldNames = Object.keys(params.activeFields);
         this.context = params.context;
+        this.setup(params);
     }
+
+    setup(/* params */) {}
 
     exportState() {
         return {};
@@ -112,7 +106,7 @@ class DataPoint {
         throw new Error("load must be implemented");
     }
 }
-class Record extends DataPoint {
+export class Record extends DataPoint {
     constructor(model, params) {
         super(model, params);
         this.resId = params.resId;
@@ -154,7 +148,7 @@ class Record extends DataPoint {
                 return;
             }
 
-            const list = new StaticList(this.model, {
+            const list = this.model.createDataPoint("list", {
                 resModel: relation,
                 fields: relatedFields,
                 activeFields: relatedFields,
@@ -259,7 +253,7 @@ class DynamicList extends DataPoint {
     }
 }
 
-class DynamicRecordList extends DynamicList {
+export class DynamicRecordList extends DynamicList {
     constructor(model, params) {
         super(model, params);
 
@@ -307,12 +301,12 @@ class DynamicRecordList extends DynamicList {
 
         return Promise.all(
             records.map(async (data) => {
-                const record = new Record(this.model, {
-                    values: data,
+                const record = this.model.createDataPoint("record", {
+                    resModel: this.resModel,
                     resId: data.id,
+                    values: data,
                     fields: this.fields,
                     activeFields: this.activeFields,
-                    resModel: this.resModel,
                 });
                 await record.loadRelationalData();
                 return record;
@@ -321,7 +315,7 @@ class DynamicRecordList extends DynamicList {
     }
 }
 
-class DynamicGroupList extends DynamicList {
+export class DynamicGroupList extends DynamicList {
     constructor(model, params, state = {}) {
         super(model, params);
 
@@ -430,7 +424,7 @@ class DynamicGroupList extends DynamicList {
 
                 const previousGroup = this.groups.find((g) => g.value === groupParams.value);
                 const state = previousGroup ? previousGroup.exportState() : {};
-                const group = new Group(this.model, groupParams, state);
+                const group = this.model.createDataPoint("group", groupParams, state);
                 await group.load();
                 return group;
             })
@@ -438,7 +432,7 @@ class DynamicGroupList extends DynamicList {
     }
 }
 
-class Group extends DataPoint {
+export class Group extends DataPoint {
     constructor(model, params, state = {}) {
         super(model, params);
 
@@ -464,8 +458,7 @@ class Group extends DataPoint {
             activeFields: params.activeFields,
             fields: params.fields,
         };
-        const ListDataPointClass = getDataPointClass(listParams);
-        this.list = new ListDataPointClass(model, listParams, state.listState);
+        this.list = this.model.createDataPoint("list", listParams, state.listState);
     }
 
     exportState() {
@@ -504,13 +497,13 @@ class StaticList extends DataPoint {
         }
         this.data = await Promise.all(
             this.resIds.map(async (resId) => {
-                const record = new Record(this.model, {
+                const record = this.model.createDataPoint("record", {
                     resModel: this.resModel,
+                    resId,
                     fields: this.fields,
                     activeFields: this.activeFields,
                     viewMode: this.viewMode,
                     views: this.views,
-                    resId,
                 });
                 await record.load();
                 return record;
@@ -524,6 +517,15 @@ export class RelationalModel extends Model {
         this.rpc = rpc;
         this.orm = new RequestBatcherORM(rpc, user);
         this.keepLast = new KeepLast();
+        this._db = {};
+        this._dpClasses = {
+            Group,
+            StaticList,
+            DynamicGroupList,
+            DynamicRecordList,
+            Record,
+            ...params.dataPointClasses,
+        };
 
         this.rootType = params.rootType || "list";
         this.rootParams = {
@@ -562,11 +564,48 @@ export class RelationalModel extends Model {
     async load(params) {
         const rootParams = Object.assign({}, this.rootParams, params);
         const state = this.root ? this.root.exportState() : {};
-        const DataPointClass = this.rootType === "list" ? getDataPointClass(rootParams) : Record;
-        this.root = new DataPointClass(this, rootParams, state);
+        this.root = this.createDataPoint(this.rootType, rootParams, state);
         await this.keepLast.add(this.root.load());
         this.rootParams = rootParams;
         this.notify();
+    }
+
+    createDataPoint(type, params, state) {
+        let DpClass;
+        switch (type) {
+            case "group": {
+                DpClass = this._dpClasses.Group;
+                break;
+            }
+            case "list": {
+                if (params.resIds) {
+                    DpClass = this._dpClasses.StaticList;
+                } else if (params.groupBy.length) {
+                    DpClass = this._dpClasses.DynamicGroupList;
+                } else {
+                    DpClass = this._dpClasses.DynamicRecordList;
+                }
+                break;
+            }
+            case "record": {
+                const record = Object.values(this._db).find(
+                    (dp) => dp.resModel === params.resModel && dp.resId === params.resId
+                );
+                if (record) {
+                    return record;
+                }
+                DpClass = this._dpClasses.Record;
+                break;
+            }
+            default: {
+                throw new Error(`Unimplemented datapoint type: ${type}.`);
+            }
+        }
+        const datapoint = new DpClass(this, params, state);
+        if (type === "record") {
+            this._db[datapoint.id] = datapoint;
+        }
+        return datapoint;
     }
 
     // /**
