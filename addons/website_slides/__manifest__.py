@@ -111,6 +111,7 @@ Featuring
             'website_slides/static/src/js/slides_embed.js',
         ],
         'web.qunit_suite_tests': [
+            'website_slides/static/src/tests/helpers/mock_models.js',
             'website_slides/static/src/components/activity/activity_tests.js',
         ],
         'web.assets_qweb': [

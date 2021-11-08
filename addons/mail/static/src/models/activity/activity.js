@@ -1,7 +1,7 @@
 /** @odoo-module **/
 
 import { registerModel } from '@mail/model/model_core';
-import { attr, many2many, many2one } from '@mail/model/model_field';
+import { attr, many2many, many2one, one2many } from '@mail/model/model_field';
 import { clear, insert, unlink, unlinkAll } from '@mail/model/model_field_command';
 
 registerModel({
@@ -225,6 +225,10 @@ registerModel({
         },
     },
     fields: {
+        activityView: one2many('mail.activity_view', {
+            inverse: 'activity',
+            isCausal: true,
+        }),
         assignee: many2one('mail.user'),
         attachments: many2many('mail.attachment', {
             inverse: 'activities',

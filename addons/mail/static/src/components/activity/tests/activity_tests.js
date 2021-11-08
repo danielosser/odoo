@@ -26,19 +26,14 @@ QUnit.module('activity_tests.js', {
     beforeEach() {
         beforeEach(this);
 
-        this.createActivityComponent = async function (activity) {
-            await createRootMessagingComponent(this, "Activity", {
-                props: { activityLocalId: activity.localId },
-                target: this.widget.el,
-            });
-        };
-
         this.start = async params => {
-            const { env, widget } = await start(Object.assign({}, params, {
-                data: this.data,
-            }));
+            const res = await start({ ...params, data: this.data });
+            const { afterEvent, components, env, widget } = res;
+            this.afterEvent = afterEvent;
+            this.components = components;
             this.env = env;
             this.widget = widget;
+            return res;
         };
     },
     afterEach() {
@@ -49,12 +44,23 @@ QUnit.module('activity_tests.js', {
 QUnit.test('activity simplest layout', async function (assert) {
     assert.expect(12);
 
-    await this.start();
-    const activity = this.messaging.models['mail.activity'].create({
-        id: 12,
-        thread: insert({ id: 42, model: 'res.partner' }),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
     });
-    await this.createActivityComponent(activity);
+    this.data['mail.activity'].records.push({
+        id: 12,
+        res_id: 100,
+        res_model: 'res.partner',
+    });
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -120,13 +126,24 @@ QUnit.test('activity simplest layout', async function (assert) {
 QUnit.test('activity with note layout', async function (assert) {
     assert.expect(3);
 
-    await this.start();
-    const activity = this.messaging.models['mail.activity'].create({
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
+    });
+    this.data['mail.activity'].records.push({
         id: 12,
         note: 'There is no good or bad note',
-        thread: insert({ id: 42, model: 'res.partner' }),
+        res_id: 100,
+        res_model: 'res.partner',
     });
-    await this.createActivityComponent(activity);
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -147,17 +164,29 @@ QUnit.test('activity with note layout', async function (assert) {
 QUnit.test('activity info layout when planned after tomorrow', async function (assert) {
     assert.expect(4);
 
-    await this.start();
     const today = new Date();
     const fiveDaysFromNow = new Date();
     fiveDaysFromNow.setDate(today.getDate() + 5);
-    const activity = this.messaging.models['mail.activity'].create({
-        dateDeadline: date_to_str(fiveDaysFromNow),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
+    });
+    this.data['mail.activity'].records.push({
+        date_deadline: date_to_str(fiveDaysFromNow),
         id: 12,
         state: 'planned',
-        thread: insert({ id: 42, model: 'res.partner' }),
+        note: 'There is no good or bad note',
+        res_id: 100,
+        res_model: 'res.partner',
     });
-    await this.createActivityComponent(activity);
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -182,17 +211,28 @@ QUnit.test('activity info layout when planned after tomorrow', async function (a
 QUnit.test('activity info layout when planned tomorrow', async function (assert) {
     assert.expect(4);
 
-    await this.start();
     const today = new Date();
     const tomorrow = new Date();
     tomorrow.setDate(today.getDate() + 1);
-    const activity = this.messaging.models['mail.activity'].create({
-        dateDeadline: date_to_str(tomorrow),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
+    });
+    this.data['mail.activity'].records.push({
+        date_deadline: date_to_str(tomorrow),
         id: 12,
         state: 'planned',
-        thread: insert({ id: 42, model: 'res.partner' }),
+        res_id: 100,
+        res_model: 'res.partner',
     });
-    await this.createActivityComponent(activity);
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -217,15 +257,25 @@ QUnit.test('activity info layout when planned tomorrow', async function (assert)
 QUnit.test('activity info layout when planned today', async function (assert) {
     assert.expect(4);
 
-    await this.start();
-    const today = new Date();
-    const activity = this.messaging.models['mail.activity'].create({
-        dateDeadline: date_to_str(today),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
+    });
+    this.data['mail.activity'].records.push({
+        date_deadline: date_to_str(new Date()),
         id: 12,
         state: 'today',
-        thread: insert({ id: 42, model: 'res.partner' }),
+        res_id: 100,
+        res_model: 'res.partner',
     });
-    await this.createActivityComponent(activity);
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -250,17 +300,28 @@ QUnit.test('activity info layout when planned today', async function (assert) {
 QUnit.test('activity info layout when planned yesterday', async function (assert) {
     assert.expect(4);
 
-    await this.start();
     const today = new Date();
     const yesterday = new Date();
     yesterday.setDate(today.getDate() - 1);
-    const activity = this.messaging.models['mail.activity'].create({
-        dateDeadline: date_to_str(yesterday),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
+    });
+    this.data['mail.activity'].records.push({
+        date_deadline: date_to_str(yesterday),
         id: 12,
         state: 'overdue',
-        thread: insert({ id: 42, model: 'res.partner' }),
+        res_id: 100,
+        res_model: 'res.partner',
     });
-    await this.createActivityComponent(activity);
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -285,17 +346,28 @@ QUnit.test('activity info layout when planned yesterday', async function (assert
 QUnit.test('activity info layout when planned before yesterday', async function (assert) {
     assert.expect(4);
 
-    await this.start();
     const today = new Date();
     const fiveDaysBeforeNow = new Date();
     fiveDaysBeforeNow.setDate(today.getDate() - 5);
-    const activity = this.messaging.models['mail.activity'].create({
-        dateDeadline: date_to_str(fiveDaysBeforeNow),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
+    });
+    this.data['mail.activity'].records.push({
+        date_deadline: date_to_str(fiveDaysBeforeNow),
         id: 12,
         state: 'overdue',
-        thread: insert({ id: 42, model: 'res.partner' }),
+        res_id: 100,
+        res_model: 'res.partner',
     });
-    await this.createActivityComponent(activity);
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -320,13 +392,24 @@ QUnit.test('activity info layout when planned before yesterday', async function 
 QUnit.test('activity with a summary layout', async function (assert) {
     assert.expect(4);
 
-    await this.start();
-    const activity = this.messaging.models['mail.activity'].create({
-        id: 12,
-        summary: 'test summary',
-        thread: insert({ id: 42, model: 'res.partner' }),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
     });
-    await this.createActivityComponent(activity);
+    this.data['mail.activity'].records.push({
+        summary: 'test summary',
+        id: 12,
+        res_id: 100,
+        res_model: 'res.partner',
+    });
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -352,13 +435,24 @@ QUnit.test('activity with a summary layout', async function (assert) {
 QUnit.test('activity without summary layout', async function (assert) {
     assert.expect(5);
 
-    await this.start();
-    const activity = this.messaging.models['mail.activity'].create({
-        id: 12,
-        thread: insert({ id: 42, model: 'res.partner' }),
-        type: insert({ id: 1, displayName: "Fake type" }),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
     });
-    await this.createActivityComponent(activity);
+    this.data['mail.activity'].records.push({
+        activity_type_id: 1,
+        id: 12,
+        res_id: 100,
+        res_model: 'res.partner',
+    });
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -371,7 +465,7 @@ QUnit.test('activity without summary layout', async function (assert) {
     );
     assert.strictEqual(
         document.querySelector('.o_Activity_type').textContent.trim(),
-        "Fake type",
+        "Email",
         "activity details should have the activity type display name in type section"
     );
     assert.strictEqual(
@@ -389,20 +483,29 @@ QUnit.test('activity without summary layout', async function (assert) {
 QUnit.test('activity details toggle', async function (assert) {
     assert.expect(5);
 
-    await this.start();
     const today = new Date();
     const tomorrow = new Date();
     tomorrow.setDate(today.getDate() + 1);
-    const activity = this.messaging.models['mail.activity'].create({
-        creator: insert({ id: 1, display_name: "Admin" }),
-        dateCreate: date_to_str(today),
-        dateDeadline: date_to_str(tomorrow),
-        id: 12,
-        state: 'planned',
-        thread: insert({ id: 42, model: 'res.partner' }),
-        type: insert({ id: 1, displayName: "Fake type" }),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
     });
-    await this.createActivityComponent(activity);
+    this.data['mail.activity'].records.push({
+        create_uid: 1,
+        create_date: date_to_str(today),
+        date_deadline: date_to_str(tomorrow),
+        id: 12,
+        res_id: 100,
+        res_model: 'res.partner',
+    });
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -441,21 +544,40 @@ QUnit.test('activity details toggle', async function (assert) {
 QUnit.test('activity details layout', async function (assert) {
     assert.expect(11);
 
-    await this.start();
     const today = new Date();
     const tomorrow = new Date();
     tomorrow.setDate(today.getDate() + 1);
-    const activity = this.messaging.models['mail.activity'].create({
-        assignee: insert({ id: 10, display_name: "Pauvre pomme" }),
-        creator: insert({ id: 1, display_name: "Admin" }),
-        dateCreate: date_to_str(today),
-        dateDeadline: date_to_str(tomorrow),
+    this.data['res.users'].records.push({
+        id: 10,
+        name: 'Pauvre pomme',
+    });
+    this.data['res.users'].records.push({
+        id: 1,
+        name: 'popy',
+    });
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
+    });
+    this.data['mail.activity'].records.push({
+        activity_type_id: 1,
+        create_uid: 1,
+        create_date: date_to_str(today),
+        date_deadline: date_to_str(tomorrow),
         id: 12,
         state: 'planned',
-        thread: insert({ id: 42, model: 'res.partner' }),
-        type: insert({ id: 1, displayName: "Fake type" }),
+        user_id: 10,
+        res_id: 100,
+        res_model: 'res.partner',
     });
-    await this.createActivityComponent(activity);
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -487,7 +609,7 @@ QUnit.test('activity details layout', async function (assert) {
     );
     assert.strictEqual(
         document.querySelector('.o_Activity_details .o_Activity_type').textContent,
-        "Fake type",
+        "Email",
         "activity details type should be 'Fake type'"
     );
     assert.strictEqual(
@@ -520,13 +642,30 @@ QUnit.test('activity details layout', async function (assert) {
 QUnit.test('activity with mail template layout', async function (assert) {
     assert.expect(8);
 
-    await this.start();
-    const activity = this.messaging.models['mail.activity'].create({
-        id: 12,
-        mailTemplates: insert({ id: 1, name: "Dummy mail template" }),
-        thread: insert({ id: 42, model: 'res.partner' }),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
     });
-    await this.createActivityComponent(activity);
+    this.data['mail.template'].records.push({
+        activities: [12],
+        id: 1,
+        name: "Dummy mail template",
+    });
+    this.data['mail.activity'].records.push({
+        activity_type_id: 1,
+        id: 12,
+        mail_template_ids: [1],
+        res_id: 100,
+        res_model: 'res.partner',
+    });
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -577,7 +716,7 @@ QUnit.test('activity with mail template: preview mail', async function (assert) 
         assert.step('do_action');
         assert.strictEqual(
             payload.action.context.default_res_id,
-            42,
+            100,
             'Action should have the activity res id as default res id in context'
         );
         assert.strictEqual(
@@ -606,16 +745,29 @@ QUnit.test('activity with mail template: preview mail', async function (assert) 
         );
     });
 
-    await this.start({ env: { bus } });
-    const activity = this.messaging.models['mail.activity'].create({
-        id: 12,
-        mailTemplates: insert({
-            id: 1,
-            name: "Dummy mail template",
-        }),
-        thread: insert({ id: 42, model: 'res.partner' }),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
     });
-    await this.createActivityComponent(activity);
+    this.data['mail.template'].records.push({
+        activities: [12],
+        id: 1,
+        name: "Dummy mail template",
+    });
+    this.data['mail.activity'].records.push({
+        activity_type_id: 1,
+        id: 12,
+        mail_template_ids: [1],
+        res_id: 100,
+        res_model: 'res.partner',
+    });
+    const { createChatterComponent } = await this.start({ env: { bus } });
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -637,12 +789,28 @@ QUnit.test('activity with mail template: preview mail', async function (assert) 
 QUnit.test('activity with mail template: send mail', async function (assert) {
     assert.expect(7);
 
-    await this.start({
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
+    });
+    this.data['mail.template'].records.push({
+        activities: [12],
+        id: 1,
+        name: "Dummy mail template",
+    });
+    this.data['mail.activity'].records.push({
+        activity_type_id: 1,
+        id: 12,
+        mail_template_ids: [1],
+        res_id: 100,
+        res_model: 'res.partner',
+    });
+    const { createChatterComponent } = await this.start({
         async mockRPC(route, args) {
             if (args.method === 'activity_send_mail') {
                 assert.step('activity_send_mail');
                 assert.strictEqual(args.args[0].length, 1);
-                assert.strictEqual(args.args[0][0], 42);
+                assert.strictEqual(args.args[0][0], 100);
                 assert.strictEqual(args.args[1], 1);
                 return;
             } else {
@@ -650,15 +818,12 @@ QUnit.test('activity with mail template: send mail', async function (assert) {
             }
         },
     });
-    const activity = this.messaging.models['mail.activity'].create({
-        id: 12,
-        mailTemplates: insert({
-            id: 1,
-            name: "Dummy mail template",
-        }),
-        thread: insert({ id: 42, model: 'res.partner' }),
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
     });
-    await this.createActivityComponent(activity);
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -680,17 +845,26 @@ QUnit.test('activity with mail template: send mail', async function (assert) {
 QUnit.test('activity upload document is available', async function (assert) {
     assert.expect(3);
 
-    await this.start();
-    const today = new Date();
-    const tomorrow = new Date();
-    tomorrow.setDate(today.getDate() + 1);
-    const activity = this.messaging.models['mail.activity'].create({
-        canWrite: true,
-        category: 'upload_file',
-        id: 12,
-        thread: insert({ id: 42, model: 'res.partner' }),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
     });
-    await this.createActivityComponent(activity);
+    this.data['mail.activity'].records.push({
+        activity_category: 'upload_file',
+        can_write: true,
+        activity_type_id: 1,
+        id: 12,
+        res_id: 100,
+        res_model: 'res.partner',
+    });
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -711,17 +885,25 @@ QUnit.test('activity upload document is available', async function (assert) {
 QUnit.test('activity click on mark as done', async function (assert) {
     assert.expect(4);
 
-    await this.start();
-    const today = new Date();
-    const tomorrow = new Date();
-    tomorrow.setDate(today.getDate() + 1);
-    const activity = this.messaging.models['mail.activity'].create({
-        canWrite: true,
-        category: 'not_upload_file',
-        id: 12,
-        thread: insert({ id: 42, model: 'res.partner' }),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
     });
-    await this.createActivityComponent(activity);
+    this.data['mail.activity'].records.push({
+        activity_category: 'default',
+        can_write: true,
+        activity_type_id: 1,
+        id: 12,
+        res_id: 100,
+        res_model: 'res.partner',
+    });
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
 
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
@@ -756,17 +938,25 @@ QUnit.test('activity click on mark as done', async function (assert) {
 QUnit.test('activity mark as done popover should focus feedback input on open [REQUIRE FOCUS]', async function (assert) {
     assert.expect(3);
 
-    await this.start();
-    const today = new Date();
-    const tomorrow = new Date();
-    tomorrow.setDate(today.getDate() + 1);
-    const activity = this.messaging.models['mail.activity'].create({
-        canWrite: true,
-        category: 'not_upload_file',
-        id: 12,
-        thread: insert({ id: 42, model: 'res.partner' }),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
     });
-    await this.createActivityComponent(activity);
+    this.data['mail.activity'].records.push({
+        activity_category: 'default',
+        can_write: true,
+        activity_type_id: 1,
+        id: 12,
+        res_id: 100,
+        res_model: 'res.partner',
+    });
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
 
     assert.containsOnce(
         document.body,
@@ -797,7 +987,7 @@ QUnit.test('activity click on edit', async function (assert) {
         assert.step('do_action');
         assert.strictEqual(
             payload.action.context.default_res_id,
-            42,
+            100,
             'Action should have the activity res id as default res id in context'
         );
         assert.strictEqual(
@@ -822,14 +1012,30 @@ QUnit.test('activity click on edit', async function (assert) {
         );
     });
 
-    await this.start({ env: { bus } });
-    const activity = this.messaging.models['mail.activity'].create({
-        canWrite: true,
-        id: 12,
-        mailTemplates: insert({ id: 1, name: "Dummy mail template" }),
-        thread: insert({ id: 42, model: 'res.partner' }),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
     });
-    await this.createActivityComponent(activity);
+    this.data['mail.template'].records.push({
+        activities: [12],
+        id: 1,
+        name: "Dummy mail template",
+    });
+    this.data['mail.activity'].records.push({
+        can_write: true,
+        activity_type_id: 1,
+        id: 12,
+        mail_template_ids: [1],
+        res_id: 100,
+        res_model: 'res.partner',
+    });
+    const { createChatterComponent } = await this.start({ env: { bus } });
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.strictEqual(
         document.querySelectorAll('.o_Activity').length,
         1,
@@ -851,11 +1057,15 @@ QUnit.test('activity click on edit', async function (assert) {
 QUnit.test('activity edition', async function (assert) {
     assert.expect(14);
 
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
+    });
     this.data['mail.activity'].records.push({
         can_write: true,
         icon: 'fa-times',
         id: 12,
-        res_id: 42,
+        res_id: 100,
         res_model: 'res.partner',
     });
     const bus = new Bus();
@@ -863,7 +1073,7 @@ QUnit.test('activity edition', async function (assert) {
         assert.step('do_action');
         assert.strictEqual(
             payload.action.context.default_res_id,
-            42,
+            100,
             'Action should have the activity res id as default res id in context'
         );
         assert.strictEqual(
@@ -889,14 +1099,12 @@ QUnit.test('activity edition', async function (assert) {
         this.data['mail.activity'].records[0].icon = 'fa-check';
         payload.options.on_close();
     });
-
-    await this.start({ env: { bus } });
-    const activity = this.messaging.models['mail.activity'].insert(
-        this.messaging.models['mail.activity'].convertData(
-            this.data['mail.activity'].records[0]
-        )
-    );
-    await this.createActivityComponent(activity);
+    const { createChatterComponent } = await this.start({ env: { bus } });
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
 
     assert.containsOnce(
         document.body,
@@ -946,7 +1154,19 @@ QUnit.test('activity edition', async function (assert) {
 QUnit.test('activity click on cancel', async function (assert) {
     assert.expect(7);
 
-    await this.start({
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
+    });
+    this.data['mail.activity'].records.push({
+        can_write: true,
+        activity_type_id: 1,
+        id: 12,
+        res_id: 100,
+        res_model: 'res.partner',
+    });
+
+    const { createChatterComponent } = await this.start({
         async mockRPC(route, args) {
             if (route === '/web/dataset/call_kw/mail.activity/unlink') {
                 assert.step('unlink');
@@ -958,43 +1178,11 @@ QUnit.test('activity click on cancel', async function (assert) {
             }
         },
     });
-    const activity = this.messaging.models['mail.activity'].create({
-        canWrite: true,
-        id: 12,
-        mailTemplates: insert({
-            id: 1,
-            name: "Dummy mail template",
-        }),
-        thread: insert({ id: 42, model: 'res.partner' }),
-    });
 
-    // Create a parent component to surround the Activity component in order to be able
-    // to check that activity component has been destroyed
-    class ParentComponent extends Component {
-        /**
-         * @returns {mail.activity}
-         */
-        get activity() {
-            return this.messaging.models['mail.activity'].get(this.props.activityLocalId);
-        }
-    }
-    ParentComponent.env = this.env;
-    Object.assign(ParentComponent, {
-        props: { activityLocalId: String },
-        template: xml`
-            <div>
-                <p>parent</p>
-                <t t-if="activity">
-                    <Activity activityLocalId="activity.localId"/>
-                </t>
-            </div>
-        `,
-    });
-    registerMessagingComponent(ParentComponent);
-    registerCleanup(() => unregisterMessagingComponent(ParentComponent));
-    await createRootMessagingComponent(this, "ParentComponent", {
-        props: { activityLocalId: activity.localId },
-        target: this.widget.el,
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
     });
 
     assert.strictEqual(
@@ -1026,16 +1214,27 @@ QUnit.test('activity mark done popover close on ESCAPE', async function (assert)
     // This test is not in activity_mark_done_popover_tests.js as it requires the activity mark done
     // component to have a parent in order to allow testing interactions the popover.
     assert.expect(2);
-
-    await this.start();
-    const activity = this.messaging.models['mail.activity'].create({
-        canWrite: true,
-        category: 'not_upload_file',
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
+    });
+    this.data['mail.activity'].records.push({
+        activity_category: 'default',
+        can_write: true,
+        activity_type_id: 1,
         id: 12,
-        thread: insert({ id: 42, model: 'res.partner' }),
+        res_id: 100,
+        res_model: 'res.partner',
     });
 
-    await this.createActivityComponent(activity);
+    const { createChatterComponent } = await this.start();
+
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     await afterNextRender(() => {
         document.querySelector('.o_Activity_markDoneButton').click();
     });
@@ -1061,14 +1260,25 @@ QUnit.test('activity mark done popover click on discard', async function (assert
     // component to have a parent in order to allow testing interactions the popover.
     assert.expect(3);
 
-    await this.start();
-    const activity = this.messaging.models['mail.activity'].create({
-        canWrite: true,
-        category: 'not_upload_file',
-        id: 12,
-        thread: insert({ id: 42, model: 'res.partner' }),
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
     });
-    await this.createActivityComponent(activity);
+    this.data['mail.activity'].records.push({
+        activity_category: 'default',
+        can_write: true,
+        activity_type_id: 1,
+        id: 12,
+        res_id: 100,
+        res_model: 'res.partner',
+    });
+    const { createChatterComponent } = await this.start();
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     await afterNextRender(() => {
         document.querySelector('.o_Activity_markDoneButton').click();
     });
@@ -1114,15 +1324,27 @@ QUnit.test('data-oe-id & data-oe-model link redirection on click', async functio
         );
         assert.step('do-action:openFormView_some.model_250');
     });
-    await this.start({ env: { bus } });
-    const activity = this.messaging.models['mail.activity'].create({
-        canWrite: true,
-        category: 'not_upload_file',
+
+    this.data['res.partner'].records.push({
+        id: 100,
+        activity_ids: [12]
+    });
+    this.data['mail.activity'].records.push({
+        activity_category: 'default',
+        can_write: true,
+        activity_type_id: 1,
         id: 12,
         note: `<p><a href="#" data-oe-id="250" data-oe-model="some.model">some.model_250</a></p>`,
-        thread: insert({ id: 42, model: 'res.partner' }),
+        res_id: 100,
+        res_model: 'res.partner',
     });
-    await this.createActivityComponent(activity);
+    const { createChatterComponent } = await this.start({ env: { bus } });
+    await createChatterComponent({
+        id: 11,
+        threadId: 100,
+        threadModel: 'res.partner',
+    });
+
     assert.containsOnce(
         document.body,
         '.o_Activity_note',

@@ -17,11 +17,11 @@ patch(Activity.prototype, 'website_slides/static/src/components/activity/activit
         await this.env.services.rpc({
             model: 'slide.channel',
             method: 'action_grant_access',
-            args: [[this.activity.thread.id]],
-            kwargs: { partner_id: this.activity.requestingPartner.id },
+            args: [[this.activityView.activity.thread.id]],
+            kwargs: { partner_id: this.activityView.activity.requestingPartner.id },
         });
-        if (this.activity) {
-            this.activity.delete();
+        if (this.activityView && this.activityView.activity) {
+            this.activityView.activity.delete();
         }
         this.trigger('reload', { keepChanges: true });
     },
@@ -32,11 +32,11 @@ patch(Activity.prototype, 'website_slides/static/src/components/activity/activit
         await this.env.services.rpc({
             model: 'slide.channel',
             method: 'action_refuse_access',
-            args: [[this.activity.thread.id]],
-            kwargs: { partner_id: this.activity.requestingPartner.id },
+            args: [[this.activityView.activity.thread.id]],
+            kwargs: { partner_id: this.activityView.activity.requestingPartner.id },
         });
-        if (this.activity) {
-            this.activity.delete();
+        if (this.activityView && this.activityView.activity) {
+            this.activityView.activity.delete();
         }
         this.trigger('reload', { keepChanges: true });
     },

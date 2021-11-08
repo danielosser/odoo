@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
     <t t-inherit="mail.Activity" t-inherit-mode="extension">
         <xpath expr="//*[@name='tools']" position="replace">
-            <t t-if="activity.requestingPartner and activity.thread.model === 'slide.channel'">
+            <t t-if="activityView.activity.requestingPartner and activityView.activity.thread.model === 'slide.channel'">
                 <div class="o_Activity_tools">
                     <button class="o_Activity_toolButton o_Activity_grantAccessButton btn btn-link" t-on-click="_onGrantAccess">
                         <i class="fa fa-check"/> Grant Access

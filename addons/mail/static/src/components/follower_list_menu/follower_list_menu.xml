@@ -6,7 +6,9 @@
             <div class="o_FollowerListMenu_followers" t-ref="dropdown">
                 <button class="o_FollowerListMenu_buttonFollowers btn btn-link" t-att-disabled="props.isDisabled" t-on-click="_onClickFollowersButton" title="Show Followers">
                     <i class="fa fa-user"/>
-                    <span class="o_FollowerListMenu_buttonFollowersCount pl-1" t-esc="thread.followers.length"/>
+                    <t t-if="thread and thread.followers">
+                        <span class="o_FollowerListMenu_buttonFollowersCount pl-1" t-esc="thread.followers.length"/>
+                    </t>
                 </button>
 
                 <t t-if="state.isDropdownOpen">

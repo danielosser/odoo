@@ -137,16 +137,8 @@ MockServer.include({
         }
         // mail.activity methods
         if (args.model === 'mail.activity' && args.method === 'activity_format') {
-            let res = this._mockRead(args.model, args.args, args.kwargs);
-            res = res.map(function (record) {
-                if (record.mail_template_ids) {
-                    record.mail_template_ids = record.mail_template_ids.map(function (template_id) {
-                        return { id: template_id, name: "template" + template_id };
-                    });
-                }
-                return record;
-            });
-            return res;
+
+            return this._mockMailActivityFormat(args);
         }
         if (args.model === 'mail.activity' && args.method === 'get_activity_data') {
             const res_model = args.args[0] || args.kwargs.res_model;
@@ -306,6 +298,30 @@ MockServer.include({
     //--------------------------------------------------------------------------
     // Private Mocked Routes
     //--------------------------------------------------------------------------
+
+    /**
+     * Simulates `activity_format` on `mail.activity`.
+     *
+     * @private
+     * @param {Object} args
+     * @returns {Object}
+     */
+    _mockMailActivityFormat(args) {
+        let res = this._mockRead(args.model, args.args, args.kwargs);
+        res = res.map(record => {
+            if (record.mail_template_ids) {
+                record.mail_template_ids = record.mail_template_ids.map(template_id => {
+                    const template = _.findWhere(this.data['mail.template'].records, { id: template_id });
+                    return {
+                        id: template.id,
+                        name: template.name,
+                    };
+                });
+            }
+            return record;
+        });
+        return res;
+    },
 
     /**
      * Simulates the `/mail/attachment/delete` route.
