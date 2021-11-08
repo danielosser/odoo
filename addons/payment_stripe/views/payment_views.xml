@@ -6,14 +6,41 @@
         <field name="model">payment.acquirer</field>
         <field name="inherit_id" ref="payment.payment_acquirer_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//group[@name='acquirer']" position="before">
+                <group invisible="context.get('stripe_onboarding', False)" attrs="{'invisible': ['|', ('provider', '!=', 'stripe'), ('stripe_secret_key', '!=', False)]}">
+                    <group>
+                        <button type="object" role="button" name="action_stripe_onboarding_account" class="btn-primary"
+                                string="Create &amp; Connect your Stripe Account" attrs="{'invisible': [('stripe_secret_key', '!=', False)]}"/>
+                    </group>
+                </group>
+            </xpath>
             <xpath expr="//group[@name='acquirer']" position="inside">
                 <group attrs="{'invisible': [('provider', '!=', 'stripe')]}">
-                    <field name="stripe_publishable_key" attrs="{'required':[('provider', '=', 'stripe'), ('state', '!=', 'disabled')]}" password="True"/>
-                    <field name="stripe_secret_key" attrs="{'required':[('provider', '=', 'stripe'), ('state', '!=', 'disabled')]}" password="True"/>
-                    <field name="stripe_webhook_secret" password="True"/>
+                    <div class="o_td_label d-flex justify-content-between">
+                        <label for="stripe_publishable_key"/>
+                        <a href="https://www.odoo.com/documentation/15.0/applications/general/payment_acquirers/stripe.html#credentials-tab" title="Get your Stripe API Keys" class="o_doc_link" target="_blank"></a>
+                    </div>
+                    <field name="stripe_publishable_key" nolabel="1" attrs="{'required':[('provider', '=', 'stripe'), ('state', '!=', 'disabled')]}" password="True"/>
+                    <div class="o_td_label d-flex justify-content-between">
+                        <label for="stripe_secret_key"/>
+                        <a href="https://www.odoo.com/documentation/15.0/applications/general/payment_acquirers/stripe.html#credentials-tab" title="Get your Stripe API Keys" class="o_doc_link" target="_blank"></a>
+                    </div>
+                    <field name="stripe_secret_key" nolabel="1" attrs="{'required':[('provider', '=', 'stripe'), ('state', '!=', 'disabled')]}" password="True"/>
+                    <div class="o_td_label d-flex justify-content-between">
+                        <label for="stripe_webhook_secret"/>
+                        <a href="https://www.odoo.com/documentation/15.0/applications/general/payment_acquirers/stripe.html#credentials-tab " title="Configure your Stripe Webhook" class="o_doc_link" target="_blank"></a>
+                    </div>
+                    <field name="stripe_webhook_secret" nolabel="1" password="True"/>
                 </group>
             </xpath>
         </field>
+    </record>
+
+    <record id="action_payment_acquirer_onboarding" model="ir.actions.act_window">
+        <field name="name">Payment Acquirers</field>
+        <field name="res_model">payment.acquirer</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'stripe_onboarding': True, 'form_view_initial_mode': 'edit'}</field>
     </record>
 
 </odoo>

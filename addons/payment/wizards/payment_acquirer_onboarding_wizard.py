@@ -9,8 +9,8 @@ class PaymentWizard(models.TransientModel):
     _description = 'Payment acquire onboarding wizard'
 
     payment_method = fields.Selection([
+        ('stripe', "Credit & Debit Card with Stripe (Visa, Mastercard, Google Pay, ...)"),
         ('paypal', "PayPal"),
-        ('stripe', "Credit card (via Stripe)"),
         ('other', "Other payment acquirer"),
         ('manual', "Custom payment instructions"),
     ], string="Payment Method", default=lambda self: self._get_default_payment_acquirer_onboarding_value('payment_method'))
@@ -98,6 +98,7 @@ class PaymentWizard(models.TransientModel):
     def add_payment_methods(self):
         """ Install required payment acquiers, configure them and mark the
             onboarding step as done."""
+        stripe_onboarding = False
 
         if self.payment_method == 'paypal':
             self._install_module('payment_paypal')
@@ -122,11 +123,19 @@ class PaymentWizard(models.TransientModel):
                     'state': 'enabled',
                 })
             if self.payment_method == 'stripe':
-                new_env.ref('payment.payment_acquirer_stripe').write({
-                    'stripe_secret_key': self.stripe_secret_key,
-                    'stripe_publishable_key': self.stripe_publishable_key,
-                    'state': 'enabled',
-                })
+                if self.stripe_secret_key and self.stripe_publishable_key:
+                    new_env.ref('payment.payment_acquirer_stripe').write({
+                        'stripe_secret_key': self.stripe_secret_key,
+                        'stripe_publishable_key': self.stripe_publishable_key,
+                        'state': 'enabled',
+                    })
+                else:
+                    new_env.ref('payment.payment_acquirer_stripe').write({
+                        'journal_id': self.env['account.journal'].search([
+                            ('type', '=', 'bank'), ('company_id', '=', new_env.company.id)
+                        ], limit=1).id,
+                    })
+                    stripe_onboarding = True
             if self.payment_method == 'manual':
                 manual_acquirer = self._get_manual_payment_acquirer(new_env)
                 if not manual_acquirer:
@@ -149,6 +158,8 @@ class PaymentWizard(models.TransientModel):
             self.sudo().unlink()
         # the user clicked `apply` and not cancel so we can assume this step is done.
         self._set_payment_acquirer_onboarding_step_done()
+        if stripe_onboarding:
+            return self._onboarding_stripe(new_env)
         return {'type': 'ir.actions.act_window_close'}
 
     def _set_payment_acquirer_onboarding_step_done(self):
@@ -157,4 +168,21 @@ class PaymentWizard(models.TransientModel):
     def action_onboarding_other_payment_acquirer(self):
         self._set_payment_acquirer_onboarding_step_done()
         action = self.env["ir.actions.actions"]._for_xml_id("payment.action_payment_acquirer")
+        return action
+
+    def _onboarding_stripe(self, new_env):
+        stripe_acquirer = new_env.ref('payment.payment_acquirer_stripe')
+        stripe_onboarding_url = stripe_acquirer._stripe_onboarding_account()
+        if stripe_onboarding_url:
+            return {
+                'type': 'ir.actions.act_url',
+                'url': stripe_onboarding_url,
+                'target': 'self',
+            }
+
+        action = self.env["ir.actions.actions"]._for_xml_id("payment.action_payment_acquirer")
+        action.update({
+            'views': [[False, 'form']],
+            'res_id': stripe_acquirer.id,
+        })
         return action

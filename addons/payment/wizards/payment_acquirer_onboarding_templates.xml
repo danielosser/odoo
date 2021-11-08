@@ -45,15 +45,16 @@
                             <div attrs="{'invisible': [('payment_method', '!=', 'stripe')]}">
                                 <group>
                                     <field name="stripe_secret_key" password="True"
-                                       attrs="{'required': [('payment_method', '=', 'stripe')]}" />
+                                       invisible="1" />
                                     <field name="stripe_publishable_key" password="True"
-                                       attrs="{'required': [('payment_method', '=', 'stripe')]}" />
+                                       invisible="1" />
                                 </group>
-                                <p>
+                                <p invisible="1">
                                     <a href="https://dashboard.stripe.com/account/apikeys" target="_blank">
                                         <span><i class="fa fa-arrow-right"/> Get my Stripe keys</span>
                                     </a>
                                 </p>
+
                             </div>
 
                             <div attrs="{'invisible': [('payment_method', '!=', 'other')]}">
