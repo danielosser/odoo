@@ -632,7 +632,7 @@
                                 attrs="{'invisible': ['|', ('move_type', '!=', 'entry'), '|', ('state', '!=', 'posted'), ('payment_state', '=', 'reversed')]}"/>
                         <button name="action_reverse" string='Add Credit Note'
                                 type='object' groups="account.group_account_invoice"
-                                attrs="{'invisible': ['|', ('move_type', 'not in', ('out_invoice', 'in_invoice')), ('state', '!=', 'posted')]}"/>
+                                attrs="{'invisible': ['|', '|', ('move_type', 'not in', ('out_invoice', 'in_invoice')), ('state', '!=', 'posted'), ('amount_total', '=', 0)]}"/>
                         <!-- Cancel -->
                         <button name="button_cancel" string="Cancel Entry" type="object" groups="account.group_account_invoice" data-hotkey="w"
                                 attrs="{'invisible' : ['|', '|', ('id', '=', False), ('state', '!=', 'draft'),('move_type', '!=', 'entry')]}"/>
@@ -734,6 +734,7 @@
                         <field name="bank_partner_id" invisible="1"/>
                         <field name="display_qr_code" invisible="1"/>
                         <field name="show_reset_to_draft_button" invisible="1"/>
+                        <field name="amount_total" invisible="1"/>
 
                         <field name="invoice_has_outstanding" invisible="1"/>
                         <field name="is_move_sent" invisible="1"/>
