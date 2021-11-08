@@ -1,0 +1,9 @@
+id,code_prefix_start,code_prefix_end,name,chart_template_id/id
+account_group_1,1000,1999,"Краткосрочные активы",l10n_kz.chart_template
+account_group_2,2000,2999,"Долгосрочные активы",l10n_kz.chart_template
+account_group_3,3000,3999,"Краткосрочные обязательства",l10n_kz.chart_template
+account_group_4,4000,4999,"Долгосрочные обязательства",l10n_kz.chart_template
+account_group_5,5000,5999,"Капитал и резервы",l10n_kz.chart_template
+account_group_6,6000,6999,"Доходы",l10n_kz.chart_template
+account_group_7,7000,7999,"Расходы",l10n_kz.chart_template
+account_group_8,8000,8999,"Счета производственного учета",l10n_kz.chart_template
