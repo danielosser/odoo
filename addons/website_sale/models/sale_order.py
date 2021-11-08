@@ -108,6 +108,11 @@ class SaleOrder(models.Model):
         product = self.env['product.product'].with_company(order.company_id).browse(product_id)
         discount = 0
 
+        if order.pricelist_id and order.partner_id:
+            order_line = order._cart_find_product_line(product.id)
+        else:
+            order_line = self.env['sale.order.line']
+
         if not order.pricelist_id:
             pu = product.lst_price
 
@@ -117,17 +122,17 @@ class SaleOrder(models.Model):
         elif order.pricelist_id.discount_policy == 'with_discount':
             pu = order.pricelist_id.get_product_price(
                 product, qty, date=order.date_order)
+            if order_line:
+                pu = self.env['account.tax']._fix_tax_included_price_company(pu, product.taxes_id, order_line[0].tax_id, self.company_id)
         else: # 'without_discount'
             # This part is pretty much a copy-paste of the method '_onchange_discount' of
             # 'sale.order.line'.
             price, rule_id = order.pricelist_id.get_product_price_rule(product, qty or 1.0, date=order.date_order)
             pu, currency = request.env['sale.order.line']._get_real_price_currency(
                 product, rule_id, qty, product.uom_id, date=order.date_order)
-            if order.pricelist_id and order.partner_id:
-                order_line = order._cart_find_product_line(product.id)
-                if order_line:
-                    price = self.env['account.tax']._fix_tax_included_price_company(price, product.taxes_id, order_line[0].tax_id, self.company_id)
-                    pu = self.env['account.tax']._fix_tax_included_price_company(pu, product.taxes_id, order_line[0].tax_id, self.company_id)
+            if order_line:
+                price = self.env['account.tax']._fix_tax_included_price_company(price, product.taxes_id, order_line[0].tax_id, self.company_id)
+                pu = self.env['account.tax']._fix_tax_included_price_company(pu, product.taxes_id, order_line[0].tax_id, self.company_id)
             if pu != 0:
                 if order.pricelist_id.currency_id != currency:
                     # we need new_list_price in the same currency as price, which is in the SO's pricelist's currency
