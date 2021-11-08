@@ -1,0 +1,15 @@
+.o_field_radio.o_vertical.o_field_widget.o_quick_editable.o_required_modifier {
+    input + label {
+        display: none;
+    }
+    input:checked + label {
+        display: inherit;
+        color: inherit;
+        &::before{
+            display: none;
+        }
+        &::after{
+            display: none;
+        }
+    }
+}
