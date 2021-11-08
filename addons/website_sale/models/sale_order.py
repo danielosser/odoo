@@ -104,22 +104,25 @@ class SaleOrder(models.Model):
 
     def _website_product_id_change(self, order_id, product_id, qty=0, **kwargs):
         order = self.sudo().browse(order_id)
-        product_context = dict(self.env.context)
-        product_context.setdefault('lang', order.partner_id.lang)
-        product_context.update({
-            'partner': order.partner_id,
-            'quantity': qty,
-            'date': order.date_order,
-            'pricelist': order.pricelist_id.id,
-        })
-        product = self.env['product.product'].with_context(product_context).with_company(order.company_id.id).browse(product_id)
+        order = order.with_company(order.company_id)
+        product = self.env['product.product'].with_company(order.company_id).browse(product_id)
         discount = 0
 
-        if order.pricelist_id.discount_policy == 'without_discount':
+        if not order.pricelist_id:
+            pu = product.lst_price
+
+            if order.currency_id != product.currency_id:
+                pu = product.currency_id._convert(
+                    pu, order.currency_id, order.company_id, order.date_order or fields.Date.today())
+        elif order.pricelist_id.discount_policy == 'with_discount':
+            pu = order.pricelist_id.get_product_price(
+                product, qty, date=order.date_order)
+        else: # 'without_discount'
             # This part is pretty much a copy-paste of the method '_onchange_discount' of
             # 'sale.order.line'.
-            price, rule_id = order.pricelist_id.with_context(product_context).get_product_price_rule(product, qty or 1.0, order.partner_id)
-            pu, currency = request.env['sale.order.line'].with_context(product_context)._get_real_price_currency(product, rule_id, qty, product.uom_id, order.pricelist_id.id)
+            price, rule_id = order.pricelist_id.get_product_price_rule(product, qty or 1.0, date=order.date_order)
+            pu, currency = request.env['sale.order.line']._get_real_price_currency(
+                product, rule_id, qty, product.uom_id, date=order.date_order)
             if order.pricelist_id and order.partner_id:
                 order_line = order._cart_find_product_line(product.id)
                 if order_line:
@@ -140,12 +143,6 @@ class SaleOrder(models.Model):
                 # In case the price_unit equal 0 and therefore not able to calculate the discount,
                 # we fallback on the price defined on the pricelist.
                 pu = price
-        else:
-            pu = product.price
-            if order.pricelist_id and order.partner_id:
-                order_line = order._cart_find_product_line(product.id)
-                if order_line:
-                    pu = self.env['account.tax']._fix_tax_included_price_company(pu, product.taxes_id, order_line[0].tax_id, self.company_id)
 
         return {
             'product_id': product_id,
@@ -266,15 +263,9 @@ class SaleOrder(models.Model):
             no_variant_attributes_price_extra = [ptav.price_extra for ptav in order_line.product_no_variant_attribute_value_ids]
             values = self.with_context(no_variant_attributes_price_extra=tuple(no_variant_attributes_price_extra))._website_product_id_change(self.id, product_id, qty=quantity, **kwargs)
             order = self.sudo().browse(self.id)
-            if self.pricelist_id.discount_policy == 'with_discount' and not self.env.context.get('fixed_price'):
-                product_context.update({
-                    'partner': order.partner_id,
-                    'quantity': quantity,
-                    'date': order.date_order,
-                    'pricelist': order.pricelist_id.id,
-                })
-            product_with_context = self.env['product.product'].with_context(product_context).with_company(order.company_id.id)
-            product = product_with_context.browse(product_id)
+
+            product = product.with_company(order.company_id)
+            product_with_context = product_with_context.with_company(order.company_id)
 
             order_line.write(values)
 
