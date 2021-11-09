@@ -25,7 +25,7 @@
 </template>
 
 <template id="s_newsletter_subscribe_form" name="Newsletter">
-    <div class="s_newsletter_subscribe_form js_subscribe" data-vxml="001" data-list-id="0" data-name="Newsletter Form">
+    <div class="s_newsletter s_newsletter_subscribe_form js_subscribe" data-vxml="001" data-list-id="0" data-name="Newsletter Form">
         <div class="input-group">
             <input type="email" name="email" class="js_subscribe_email form-control" placeholder="your email..."/>
             <span class="input-group-append">
@@ -37,7 +37,7 @@
 </template>
 
 <template id="s_newsletter_block" name="Newsletter block">
-    <section class="s_newsletter_block bg-200 pt32 pb32">
+    <section class="s_newsletter s_newsletter_block bg-200 pt32 pb32">
         <div class="container">
             <div class="row">
                 <div class="col-lg-8 offset-lg-2 pt24 pb24">
@@ -51,7 +51,7 @@
 </template>
 
 <template id="s_newsletter_subscribe_popup" name="Newsletter Popup">
-    <div class="s_popup o_newsletter_popup o_snippet_invisible" data-name="Newsletter Popup" data-vcss="001" data-invisible="1">
+    <div class="s_popup s_newsletter o_newsletter_popup o_snippet_invisible" data-name="Newsletter Popup" data-vcss="001" data-invisible="1">
         <div class="modal fade s_popup_middle o_newsletter_modal"
              style="background-color: var(--black-50) !important;"
              data-show-after="5000" data-display="afterDelay" data-consents-duration="7"
@@ -84,17 +84,19 @@
 <template id="newsletter_subscribe_options" name="Newsletter Subscribe Options" inherit_id="website.snippet_options">
     <xpath expr="//*[@t-set='so_snippet_addition_selector']" position="inside">, .o_newsletter_popup</xpath>
     <xpath expr="//div" position="after">
-        <t t-set="selector" t-value="'.js_subscribe'"/>
+        <t t-set="selector" t-value="'.s_newsletter'"/>
         <div data-js="mailing_list_subscribe"
-            t-att-data-selector="selector">
+            t-att-data-selector="selector"
+            data-target=".js_subscribe">
             <we-select string="Newsletter" data-attribute-name="listId"></we-select>
         </div>
         <div data-js="recaptchaSubscribe"
-            t-att-data-selector="selector">
+            t-att-data-selector="selector"
+            data-target=".js_subscribe">
             <t t-set="recaptcha_public_key" t-value="request.env['ir.config_parameter'].sudo().get_param('recaptcha_public_key')"/>
             <we-checkbox t-if="recaptcha_public_key" string="Show reCaptcha Policy" data-toggle-recaptcha-legal="" data-no-preview="true"/>
         </div>
-        <div t-att-data-selector="selector" data-drop-near="p, h1, h2, h3, blockquote, .card"/>
+        <div data-selector=".js_subscribe" data-drop-near="p, h1, h2, h3, blockquote, .card"/>
     </xpath>
     <xpath expr="//div[@data-js='anchor']" position="attributes">
         <attribute name="data-exclude" add=".o_newsletter_popup" separator=","/>
