@@ -250,6 +250,14 @@ class TestEventSale(TestEventSaleCommon):
         sol.product_id_change()
         self.assertEqual(so.amount_total, 660.0, "Ticket is $1000 but the event product is on a pricelist 10 -> 6. So, $600 + a 10% tax.")
 
+    def test_sale_price_subtotal(self):
+        report = self.env['event.sale.report'].search([
+            ('event_ids', '=', self.event_0.id)
+        ])
+        self.assertEqual(self.event_0.sale_price_subtotal, 190.5)
+        self.assertEqual(report.sale_price_subtotal, 190.5)
+        # TODO: Test with different currencies
+
     @users('user_salesman')
     def test_unlink_so(self):
         """ This test ensures that when deleting a sale order, if the latter is linked to an event registration,

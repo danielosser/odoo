@@ -17,5 +17,52 @@
             <field name="categ_id" ref="event_sale.product_category_events"/>
             <field name="detailed_type">event</field>
         </record>
+
+        <record id="event_sale_order_pricelist_1" model="product.pricelist">
+            <field name="name">Euro</field>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+
+        <record id="event_sale_order_pricelist_2" model="product.pricelist">
+            <field name="name">Dollar</field>
+            <field name="currency_id" ref="base.EUR"/>
+        </record>
+
+        <record id="event_sale_order_1" model="sale.order">
+            <field name="partner_id" ref="base.res_partner_1"/>
+            <field name="pricelist_id" ref="event_sale_order_pricelist_1"/>
+        </record>
+
+        <record id="event_sale_order_2" model="sale.order">
+            <field name="partner_id" ref="base.res_partner_2"/>
+            <field name="pricelist_id" ref="event_sale_order_pricelist_2"/>
+        </record>
+
+        <record id="event_sale_order_line_1" model="sale.order.line">
+            <field name="order_id" ref="event_sale.event_sale_order_1"/>
+            <field name="name">sales order line</field>
+            <field name="product_id" ref="event_sale.product_product_event"/>
+            <field name="price_unit">10</field>
+            <field name="product_uom_qty">1.0</field>
+            <field name="event_id" ref="event.event_1"/>
+        </record>
+
+        <record id="event_sale_order_line_2" model="sale.order.line">
+            <field name="order_id" ref="event_sale.event_sale_order_1"/>
+            <field name="name">sales order line</field>
+            <field name="product_id" ref="event_sale.product_product_event"/>
+            <field name="price_unit">15</field>
+            <field name="product_uom_qty">2.0</field>
+            <field name="event_id" ref="event.event_1"/>
+        </record>
+
+        <record id="event_sale_order_line_3" model="sale.order.line">
+            <field name="order_id" ref="event_sale.event_sale_order_2"/>
+            <field name="name">sales order line</field>
+            <field name="product_id" ref="event_sale.product_product_event"/>
+            <field name="price_unit">50</field>
+            <field name="product_uom_qty">2.0</field>
+            <field name="event_id" ref="event.event_1"/>
+        </record>
     </data>
 </odoo>

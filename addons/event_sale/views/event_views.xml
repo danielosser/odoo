@@ -26,4 +26,63 @@
         </field>
     </record>
 
+    <record id="view_event_sale_report_graph" model="ir.ui.view">
+        <field name="name">event.sale.report.graph</field>
+        <field name="model">event.sale.report</field>
+        <field name="arch" type="xml">
+            <graph string="Revenues" sample="1">
+                <field name="sale_price_subtotal" type="measure"/>
+                <field name="event_ids"/>
+                <field name="currency_id"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_event_sale_report_tree" model="ir.ui.view">
+        <field name="name">event.sale.report.tree</field>
+        <field name="model">event.sale.report</field>
+        <field name="arch" type="xml">
+            <tree string="Revenues" edit="false">
+                <field name="event_ids"/>
+                <field name="event_type_ticket_ids"/>
+                <field name="sale_price_subtotal"/>
+                <field name="currency_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_revenues" model="ir.actions.act_window">
+        <field name="name">Revenues</field>
+        <field name="res_model">event.sale.report</field>
+        <field name="view_mode">graph,pivot</field>
+        <field name="context">{
+            'search_default_group_by_event_id': 1,
+            'search_default_group_by_ticket_id': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No Event Revenues yet!
+            </p><p>
+                Come back once tickets have been sold to overview your sales income.
+            </p>
+        </field>
+    </record>
+
+    <record id="view_event_sale_report_search" model="ir.ui.view">
+        <field name="name">event.sale.report.search</field>
+        <field name="model">event.sale.report</field>
+        <field name="arch" type="xml">
+            <search string="Event Sales Analysis">
+                <filter string="By Event" name="group_by_event_id" context="{'group_by': 'event_ids' }"/>
+                <filter string="By Ticket" name="group_by_ticket_id" context="{'group_by': 'event_type_ticket_ids'}"/>
+            </search>
+        </field>
+    </record>
+
+    <menuitem name="Revenues"
+        id="menu_action_revenues"
+        action="action_revenues"
+        sequence="5"
+        parent="event.menu_reporting_events"
+        groups="event.group_event_user"/>
 </odoo>
