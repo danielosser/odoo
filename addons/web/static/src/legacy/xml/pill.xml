@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<template>
-    <t t-name="web.pill">
-        <span t-att-class="'badge border-0 badge-pill mx-0 mt-1 ' + widget.className">&amp;nbsp;</span>
-    </t>
-</template>
