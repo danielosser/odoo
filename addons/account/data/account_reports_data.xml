@@ -6,6 +6,7 @@
             <field name="name">Generic Tax report</field>
             <field name="filter_multi_company" eval="True"/>
             <field name="columns">'NET', 'TAX'</field> <!--TODO OCO chiant: en master on met NET + nom du mois et année ... On veut garder ça ?-->
+            <field name="dynamic_lines_generator">_generic_tax_report_get_dynamic_lines</field> <!--TODO OCO pareil: ça, c'est à ajouter en enterprise. Le champ aussi ?-->
             <!--TODO OCO fiscal_position à voir-->
         </record>
 
@@ -13,38 +14,16 @@
         <record id="oco_test_line_1" model="account.report.line">
             <field name="name">test line 1</field>
             <field name="report_id" ref="generic_tax_report"/>
+            <!--TODO OCO pour les vrais cas comme ceci, on a un souci: la fonction est en enterprise: donc soit on la déclare qui retourne 0 en community, soit on l'ajoute là-bas...
+            Ou bien on la met aussi en community ? Ca fait quand même bcp, là ...
+             -->
             <field name="expression_ids" eval="[
                 (0, 0, {'total': 'main', 'engine': 'custom', 'formula': '_tax_report_engine_generic', 'subformula': 'sales.tax','date_scope': 'test'}),
                 (0, 0, {'total': 'forty_two', 'engine': 'custom', 'formula': 'test_oco_always_42', 'date_scope': 'test'}),
             ]"/>
             <!--TODO OCO pour le control, on pourrait du coup mettre control_main, control_opt, ... EASY-->
             <field name="column_values">main, forty_two</field>
-            <field name="sequence">0</field>
-        </record>
-
-        <record id="generic_tax_report_sales" model="account.report.line">
-            <field name="name">Sales</field>
-            <field name="report_id" ref="generic_tax_report"/>
-            <field name="expression_ids" eval="[
-                (0, 0, {'total': 'net', 'engine': 'custom', 'formula': '_tax_report_engine_generic', 'subformula': 'sales.net', 'date_scope': 'test'}),
-                (0, 0, {'total': 'tax', 'engine': 'custom', 'formula': '_tax_report_engine_generic', 'date_scope': 'sales.tax', 'date_scope': 'test'}),
-            ]"/>
-            <!--TODO OCO pour le control, on pourrait du coup mettre control_main, control_opt, ... EASY-->
-            <field name="column_values">net, tax</field>
             <field name="sequence">1</field>
-        </record>
-
-        <record id="generic_tax_report_purchases" model="account.report.line">
-            <field name="name">Purchases</field>
-            <field name="report_id" ref="generic_tax_report"/>
-            <field name="expression_ids" eval="[
-                (0, 0, {'total': 'net', 'engine': 'custom', 'formula': '_tax_report_engine_generic', 'subformula': 'purchases.net', 'date_scope': 'test'}),
-                (0, 0, {'total': 'tax', 'engine': 'custom', 'formula': '_tax_report_engine_generic', 'date_scope': 'purchases.tax', 'date_scope': 'test'}),
-            ]"/>
-            <!--TODO OCO pour le control, on pourrait du coup mettre control_main, control_opt, ... EASY-->
-            <field name="column_values">net, tax</field>
-            <field name="sequence">2</field>
-            <!--TODO OCO si ne compte aucune line (===> count rows pour le savoir?), doit disparaître de ce rapport=> option pour ça ===> Plutôt le cacher en cas de groupby quand il n'a pas d'enfants. Quitte à faire un champ sélection hide ('never', 'if_no_child', 'if_zero')-->
         </record>
 
     </data>

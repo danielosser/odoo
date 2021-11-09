@@ -25,6 +25,7 @@ class AccountReport(models.Model):
     # TODO OCO attention à la gestion des tax units => le filter_multi_company, en faire un champ sélection ? (3 choix: désactivé, avec le sélecteur ou tax unit)
     line_ids = fields.One2many(string="Lines", comodel_name='account.report.line', inverse_name='report_id')
     columns = fields.Char(string="Columns") #TODO OCO le rendre requis ; je ne le fais pas toute suite car nique l'installation à cause des financial reports~~
+    dynamic_lines_generator = fields.Char(string="Dynamic Lines Generator")
 
 
 class AccountReportLine(models.Model):
