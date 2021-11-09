@@ -151,6 +151,8 @@ class MetaModel(api.Meta):
     DEPRECATED_METHODS_ATTRIBUTES = [
         'view_init',
         '_needaction',
+        '_sql',
+        '_execute_sql',
     ]
 
     def __new__(meta, name, bases, attrs):
