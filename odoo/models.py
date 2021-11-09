@@ -34,6 +34,7 @@ import operator
 import pytz
 import re
 import uuid
+import warnings
 from collections import defaultdict, OrderedDict
 from collections.abc import MutableMapping
 from contextlib import closing
@@ -5920,6 +5921,8 @@ Fields:
             .. deprecated:: 8.0
                 The record cache is automatically invalidated.
         """
+        warnings.warn('refresh() is deprecated method, use invalidate_cache() instead',
+                      DeprecationWarning)
         self.invalidate_cache()
 
     @api.model
