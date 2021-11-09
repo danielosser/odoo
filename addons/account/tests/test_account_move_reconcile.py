@@ -970,15 +970,15 @@ class TestAccountMoveReconcile(AccountTestInvoicingCommon):
 
         self.assertRecordValues(reverse_exchange_diff_lines, [
             {
-                'debit': 0.0,
-                'credit': 600.0,
+                'debit': 0.0 if not reverse_exchange_diff.is_storno else -600.0,
+                'credit': 600.0 if not reverse_exchange_diff.is_storno else 0,
                 'amount_currency': 0.0,
                 'currency_id': self.currency_data['currency'].id,
                 'account_id': self.company_data['default_account_receivable'].id,
             },
             {
-                'debit': 600.0,
-                'credit': 0.0,
+                'debit': 600.0 if not reverse_exchange_diff.is_storno else 0,
+                'credit': 0.0 if not reverse_exchange_diff.is_storno else -600.0,
                 'amount_currency': 0.0,
                 'currency_id': self.currency_data['currency'].id,
                 'account_id': exchange_diff.journal_id.company_id.income_currency_exchange_account_id.id,

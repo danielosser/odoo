@@ -20,7 +20,7 @@ class TestAccountMoveOutInvoiceOnchanges(AccountTestInvoicingCommon):
 
         cls.invoice = cls.init_invoice('out_invoice', products=cls.product_a+cls.product_b)
 
-        cls.product_line_vals_1 = {
+        cls.product_line_vals_base_1 = {
             'name': cls.product_a.name,
             'product_id': cls.product_a.id,
             'account_id': cls.product_a.property_account_income_id.id,
@@ -35,11 +35,14 @@ class TestAccountMoveOutInvoiceOnchanges(AccountTestInvoicingCommon):
             'tax_line_id': False,
             'currency_id': cls.company_data['currency'].id,
             'amount_currency': -1000.0,
-            'debit': 0.0,
-            'credit': 1000.0,
             'date_maturity': False,
         }
-        cls.product_line_vals_2 = {
+        cls.product_line_vals_1 = {
+            **cls.product_line_vals_base_1,
+            'debit': 0.0,
+            'credit': 1000.0,
+        }
+        cls.product_line_vals_base_2 = {
             'name': cls.product_b.name,
             'product_id': cls.product_b.id,
             'account_id': cls.product_b.property_account_income_id.id,
@@ -54,11 +57,14 @@ class TestAccountMoveOutInvoiceOnchanges(AccountTestInvoicingCommon):
             'tax_line_id': False,
             'currency_id': cls.company_data['currency'].id,
             'amount_currency': -200.0,
-            'debit': 0.0,
-            'credit': 200.0,
             'date_maturity': False,
         }
-        cls.tax_line_vals_1 = {
+        cls.product_line_vals_2 = {
+            **cls.product_line_vals_base_2,
+            'debit': 0.0,
+            'credit': 200.0,
+        }
+        cls.tax_line_vals_base_1 = {
             'name': cls.tax_sale_a.name,
             'product_id': False,
             'account_id': cls.company_data['default_account_tax_sale'].id,
@@ -73,11 +79,14 @@ class TestAccountMoveOutInvoiceOnchanges(AccountTestInvoicingCommon):
             'tax_line_id': cls.tax_sale_a.id,
             'currency_id': cls.company_data['currency'].id,
             'amount_currency': -180.0,
-            'debit': 0.0,
-            'credit': 180.0,
             'date_maturity': False,
         }
-        cls.tax_line_vals_2 = {
+        cls.tax_line_vals_1 = {
+            **cls.tax_line_vals_base_1,
+            'debit': 0.0,
+            'credit': 180.0,
+        }
+        cls.tax_line_vals_base_2 = {
             'name': cls.tax_sale_b.name,
             'product_id': False,
             'account_id': cls.company_data['default_account_tax_sale'].id,
@@ -92,11 +101,14 @@ class TestAccountMoveOutInvoiceOnchanges(AccountTestInvoicingCommon):
             'tax_line_id': cls.tax_sale_b.id,
             'currency_id': cls.company_data['currency'].id,
             'amount_currency': -30.0,
-            'debit': 0.0,
-            'credit': 30.0,
             'date_maturity': False,
         }
-        cls.term_line_vals_1 = {
+        cls.tax_line_vals_2 = {
+            **cls.tax_line_vals_base_2,
+            'debit': 0.0,
+            'credit': 30.0,
+        }
+        cls.term_line_vals_base_1 = {
             'name': '',
             'product_id': False,
             'account_id': cls.company_data['default_account_receivable'].id,
@@ -111,9 +123,12 @@ class TestAccountMoveOutInvoiceOnchanges(AccountTestInvoicingCommon):
             'tax_line_id': False,
             'currency_id': cls.company_data['currency'].id,
             'amount_currency': 1410.0,
+            'date_maturity': fields.Date.from_string('2019-01-01'),
+        }
+        cls.term_line_vals_1 = {
+            **cls.term_line_vals_base_1,
             'debit': 1410.0,
             'credit': 0.0,
-            'date_maturity': fields.Date.from_string('2019-01-01'),
         }
         cls.move_vals = {
             'partner_id': cls.partner_a.id,
@@ -1754,33 +1769,33 @@ class TestAccountMoveOutInvoiceOnchanges(AccountTestInvoicingCommon):
             {
                 **self.product_line_vals_1,
                 'amount_currency': 1000.0,
-                'debit': 1000.0,
-                'credit': 0.0,
+                'debit': 1000.0 if not reverse_move.is_storno else 0,
+                'credit': 0.0 if not reverse_move.is_storno else -1000.0,
             },
             {
                 **self.product_line_vals_2,
                 'amount_currency': 200.0,
-                'debit': 200.0,
-                'credit': 0.0,
+                'debit': 200.0 if not reverse_move.is_storno else 0,
+                'credit': 0.0 if not reverse_move.is_storno else -200.0,
             },
             {
                 **self.tax_line_vals_1,
                 'amount_currency': 180.0,
-                'debit': 180.0,
-                'credit': 0.0,
+                'debit': 180.0 if not reverse_move.is_storno else 0,
+                'credit': 0.0 if not reverse_move.is_storno else -180.0,
             },
             {
                 **self.tax_line_vals_2,
                 'amount_currency': 30.0,
-                'debit': 30.0,
-                'credit': 0.0,
+                'debit': 30.0 if not reverse_move.is_storno else 0,
+                'credit': 0.0 if not reverse_move.is_storno else -30.0,
             },
             {
                 **self.term_line_vals_1,
                 'name': '',
                 'amount_currency': -1410.0,
-                'debit': 0.0,
-                'credit': 1410.0,
+                'debit': 0.0 if not reverse_move.is_storno else -1410.0,
+                'credit': 1410.0 if not reverse_move.is_storno else 0,
                 'date_maturity': move_reversal.date,
             },
         ], {
@@ -1807,33 +1822,33 @@ class TestAccountMoveOutInvoiceOnchanges(AccountTestInvoicingCommon):
             {
                 **self.product_line_vals_1,
                 'amount_currency': 1000.0,
-                'debit': 1000.0,
-                'credit': 0.0,
+                'debit': 1000.0 if not reverse_move.is_storno else 0,
+                'credit': 0.0 if not reverse_move.is_storno else -1000.0,
             },
             {
                 **self.product_line_vals_2,
                 'amount_currency': 200.0,
-                'debit': 200.0,
-                'credit': 0.0,
+                'debit': 200.0 if not reverse_move.is_storno else 0,
+                'credit': 0.0 if not reverse_move.is_storno else -200.0,
             },
             {
                 **self.tax_line_vals_1,
                 'amount_currency': 180.0,
-                'debit': 180.0,
-                'credit': 0.0,
+                'debit': 180.0 if not reverse_move.is_storno else 0,
+                'credit': 0.0 if not reverse_move.is_storno else -180.0,
             },
             {
                 **self.tax_line_vals_2,
                 'amount_currency': 30.0,
-                'debit': 30.0,
-                'credit': 0.0,
+                'debit': 30.0 if not reverse_move.is_storno else 0,
+                'credit': 0.0 if not reverse_move.is_storno else -30.0,
             },
             {
                 **self.term_line_vals_1,
                 'name': '',
                 'amount_currency': -1410.0,
-                'debit': 0.0,
-                'credit': 1410.0,
+                'debit': 0.0 if not reverse_move.is_storno else -1410.0,
+                'credit': 1410.0 if not reverse_move.is_storno else 0,
                 'date_maturity': move_reversal.date,
             },
         ], {
@@ -1869,40 +1884,35 @@ class TestAccountMoveOutInvoiceOnchanges(AccountTestInvoicingCommon):
         self.assertEqual(self.invoice.payment_state, 'not_paid', "Refunding with a draft credit note should keep the invoice 'not_paid'.")
         self.assertInvoiceValues(reverse_move, [
             {
-                **self.product_line_vals_1,
+                **self.product_line_vals_base_1,
                 'amount_currency': 1000.0,
                 'currency_id': self.currency_data['currency'].id,
-                'debit': 500.0,
-                'credit': 0.0,
+                'balance': 500.0,
             },
             {
-                **self.product_line_vals_2,
+                **self.product_line_vals_base_2,
                 'amount_currency': 200.0,
                 'currency_id': self.currency_data['currency'].id,
-                'debit': 100.0,
-                'credit': 0.0,
+                'balance': 100.0,
             },
             {
-                **self.tax_line_vals_1,
+                **self.tax_line_vals_base_1,
                 'amount_currency': 180.0,
                 'currency_id': self.currency_data['currency'].id,
-                'debit': 90.0,
-                'credit': 0.0,
+                'balance': 90.0,
             },
             {
-                **self.tax_line_vals_2,
+                **self.tax_line_vals_base_2,
                 'amount_currency': 30.0,
                 'currency_id': self.currency_data['currency'].id,
-                'debit': 15.0,
-                'credit': 0.0,
+                'balance': 15.0,
             },
             {
-                **self.term_line_vals_1,
+                **self.term_line_vals_base_1,
                 'name': '',
                 'amount_currency': -1410.0,
                 'currency_id': self.currency_data['currency'].id,
-                'debit': 0.0,
-                'credit': 705.0,
+                'balance': -705.0,
                 'date_maturity': move_reversal.date,
             },
         ], {
@@ -1927,40 +1937,35 @@ class TestAccountMoveOutInvoiceOnchanges(AccountTestInvoicingCommon):
         self.assertEqual(self.invoice.payment_state, 'reversed', "After cancelling it with a reverse invoice, an invoice should be in 'reversed' state.")
         self.assertInvoiceValues(reverse_move, [
             {
-                **self.product_line_vals_1,
+                **self.product_line_vals_base_1,
                 'amount_currency': 1000.0,
                 'currency_id': self.currency_data['currency'].id,
-                'debit': 500.0,
-                'credit': 0.0,
+                'balance': 500.0,
             },
             {
-                **self.product_line_vals_2,
+                **self.product_line_vals_base_2,
                 'amount_currency': 200.0,
                 'currency_id': self.currency_data['currency'].id,
-                'debit': 100.0,
-                'credit': 0.0,
+                'balance': 100.0,
             },
             {
-                **self.tax_line_vals_1,
+                **self.tax_line_vals_base_1,
                 'amount_currency': 180.0,
                 'currency_id': self.currency_data['currency'].id,
-                'debit': 90.0,
-                'credit': 0.0,
+                'balance': 90.0,
             },
             {
-                **self.tax_line_vals_2,
+                **self.tax_line_vals_base_2,
                 'amount_currency': 30.0,
                 'currency_id': self.currency_data['currency'].id,
-                'debit': 15.0,
-                'credit': 0.0,
+                'balance': 15.0,
             },
             {
-                **self.term_line_vals_1,
+                **self.term_line_vals_base_1,
                 'name': '',
                 'amount_currency': -1410.0,
                 'currency_id': self.currency_data['currency'].id,
-                'debit': 0.0,
-                'credit': 705.0,
+                'balance': -705.0,
                 'date_maturity': move_reversal.date,
             },
         ], {
@@ -2411,36 +2416,36 @@ class TestAccountMoveOutInvoiceOnchanges(AccountTestInvoicingCommon):
                 **self.product_line_vals_1,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': 1000.0,
-                'debit': 500.0,
-                'credit': 0,
+                'debit': 500.0 if not move.is_storno else 0,
+                'credit': 0 if not move.is_storno else -500.0,
             },
             {
                 **self.product_line_vals_2,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': 200.0,
-                'debit': 100.0,
-                'credit': 0,
+                'debit': 100.0 if not move.is_storno else 0,
+                'credit': 0 if not move.is_storno else -100.0,
             },
             {
                 **self.tax_line_vals_1,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': 180.0,
-                'debit': 90.0,
-                'credit': 0,
+                'debit': 90.0 if not move.is_storno else 0,
+                'credit': 0 if not move.is_storno else -90.0,
             },
             {
                 **self.tax_line_vals_2,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': 30.0,
-                'debit': 15.0,
-                'credit': 0,
+                'debit': 15.0 if not move.is_storno else 0,
+                'credit': 0 if not move.is_storno else -15.0,
             },
             {
                 **self.term_line_vals_1,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': -1410.0,
-                'credit': 705.0,
-                'debit': 0,
+                'credit': 705.0 if not move.is_storno else 0,
+                'debit': 0 if not move.is_storno else -705.0,
             },
         ], {
             **self.move_vals,
@@ -2475,54 +2480,49 @@ class TestAccountMoveOutInvoiceOnchanges(AccountTestInvoicingCommon):
 
         self.assertInvoiceValues(move, [
             {
-                **self.product_line_vals_1,
+                **self.product_line_vals_base_1,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': 1000.0,
                 'price_subtotal': -1000.0,
                 'price_total': -1150.0,
-                'debit': 500.0,
-                'credit': 0,
+                'balance': 500.0,
                 'quantity': -1.0,
             },
             {
-                **self.product_line_vals_2,
+                **self.product_line_vals_base_2,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': 200.0,
                 'price_subtotal': -200.0,
                 'price_total': -260.0,
-                'debit': 100.0,
-                'credit': 0,
+                'balance': 100.0,
                 'quantity': -1.0,
             },
             {
-                **self.tax_line_vals_1,
+                **self.tax_line_vals_base_1,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': 180.0,
                 'price_subtotal': -180.0,
                 'price_total': -180.0,
                 'price_unit': -180.0,
-                'debit': 90.0,
-                'credit': 0,
+                'balance': 90.0,
             },
             {
-                **self.tax_line_vals_2,
+                **self.tax_line_vals_base_2,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': 30.0,
                 'price_subtotal': -30.0,
                 'price_total': -30.0,
                 'price_unit': -30.0,
-                'debit': 15.0,
-                'credit': 0,
+                'balance': 15.0,
             },
             {
-                **self.term_line_vals_1,
+                **self.term_line_vals_base_1,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': -1410.0,
                 'price_subtotal': 1410.0,
                 'price_total': 1410.0,
                 'price_unit': 1410.0,
-                'credit': 705.0,
-                'debit': 0,
+                'balance': -705.0,
             },
         ], {
             **self.move_vals,
@@ -2537,46 +2537,41 @@ class TestAccountMoveOutInvoiceOnchanges(AccountTestInvoicingCommon):
         self.assertRecordValues(move, [{'move_type': 'out_refund'}])
         self.assertInvoiceValues(move, [
             {
-                **self.product_line_vals_1,
+                **self.product_line_vals_base_1,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': 1000.0,
-                'debit': 500.0,
-                'credit': 0,
+                'balance': 500.0,
             },
             {
-                **self.product_line_vals_2,
+                **self.product_line_vals_base_2,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': 200.0,
-                'debit': 100.0,
-                'credit': 0,
+                'balance': 100.0,
             },
             {
-                **self.tax_line_vals_1,
+                **self.tax_line_vals_base_1,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': 180.0,
-                'debit': 90.0,
-                'credit': 0,
+                'balance': 90.0,
             },
             {
-                **self.tax_line_vals_2,
+                **self.tax_line_vals_base_2,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': 30.0,
-                'debit': 15.0,
-                'credit': 0,
+                'balance': 15.0,
             },
             {
-                **self.term_line_vals_1,
+                **self.term_line_vals_base_1,
                 'currency_id': self.currency_data['currency'].id,
                 'amount_currency': -1410.0,
-                'credit': 705.0,
-                'debit': 0,
+                'balance': -705.0,
             },
         ], {
             **self.move_vals,
             'currency_id': self.currency_data['currency'].id,
-            'amount_tax' : self.move_vals['amount_tax'],
-            'amount_total' : self.move_vals['amount_total'],
-            'amount_untaxed' : self.move_vals['amount_untaxed'],
+            'amount_tax': self.move_vals['amount_tax'],
+            'amount_total': self.move_vals['amount_total'],
+            'amount_untaxed': self.move_vals['amount_untaxed'],
         })
 
     def test_out_invoice_reverse_move_tags(self):

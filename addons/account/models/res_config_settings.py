@@ -143,6 +143,9 @@ class ResConfigSettings(models.TransientModel):
     # Technical field to hide country specific fields from accounting configuration
     country_code = fields.Char(related='company_id.account_fiscal_country_id.code', readonly=True)
 
+    # Storno Accounting
+    storno_accounting = fields.Boolean(string="Storno accounting", readonly=False, related='company_id.storno_accounting')
+
     def set_values(self):
         super(ResConfigSettings, self).set_values()
         # install a chart of accounts for the given company (if required)

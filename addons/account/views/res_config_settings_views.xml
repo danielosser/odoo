@@ -627,6 +627,22 @@
                                 </div>
                             </div>
                         </div>
+                        <h2>Storno Accounting</h2>
+                        <div class="row mt16 o_settings_container" id="storno">
+                            <div class="col-12 col-lg-6 o_setting_box"
+                                id="enable_storno_accounting"
+                                title="Allows you to use Storno accounting.">
+                                <div class="o_setting_left_pane">
+                                    <field name="storno_accounting"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="storno_accounting"/>
+                                    <div class="text-muted">
+                                        Use Storno accounting
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </xpath>
             </field>

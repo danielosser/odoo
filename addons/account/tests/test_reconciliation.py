@@ -462,7 +462,9 @@ class TestReconciliationExec(TestAccountReconciliationCommon):
 
         def _determine_debit_credit_line(move):
             line_ids_reconciliable = move.line_ids.filtered(lambda l: l.account_id.reconcile or l.account_id.internal_type == 'liquidity')
-            return line_ids_reconciliable.filtered(lambda l: l.debit), line_ids_reconciliable.filtered(lambda l: l.credit)
+            if not move.is_storno:
+                return line_ids_reconciliable.filtered(lambda l: l.debit), line_ids_reconciliable.filtered(lambda l: l.credit)
+            return line_ids_reconciliable.filtered(lambda l: l.credit), line_ids_reconciliable.filtered(lambda l: l.debit)
 
         def _move_revert_test_pair(move, revert):
             self.assertTrue(move.line_ids)
