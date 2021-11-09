@@ -152,6 +152,11 @@ class MetaModel(api.Meta):
     """
     module_to_models = defaultdict(list)
 
+    # Deprecated methods/attributes
+    DEPRECATED_METHODS_ATTRIBUTES = [
+        'view_init',
+    ]
+
     def __new__(meta, name, bases, attrs):
         # this prevents assignment of non-fields on recordsets
         attrs.setdefault('__slots__', ())
@@ -177,6 +182,10 @@ class MetaModel(api.Meta):
 
     def __init__(self, name, bases, attrs):
         super().__init__(name, bases, attrs)
+
+        for deprecate in self.DEPRECATED_METHODS_ATTRIBUTES:
+            if deprecate in attrs:
+                _logger.warning("Deprecated method/attribute %s.%s in module %s", name, deprecate, attrs.get('__module__'))
 
         if not attrs.get('_register', True):
             return
@@ -532,13 +541,6 @@ class BaseModel(metaclass=MetaModel):
     _transient_max_hours = lazy_classproperty(lambda _: config.get('transient_age_limit'))
 
     CONCURRENCY_CHECK_FIELD = '__last_update'
-
-    @api.model
-    def view_init(self, fields_list):
-        """ Override this method to do specific things when a form view is
-        opened. This method is invoked by :meth:`~default_get`.
-        """
-        pass
 
     def _valid_field_parameter(self, field, name):
         """ Return whether the given parameter name is valid for the field. """
@@ -1384,9 +1386,6 @@ class BaseModel(metaclass=MetaModel):
             Unrequested defaults won't be considered, there is no need to return a
             value for fields whose names are not in `fields_list`.
         """
-        # trigger view init hook
-        self.view_init(fields_list)
-
         defaults = {}
         parent_fields = defaultdict(list)
         ir_defaults = self.env['ir.default'].get_model_defaults(self._name)
