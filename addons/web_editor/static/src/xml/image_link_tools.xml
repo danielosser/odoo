@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="web_editor.image_link_tools_button">
+        <we-button class="fa fa-link" data-set-link="" data-no-preview="true"
+            title="Redirect the user elsewhere when he clicks on the image."/>
+    </t>
+
+    <t t-name="web.editor.image_link_tools_fields">
+        <t t-set="url_input_label">⌙ Your URL</t>
+        <we-input t-att-string="url_input_label"
+            data-set-url="" name="url" data-name="link_on_image_opt"
+            title="Type '/' to search a page. '#' to link to an anchor."
+            class="o_we_large" placeholder="www.example.com"
+            data-request-focus="true"/>
+        <t t-set="anchor_select_label">⌙ Page Anchor</t>
+        <we-select data-name="page_anchor_opt"
+            data-no-preview="true" t-att-string="anchor_select_label">
+        </we-select>
+        <t t-set="new_window_checkbox_label">⌙ Open in new window</t>
+        <we-checkbox data-name="link_on_image_opt" data-no-preview="true"
+            data-set-new-window="" t-att-string="new_window_checkbox_label"/>
+    </t>
+</templates>
