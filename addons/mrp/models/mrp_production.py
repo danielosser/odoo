@@ -235,6 +235,8 @@ class MrpProduction(models.Model):
     json_popover = fields.Char('JSON data for the popover widget', compute='_compute_json_popover')
     scrap_ids = fields.One2many('stock.scrap', 'production_id', 'Scraps')
     scrap_count = fields.Integer(compute='_compute_scrap_move_count', string='Scrap Move')
+    unbuild_ids = fields.One2many('mrp.unbuild', 'mo_id', 'Unbuilds')
+    unbuild_count = fields.Integer(compute='_compute_unbuild_count', string='Number of Unbuilds')
     is_locked = fields.Boolean('Is Locked', default=_get_default_is_locked, copy=False)
     is_planned = fields.Boolean('Its Operations are Planned', compute="_compute_is_planned", store=True)
 
@@ -509,6 +511,11 @@ class MrpProduction(models.Model):
         count_data = dict((item['production_id'][0], item['production_id_count']) for item in data)
         for production in self:
             production.scrap_count = count_data.get(production.id, 0)
+
+    @api.depends('unbuild_ids')
+    def _compute_unbuild_count(self):
+        for production in self:
+            production.unbuild_count = len(production.unbuild_ids)
 
     @api.depends('move_finished_ids')
     def _compute_move_byproduct_ids(self):
@@ -1653,6 +1660,12 @@ class MrpProduction(models.Model):
         action = self.env["ir.actions.actions"]._for_xml_id("stock.action_stock_scrap")
         action['domain'] = [('production_id', '=', self.id)]
         action['context'] = dict(self._context, default_origin=self.name)
+        return action
+
+    def action_view_mrp_production_unbuilds(self):
+        action = self.env["ir.actions.actions"]._for_xml_id("mrp.mrp_unbuild")
+        action['domain'] = [('mo_id', '=', self.id)]
+        action['context'] = dict(self._context, default_mo_id=self.id)
         return action
 
     @api.model

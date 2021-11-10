@@ -314,11 +314,11 @@ class MrpWorkorder(models.Model):
             if delta_duration > 0:
                 date_start = datetime.now() - timedelta(seconds=_float_duration_to_second(delta_duration))
                 self.env['mrp.workcenter.productivity'].create(
-                    order._prepare_timeline_vals(delta_duration, date_start, datetime.now())
+                    order._prepare_timeline_vals(new_order_duration, date_start, datetime.now())
                 )
             else:
                 duration_to_remove = abs(delta_duration)
-                timelines = order.time_ids.sorted(lambda t: t.date_start)
+                timelines = order.time_ids.sorted(lambda t: t.date_end, reverse=True)
                 timelines_to_unlink = self.env['mrp.workcenter.productivity']
                 for timeline in timelines:
                     if duration_to_remove <= 0.0:
@@ -329,6 +329,8 @@ class MrpWorkorder(models.Model):
                     else:
                         new_time_line_duration = timeline.duration - duration_to_remove
                         timeline.date_start = timeline.date_end - timedelta(seconds=_float_duration_to_second(new_time_line_duration))
+                        if new_order_duration <= order.duration_expected and timeline.loss_type != 'productive':
+                            timeline.loss_id = self.env['mrp.workcenter.productivity.loss'].search([('loss_type', '=', 'productive')], limit=1)
                         break
                 timelines_to_unlink.unlink()
 
@@ -750,7 +752,7 @@ class MrpWorkorder(models.Model):
 
     def _prepare_timeline_vals(self, duration, date_start, date_end=False):
         # Need a loss in case of the real time exceeding the expected
-        if not self.duration_expected or duration < self.duration_expected:
+        if not self.duration_expected or duration <= self.duration_expected:
             loss_id = self.env['mrp.workcenter.productivity.loss'].search([('loss_type', '=', 'productive')], limit=1)
             if not len(loss_id):
                 raise UserError(_("You need to define at least one productivity loss in the category 'Productivity'. Create one from the Manufacturing app, menu: Configuration / Productivity Losses."))
