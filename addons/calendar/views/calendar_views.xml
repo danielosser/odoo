@@ -158,7 +158,8 @@
                                 <group>
                                     <field name="alarm_ids" widget="many2many_tags" options="{'no_quick_create': True}"/>
                                     <field name="location" />
-                                    <field name="videocall_location"/>
+                                    <field name="videocall_location" widget ="url" attrs="{'readonly':[('videocall_source','=','discuss')]}"/>
+                                    <field name="videocall_source"/>
                                     <field name="categ_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}"/>
                                 </group>
                             </group>

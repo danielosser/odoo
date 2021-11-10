@@ -11,6 +11,7 @@ from odoo.osv.expression import AND
 from odoo.addons.base.models.res_partner import _tz_get
 from odoo.addons.calendar.models.calendar_attendee import Attendee
 from odoo.addons.calendar.models.calendar_recurrence import weekday_to_field, RRULE_TYPE_SELECTION, END_TYPE_SELECTION, MONTH_BY_SELECTION, WEEKDAY_SELECTION, BYDAY_SELECTION
+from odoo.http import request
 from odoo.tools.translate import _
 from odoo.tools.misc import get_lang
 from odoo.tools import pycompat, html2plaintext, is_html_empty
@@ -88,7 +89,9 @@ class Meeting(models.Model):
     partner_id = fields.Many2one(
         'res.partner', string='Scheduled by', related='user_id.partner_id', readonly=True)
     location = fields.Char('Location', tracking=True, help="Location of Event")
-    videocall_location = fields.Char('Meeting URL')
+    videocall_location = fields.Char('Meeting URL', compute='_compute_videocall_location')
+    videocall_source = fields.Selection([('discuss', 'Discuss'), ('custom', 'Custom')], default="custom", required=True)
+    videocall_channel = fields.Many2one('mail.channel', 'Discuss Channel')
     # visibility
     privacy = fields.Selection(
         [('public', 'Public'),
@@ -343,6 +346,16 @@ class Meeting(models.Model):
         for event in self:
             event.display_description = not is_html_empty(event.description)
 
+    @api.depends('videocall_channel', 'videocall_source')
+    def _compute_videocall_location(self):
+        for event in self:
+            if event.videocall_source == 'discuss' and event.videocall_channel:
+                event.videocall_location = '%(base_url)s/chat/%(channel_id)s/%(uuid)s' % {
+                    'base_url': request.httprequest.host, 'channel_id': event.videocall_channel.id, 'uuid': event.videocall_channel.uuid
+                }
+            else:
+                event.videocall_location = ''
+
     # ------------------------------------------------------------
     # CRUD
     # ------------------------------------------------------------
@@ -387,6 +400,11 @@ class Meeting(models.Model):
             dict(vals, attendee_ids=self._attendees_values(vals.get('partner_ids', default_partners_ids))) if not vals.get('attendee_ids') else vals
             for vals in vals_list
         ]
+        vals_list = [
+            dict(vals, videocall_channel=self._create_videocall_channel(vals.get('name'), vals['partner_ids'][0][2])) if vals.get('videocall_source') == 'discuss' else vals
+            for vals in vals_list
+        ]
+
         recurrence_fields = self._get_recurrent_fields()
         recurring_vals = [vals for vals in vals_list if vals.get('recurrency')]
         other_vals = [vals for vals in vals_list if not vals.get('recurrency')]
@@ -474,6 +492,17 @@ class Meeting(models.Model):
         if 'partner_ids' in values:
             values['attendee_ids'] = self._attendees_values(values['partner_ids'])
             update_alarms = True
+            if self.videocall_channel:
+                partner_ids = values['partner_ids'][0][2]
+                self.videocall_channel.write({
+                    'channel_partner_ids': [(6, 0, partner_ids)]
+                })
+
+        if 'videocall_source' in values:
+            if values.get('videocall_source') == 'discuss':
+                if not self.videocall_channel:
+                    values['videocall_channel'] = self._create_videocall_channel(values.get('name', self.name), set(values.get('partner_ids', []) + list(self.partner_ids.ids)))
+        # if partner_ids and videocall_channel exists, add new partners to channel
 
         time_fields = self.env['calendar.event']._get_time_fields()
         if any([values.get(key) for key in time_fields]) or 'alarm_ids' in values:
@@ -613,6 +642,17 @@ class Meeting(models.Model):
             for partner_id in added_partner_ids
         ]
         return attendee_commands
+
+    def _create_videocall_channel(self, name, partner_ids):
+        videocall_channel = self.env['mail.channel'].create({
+            'name': name,
+            'channel_type': 'group',
+            'default_display_mode': 'video_full_screen',
+            'public': 'private',
+            'channel_partner_ids': [(6, 0, partner_ids)]
+        })
+        return videocall_channel.id
+
 
     # ------------------------------------------------------------
     # ACTIONS
