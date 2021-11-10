@@ -900,10 +900,10 @@ class Cache(object):
         except KeyError:
             pass
 
-    def get_values(self, records, field):
+    def get_values(self, records, field, reverse=False):
         """ Return the cached values of ``field`` for ``records``. """
         field_cache = self._get_field_cache(records, field)
-        for record_id in records._ids:
+        for record_id in (reversed(records._ids) if reverse else records._ids):
             try:
                 yield field_cache[record_id]
             except KeyError:

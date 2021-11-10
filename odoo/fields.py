@@ -3,6 +3,7 @@
 
 """ High-level objects for fields. """
 
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from datetime import date, datetime, time
 from operator import attrgetter
@@ -20,7 +21,7 @@ import pytz
 
 from .tools import (
     float_repr, float_round, float_compare, float_is_zero, html_sanitize, human_size,
-    pg_varchar, ustr, OrderedSet, pycompat, sql, date_utils, unique, IterableGenerator,
+    pg_varchar, ustr, OrderedSet, pycompat, sql, date_utils, unique,
     image_process, merge_sequences,
 )
 from .tools import DEFAULT_SERVER_DATE_FORMAT as DATE_FORMAT
@@ -2789,12 +2790,12 @@ class Many2one(_Relational):
     def convert_to_record(self, value, record):
         # use registry to avoid creating a recordset for the model
         ids = () if value is None else (value,)
-        prefetch_ids = IterableGenerator(prefetch_many2one_ids, record, self)
+        prefetch_ids = PrefetchMany2oneGenerator(record, self)
         return record.pool[self.comodel_name]._browse(record.env, ids, prefetch_ids)
 
     def convert_to_record_multi(self, values, records):
         # return the ids as a recordset without duplicates
-        prefetch_ids = IterableGenerator(prefetch_many2one_ids, records, self)
+        prefetch_ids = PrefetchMany2oneGenerator(records, self)
         ids = tuple(unique(id_ for id_ in values if id_ is not None))
         return records.pool[self.comodel_name]._browse(records.env, ids, prefetch_ids)
 
@@ -3190,7 +3191,7 @@ class _RelationalMulti(_Relational):
 
     def convert_to_record(self, value, record):
         # use registry to avoid creating a recordset for the model
-        prefetch_ids = IterableGenerator(prefetch_x2many_ids, record, self)
+        prefetch_ids = PrefetchX2manyGenerator(record, self)
         Comodel = record.pool[self.comodel_name]
         corecords = Comodel._browse(record.env, value, prefetch_ids)
         if (
@@ -3202,7 +3203,7 @@ class _RelationalMulti(_Relational):
 
     def convert_to_record_multi(self, values, records):
         # return the list of ids as a recordset without duplicates
-        prefetch_ids = IterableGenerator(prefetch_x2many_ids, records, self)
+        prefetch_ids = PrefetchX2manyGenerator(records, self)
         Comodel = records.pool[self.comodel_name]
         ids = tuple(unique(id_ for ids in values for id_ in ids))
         corecords = Comodel._browse(records.env, ids, prefetch_ids)
@@ -4067,23 +4068,40 @@ class Id(Field):
         raise TypeError("field 'id' cannot be assigned")
 
 
-def prefetch_many2one_ids(record, field):
-    """ Return an iterator over the ids of the cached values of a many2one
+class PrefetchRelationalGenerator(ABC):
+    __slots__ = 'record', 'field'
+
+    def __init__(self, record, field):
+        self.record = record
+        self.field = field
+
+    def __iter__(self):
+        return self.get_iterator(False)
+
+    def __reversed__(self):
+        return self.get_iterator(True)
+
+    @abstractmethod
+    def get_iterator(self, reverse):
+        """ Return an iterator over the ids of the cached values of a relational
         field for the prefetch set of a record.
-    """
-    records = record.browse(record._prefetch_ids)
-    ids = record.env.cache.get_values(records, field)
-    return unique(id_ for id_ in ids if id_ is not None)
+        `reverse` argument should be take in account and return a reversed iterator instead.
+        """
+
+class PrefetchMany2oneGenerator(PrefetchRelationalGenerator):
+
+    def get_iterator(self, reverse):
+        records = self.record.browse(self.record._prefetch_ids)
+        ids = self.record.env.cache.get_values(records, self.field, reverse)
+        return unique(id_ for id_ in ids if id_ is not None)
 
 
-def prefetch_x2many_ids(record, field):
-    """ Return an iterator over the ids of the cached values of an x2many
-        field for the prefetch set of a record.
-    """
-    records = record.browse(record._prefetch_ids)
-    ids_list = record.env.cache.get_values(records, field)
-    return unique(id_ for ids in ids_list for id_ in ids)
+class PrefetchX2manyGenerator(PrefetchRelationalGenerator):
 
+    def get_iterator(self, reverse):
+        records = self.record.browse(self.record._prefetch_ids)
+        ids_list = self.record.env.cache.get_values(records, self.field, reverse)
+        return unique(id_ for ids in ids_list for id_ in ids)
 
 def apply_required(model, field_name):
     """ Set a NOT NULL constraint on the given field, if necessary. """

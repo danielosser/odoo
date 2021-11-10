@@ -54,7 +54,7 @@ from . import tools
 from .exceptions import AccessError, MissingError, ValidationError, UserError
 from .osv.query import Query
 from .tools import frozendict, lazy_classproperty, ormcache, \
-                   Collector, LastOrderedSet, OrderedSet, IterableGenerator, \
+                   LastOrderedSet, OrderedSet, ReversedGenerator, \
                    groupby, discardattr, partition
 from .tools.config import config
 from .tools.func import frame_codeinfo
@@ -256,6 +256,18 @@ def origin_ids(ids):
         Actual ids are returned as is, and ids without origin are not returned.
     """
     return ((id_ or id_.origin) for id_ in ids if (id_ or getattr(id_, "origin", None)))
+
+class PrefetchOriginGenerator():
+    __slots__ = 'prefetch_ids',
+
+    def __init__(self, prefetch_ids):
+        self.prefetch_ids = prefetch_ids
+
+    def __iter__(self):
+        return origin_ids(self.prefetch_ids)
+
+    def __reversed__(self):
+        return origin_ids(reversed(self.prefetch_ids))
 
 
 def expand_ids(id0, ids):
@@ -5712,7 +5724,7 @@ Fields:
     def _origin(self):
         """ Return the actual records corresponding to ``self``. """
         ids = tuple(origin_ids(self._ids))
-        prefetch_ids = IterableGenerator(origin_ids, self._prefetch_ids)
+        prefetch_ids = PrefetchOriginGenerator(self._prefetch_ids)
         return self._browse(self.env, ids, prefetch_ids)
 
     #
@@ -5737,6 +5749,16 @@ Fields:
         else:
             for id in self._ids:
                 yield self._browse(self.env, (id,), self._prefetch_ids)
+
+    def __reversed__(self):
+        """ Return an reversed iterator over ``self``. """
+        if len(self._ids) > PREFETCH_MAX and self._prefetch_ids is self._ids:
+            for ids in self.env.cr.split_for_in_conditions(reversed(self._ids)):
+                for id_ in ids:
+                    yield self.__class__(self.env, (id_,), ids)
+        else:
+            for id_ in reversed(self._ids):
+                yield self.__class__(self.env, (id_,), ReversedGenerator(self._prefetch_ids))
 
     def __contains__(self, item):
         """ Test whether ``item`` (record or field name) is an element of ``self``.
@@ -6595,7 +6617,7 @@ Fields:
 
 
 collections.Set.register(BaseModel)
-# not exactly true as BaseModel doesn't have __reversed__, index or count
+# not exactly true as BaseModel doesn't have index or count
 collections.Sequence.register(BaseModel)
 
 class RecordCache(MutableMapping):
