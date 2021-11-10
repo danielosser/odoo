@@ -397,6 +397,12 @@ class Partner(models.Model):
         if self.country_id and self.country_id != self.state_id.country_id:
             self.state_id = False
 
+    @api.onchange('parent_id', 'company_type')
+    def _onchange_parent_id_for_user_id(self):
+        # While creating / updating parent, take the parent salesperson value and set on current record
+        if not self.user_id and self.parent_id.user_id and self.company_type == 'person':
+            self.user_id = self.parent_id.user_id
+
     @api.onchange('state_id')
     def _onchange_state(self):
         if self.state_id.country_id:
@@ -511,6 +517,9 @@ class Partner(models.Model):
 
         # 2. To DOWNSTREAM: sync children
         self._children_sync(values)
+        # sync salesperson with parent
+        if 'user_id' not in values and values.get('parent_id'):
+            self._onchange_parent_id_for_user_id()
 
     def _children_sync(self, values):
         if not self.child_ids:

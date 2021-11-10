@@ -52,6 +52,19 @@ class Partner(models.Model):
                     partner.opportunity_count += group['partner_id_count']
                 partner = partner.parent_id
 
+    @api.onchange('parent_id', 'company_type')
+    def _onchange_parent_id_for_team_id(self):
+        # While creating / updating parent, take the parent salesteam value and set on current record
+        if not self.team_id and self.parent_id.team_id and self.company_type == 'person':
+            self.team_id = self.parent_id.team_id
+
+    def _fields_sync(self, values):
+        # sync salesteam with parent
+        res = super(Partner, self)._fields_sync(values)
+        if 'team_id' not in values and values.get('parent_id'):
+            self._onchange_parent_id_for_team_id()
+        return res
+
     def action_view_opportunity(self):
         '''
         This function returns an action that displays the opportunities from partner.
