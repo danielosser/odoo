@@ -1146,14 +1146,14 @@ QUnit.test('rendering of tracked field of type boolean: from true to false', asy
             changed_field: "Is Ready",
             field_type: "boolean",
             id: 6,
-            new_value: false,
-            old_value: true,
+            new_value: 'No',
+            old_value: 'Yes',
         }],
     });
     await createMessageComponent(message);
     assert.strictEqual(
         document.querySelector('.o_Message_trackingValue').textContent,
-        "Is Ready:TrueFalse",
+        "Is Ready:YesNo",
         "should display the correct content of tracked field of type boolean: from true to false (Is Ready: True -> False)"
     );
 });
@@ -1168,14 +1168,14 @@ QUnit.test('rendering of tracked field of type boolean: from false to true', asy
             changed_field: "Is Ready",
             field_type: "boolean",
             id: 6,
-            new_value: true,
-            old_value: false,
+            new_value: 'Yes',
+            old_value: 'No',
         }],
     });
     await createMessageComponent(message);
     assert.strictEqual(
         document.querySelector('.o_Message_trackingValue').textContent,
-        "Is Ready:FalseTrue",
+        "Is Ready:NoYes",
         "should display the correct content of tracked field of type boolean: from false to true (Is Ready: False -> True)"
     );
 });

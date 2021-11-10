@@ -277,11 +277,10 @@ export class Message extends Component {
              * tracking in Python. Also see `create_tracking_values` in Python.
              */
             switch (value.field_type) {
-                case 'boolean':
-                    value.old_value = format.boolean(value.old_value, undefined, { forceString: true });
-                    value.new_value = format.boolean(value.new_value, undefined, { forceString: true });
-                    break;
                 /**
+                 * Boolean formatter exists, but we want to display the value label
+                 * (e.g. "Archived" instead of False for active)
+                 *
                  * many2one formatter exists but is expecting id/name_get or data
                  * object but only the target record name is known in this context.
                  *
@@ -289,6 +288,7 @@ export class Message extends Component {
                  * possibilities and they are not given in this context.
                  */
                 case 'char':
+                case 'boolean':
                 case 'many2one':
                 case 'selection':
                     value.old_value = format.char(value.old_value);

@@ -369,3 +369,21 @@ class TestGroupedExport(XlsxCreatorCase):
             ['    1000.0 (1)', '1000.000'],
             ['3', '1000.0'],
         ])
+
+
+@tagged('-at_install', 'post_install')
+class TestFieldExport(XlsxCreatorCase):
+    model_name = 'export.integer'
+
+    def test_boolean_labels(self):
+        values = [
+            {'value': 10, 'bool_value': True},
+            {'value': 20, 'bool_value': False},
+        ]
+        export = self.export(values, fields=['value', 'bool_value'])
+
+        self.assertExportEqual(export, [
+            ['Value', 'Bool Value'],
+            ['10', 'Value is True'],
+            ['20', 'Value is False'],
+        ])

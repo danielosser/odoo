@@ -8,6 +8,7 @@ class NewModel(models.Model):
     _description = 'Export: Integer'
 
     value = fields.Integer(default=4)
+    bool_value = fields.Boolean(labels=('Value is True', 'Value is False'))
 
     def name_get(self):
         return [(record.id, "%s:%s" % (self._name, record.value)) for record in self]

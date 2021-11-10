@@ -28,7 +28,7 @@ class FleetVehicle(models.Model):
 
     name = fields.Char(compute="_compute_vehicle_name", store=True)
     description = fields.Html("Vehicle Description", help="Add a note about this vehicle")
-    active = fields.Boolean('Active', default=True, tracking=True)
+    active = fields.Boolean('Active', labels=('Active', 'Inactive'), default=True, tracking=True)
     manager_id = fields.Many2one(
         'res.users', 'Fleet Manager',
         compute='_compute_manager_id', store=True, readonly=False,

@@ -192,6 +192,11 @@ class IrFieldsConverter(models.AbstractModel):
             self._get_translations(['code'], u"true"),
             self._get_translations(['code'], u"yes"),
         ))
+
+        if field.type == 'boolean' and field.labels:
+            trues.add(field.labels[0].lower())
+            trues |= {t.lower() for t in self._get_translations(['model'], field.labels[0])}
+
         if value.lower() in trues:
             return True, []
 
@@ -201,6 +206,11 @@ class IrFieldsConverter(models.AbstractModel):
             self._get_translations(['code'], u"false"),
             self._get_translations(['code'], u"no"),
         ))
+
+        if field.type == 'boolean' and field.labels:
+            falses.add(field.labels[1].lower())
+            falses |= {t.lower() for t in self._get_translations(['model'], field.labels[1])}
+
         if value.lower() in falses:
             return False, []
 

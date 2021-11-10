@@ -476,6 +476,30 @@ class IrTranslation(models.Model):
 
     @api.model
     @tools.ormcache_context('model_name', 'field_name', keys=('lang',))
+    def get_field_label_false(self, model_name, field_name):
+        """ Return the translation of field "label_false" in the context's language.
+
+        :param model_name: the name of a model
+        :param field_name: the name of the field
+        :return: the translated label
+        """
+        field = self.env['ir.model.fields']._get(model_name, field_name)
+        return field.label_false
+
+    @api.model
+    @tools.ormcache_context('model_name', 'field_name', keys=('lang',))
+    def get_field_label_true(self, model_name, field_name):
+        """ Return the translation of field "label_true" in the context's language.
+
+        :param model_name: the name of a model
+        :param field_name: the name of the field
+        :return: the translated label
+        """
+        field = self.env['ir.model.fields']._get(model_name, field_name)
+        return field.label_true
+
+    @api.model
+    @tools.ormcache_context('model_name', 'field_name', keys=('lang',))
     def get_field_selection(self, model_name, field_name):
         """ Return the translation of a field's selection in the context's language.
         Note that the result contains the available translations only.

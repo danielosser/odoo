@@ -1335,6 +1335,7 @@ var BasicModel = AbstractModel.extend({
                 model: parent.model,
                 method: 'action_archive',
                 args: [resIDs],
+                context: parent.context,
             })
             .then(function (action) {
                 // optionally clear the DataManager's cache
@@ -1377,6 +1378,7 @@ var BasicModel = AbstractModel.extend({
                 model: parent.model,
                 method: 'action_unarchive',
                 args: [resIDs],
+                context: parent.context,
             })
             .then(function (action) {
                 // optionally clear the DataManager's cache

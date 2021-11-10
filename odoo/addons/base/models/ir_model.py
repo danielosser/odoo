@@ -472,6 +472,8 @@ class IrModelFields(models.Model):
     field_description = fields.Char(string='Field Label', default='', required=True, translate=True)
     help = fields.Text(string='Field Help', translate=True)
     ttype = fields.Selection(selection=FIELD_TYPES, string='Field Type', required=True)
+    label_true = fields.Char(string='Boolean True Label', translate=True)
+    label_false = fields.Char(string='Boolean False Label', translate=True)
     selection = fields.Char(string="Selection Options (Deprecated)",
                             compute='_compute_selection', inverse='_inverse_selection')
     selection_ids = fields.One2many("ir.model.fields.selection", "field_id",
@@ -1000,6 +1002,8 @@ class IrModelFields(models.Model):
             'ttype': field.type,
             'state': 'manual' if field.manual else 'base',
             'relation': field.comodel_name or None,
+            'label_true': field.labels[0] if field.type == 'boolean' and field.labels else None,
+            'label_false': field.labels[1] if field.type == 'boolean' and field.labels else None,
             'index': bool(field.index),
             'store': bool(field.store),
             'copied': bool(field.copy),

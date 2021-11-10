@@ -113,7 +113,7 @@ class Slide(models.Model):
 
     # description
     name = fields.Char('Title', required=True, translate=True)
-    active = fields.Boolean(default=True, tracking=100)
+    active = fields.Boolean(labels=('Active', 'Inactive'), default=True, tracking=100)
     sequence = fields.Integer('Sequence', default=0)
     user_id = fields.Many2one('res.users', string='Uploaded by', default=lambda self: self.env.uid)
     description = fields.Html('Description', translate=True)

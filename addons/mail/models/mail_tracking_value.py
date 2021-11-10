@@ -3,7 +3,7 @@
 
 from datetime import datetime
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 
 
 class MailTracking(models.Model):
@@ -65,9 +65,13 @@ class MailTracking(models.Model):
                 'new_value_datetime': new_value and fields.Datetime.to_string(datetime.combine(fields.Date.from_string(new_value), datetime.min.time())) or False,
             })
         elif col_info['type'] == 'boolean':
+            label_true = col_info.get('label_true') or _('Yes')
+            label_false = col_info.get('label_false') or _('No')
             values.update({
                 'old_value_integer': initial_value,
-                'new_value_integer': new_value
+                'new_value_integer': new_value,
+                'old_value_char': label_true if initial_value else label_false,
+                'new_value_char': label_true if new_value else label_false,
             })
         elif col_info['type'] == 'selection':
             values.update({
@@ -106,8 +110,6 @@ class MailTracking(models.Model):
                     result.append(fields.Date.to_string(new_date))
                 else:
                     result.append(record['%s_value_datetime' % type])
-            elif record.field_type == 'boolean':
-                result.append(bool(record['%s_value_integer' % type]))
             else:
                 result.append(record['%s_value_char' % type])
         return result

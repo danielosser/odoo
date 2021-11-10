@@ -1292,6 +1292,12 @@ class Boolean(Field):
     """ Encapsulates a :class:`bool`. """
     type = 'boolean'
     column_type = ('bool', 'bool')
+    labels = None  # Labels used when the value is (True, False)
+
+    def _setup_attrs(self, model_class, name):
+        super(Boolean, self)._setup_attrs(model_class, name)
+        assert self.labels is None or (isinstance(self.labels, tuple) and len(self.labels) == 2), \
+            'The "labels" attribute must be a tuple of size 2'
 
     def convert_to_column(self, value, record, values=None, validate=True):
         return bool(value)
@@ -1300,7 +1306,21 @@ class Boolean(Field):
         return bool(value)
 
     def convert_to_export(self, value, record):
-        return value
+        if value:
+            return self._description_label_true(record.env) or value
+        return self._description_label_false(record.env) or value
+
+    def _description_label_false(self, env):
+        if self.labels and len(self.labels) == 2:
+            label_false = env['ir.translation'].get_field_label_false(self.model_name, self.name)
+            return label_false or self.labels[1]
+        return None
+
+    def _description_label_true(self, env):
+        if self.labels and len(self.labels) == 2:
+            label_true = env['ir.translation'].get_field_label_true(self.model_name, self.name)
+            return label_true or self.labels[0]
+        return None
 
 
 class Integer(Field):

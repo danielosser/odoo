@@ -64,7 +64,7 @@ class MassMailing(models.Model):
         except ValueError:
             return False
 
-    active = fields.Boolean(default=True, tracking=True)
+    active = fields.Boolean(labels=('Active', 'Inactive'), default=True, tracking=True)
     subject = fields.Char('Subject', help='Subject of your Mailing', required=True, translate=False)
     preview = fields.Char(
         'Preview', translate=False,

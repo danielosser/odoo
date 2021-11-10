@@ -41,7 +41,7 @@ class Event(models.Model):
     # registration
     is_participating = fields.Boolean("Is Participating", compute="_compute_is_participating")
     # website
-    website_published = fields.Boolean(tracking=True)
+    website_published = fields.Boolean(labels=('Published', 'Unpublished'), tracking=True)
     website_menu = fields.Boolean(
         string='Website Menu',
         compute='_compute_website_menu', readonly=False, store=True,
