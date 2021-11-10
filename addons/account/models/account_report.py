@@ -7,10 +7,12 @@ from odoo import models, fields, api, _
 class AccountReport(models.Model):
     _name = 'account.report'
 
+    #TODO OCO garder filter_ en préfixe ?? => Peut-être ... Ou pas ... On pourrait le garder juste sur les fonctions.
     name = fields.Char(string="Name", required=True)
-    filter_multi_company = fields.Boolean(string="Multi-Company", default=False) #TODO OCO garder filter_ en préfixe ?? => Peut-être ... Ou pas ... On pourrait le garder juste sur les fonctions.
+    filter_multi_company = fields.Boolean(string="Multi-Company", default=False) # TODO OCO on pourrait en faire un champ sélection (no, with_selector, with_tax_units)
     filter_date_range = fields.Boolean(string="Use Date Range", default=True) # TODO OCO remplace filter_date > True si range, False si date unique.
     allow_showing_draft = fields.Boolean(string="Allow Showing Draft Entries", default=True) #TODO OCO remplace filter_all_entries (qui n'est jamais passé à True, dirait-on)
+    allow_comparison = fields.Boolean(string="Allow Comparison", default=True)
     #TODO OCO filter_comparison
     #TODO OCO filter_journals
     #TODO OCO filter_analytic
@@ -24,8 +26,19 @@ class AccountReport(models.Model):
     # TODO OCO  ajouter un champ default_options ou default_filters ??? Genre avec un dict en str, qui permette de dire par exemple pour le tax report qu'il s'ouvre par défaut sur le mois passé ?
     # TODO OCO attention à la gestion des tax units => le filter_multi_company, en faire un champ sélection ? (3 choix: désactivé, avec le sélecteur ou tax unit)
     line_ids = fields.One2many(string="Lines", comodel_name='account.report.line', inverse_name='report_id')
-    columns = fields.Char(string="Columns") #TODO OCO le rendre requis ; je ne le fais pas toute suite car nique l'installation à cause des financial reports~~
+    columns = fields.Char(string="Columns") #TODO OCO le rendre requis ; je ne le fais pas tout de suite car nique l'installation à cause des financial reports~~
     dynamic_lines_generator = fields.Char(string="Dynamic Lines Generator")
+    # TODO OCO ajouter un genre de séquence pour dans le sélecteur de layout ===> 2.1 serait "2ème bloc, 1ère ligne", comme ça on garde les spérateurs (si besoin) => Ou bien une catégorie de rapport ??? => default = '0.0'
+    root_report_id = fields.Many2one(string="Root Report", comodel_name='account.report') # TODO OCO DOC + il faudra créer le menuitem comme avec les financial reports
+    variant_report_ids = fields.One2many(string="Variants", comodel_name='account.report', inverse_name='root_report_id')# TODO OCO contrainte pour empêcher de remplire ça s'il y a un root
+    country_id = fields.Many2one(string="Country", comodel_name='res.country')
+    country_group_id = fields.Many2one(string="Country Group", comodel_name='res.country.group') # TODO OCO rentre mutuellement exclusif avec le pays ? => Le pays prime, en tout cas. ===> Je ne sais pas si ça vaut la peine de le garder pour le moment. A voir. Pour intrastat ?
+    availability_condition = fields.Selection(
+        string="Available if",
+        selection=[('country', "Country Matches"), ('always', "Always")], #TODO OCO ajouter using_oss dans OSS
+        required=True,
+        default='always',
+    )
 
 
 class AccountReportLine(models.Model):

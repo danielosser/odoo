@@ -26,5 +26,14 @@
             <field name="sequence">1</field>
         </record>
 
+        <record id="generic_tax_report2" model="account.report"> <!--TODO OCO TEST-->
+            <field name="name">Generic Tax report 2 (test)</field>
+            <field name="filter_multi_company" eval="True"/>
+            <field name="columns">'NET2', 'TAX2'</field>
+            <field name="dynamic_lines_generator">_generic_tax_report_get_dynamic_lines</field>
+            <field name="root_report_id" ref="generic_tax_report"/>
+            <field name="allow_showing_draft" eval="False"/>
+        </record>
+
     </data>
 </odoo>
