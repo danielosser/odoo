@@ -78,7 +78,11 @@
     <a class="o_wslides_js_course_join_link" href="#"
        t-att-data-channel-id="slide.channel_id.id">
         Join Course
-    </a> to download resources
+    </a>
+</template>
+
+<template id="join_course_link_resources" name="Join Course Link for Resources">
+    <t t-call="website_slides.join_course_link"/> to download resources
 </template>
 
 </data></odoo>
