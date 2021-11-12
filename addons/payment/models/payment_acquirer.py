@@ -303,6 +303,13 @@ class PaymentAcquirer(models.Model):
 
         # Handle partner country
         partner = self.env['res.partner'].browse(partner_id)
+
+        # Partners can only make transactions for the company they belong.
+        # No acquirers should be returned when there is a mismatch of the
+        # partner's company and the company recipient of the transaction.
+        if partner.company_id.id and partner.company_id.id != company_id:
+            return self.env['payment.acquirer']
+
         if partner.country_id:  # The partner country must either not be set or be supported
             domain = expression.AND([
                 domain,
