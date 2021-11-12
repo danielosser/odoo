@@ -171,17 +171,17 @@ class OAuthController(http.Controller):
         if not request.db:
             return BadRequest()
 
-        registry = registry_get(dbname)
+        registry = registry_get(request.db)
         with registry.cursor() as cr:
             try:
                 env = api.Environment(cr, SUPERUSER_ID, {})
                 provider = env.ref('auth_oauth.provider_openerp')
             except ValueError:
-                return set_cookie_and_redirect('/web?db=%s' % dbname)
+                return set_cookie_and_redirect('/web?db=%s' % request.db)
             assert provider._name == 'auth.oauth.provider'
 
         state = {
-            'd': dbname,
+            'd': request.db,
             'p': provider.id,
             'c': {'no_user_creation': True},
         }

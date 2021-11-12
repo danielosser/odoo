@@ -132,7 +132,7 @@ class IrHttp(models.AbstractModel):
 
     @classmethod
     def _serve_attachment(cls):
-        env = api.Environment(request.env.cr, SUPERUSER_ID, request.env.context)
+        env = request.env(user=SUPERUSER_ID)
         attach = env['ir.attachment'].get_serve_attachment(request.httprequest.path, extra_fields=['name', 'checksum'])
         if attach:
             wdate = attach[0]['__last_update']

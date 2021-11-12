@@ -7,14 +7,14 @@ class IrHttp(models.AbstractModel):
     _inherit = 'ir.http'
 
     @classmethod
-    def _load_web_editor_qs(cls):
-        keys = super()._load_web_editor_qs()
+    def _web_editor_context(cls):
+        ctx = super()._web_editor_context()
         if request.is_frontend_multilang and request.lang == cls._get_default_lang():
-            keys['edit_translations'] = False
-        return keys
+            ctx['edit_translations'] = False
+        return ctx
 
     @classmethod
     def _frontend_pre_dispatch(cls):
         super()._frontend_pre_dispatch()
-        keys = cls._load_web_editor_qs()
-        request.update_context(**keys)
+        ctx = cls._web_editor_context()
+        request.update_context(**ctx)

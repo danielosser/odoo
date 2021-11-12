@@ -1239,7 +1239,8 @@ def submap(mapping, keys):
     :param Iterable keys: the list of keys to keep
     :return dict: a filtered dict copy of the original mapping
     """
-    return {key: mapping[key] for key in set(keys).intersection(mapping)}
+    keys = frozenset(keys)
+    return {key: mapping[key] for key in mapping if key in keys}
 
 class Reverse(object):
     """ Wraps a value and reverses its ordering, useful in key functions when
