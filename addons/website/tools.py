@@ -9,7 +9,8 @@ from unittest.mock import Mock, MagicMock, patch
 import werkzeug
 
 import odoo
-from odoo.tools.misc import DotDict
+from odoo.tools.misc import Namespace
+from odoo.tests.common import HOST
 
 
 def get_video_embed_code(video_url):
@@ -85,23 +86,23 @@ def MockRequest(
         context = {}
     lang_code = context.get('lang', env.context.get('lang', 'en_US'))
     context.setdefault('lang', lang_code)
+    env = env(context=context)
 
     request = Mock(
-        context=context,
         db=None,
-        endpoint=match.return_value[0] if routing else None,
         env=env,
         httprequest=Mock(
             host='localhost',
             path='/hello/',
             app=odoo.http.root,
-            environ={'REMOTE_ADDR': '127.0.0.1'},
+            environ={'REMOTE_ADDR': HOST},
             cookies=cookies or {},
             referrer='',
         ),
+        app=odoo.http.root,
         lang=env['res.lang']._lang_get(lang_code),
         redirect=env['ir.http']._redirect,
-        session=DotDict(
+        session=Namespace(
             geoip={'country_code': country_code},
             debug=False,
             sale_order_id=sale_order_id,

@@ -82,7 +82,7 @@ class WebsiteForm(form.WebsiteForm):
                     values['partner_id'] = visitor_partner.id
             if 'company_id' not in values:
                 values['company_id'] = request.website.company_id.id
-            lang = request.context.get('lang', False)
+            lang = request.env.context.get('lang', False)
             values['lang_id'] = values.get('lang_id') or request.env['res.lang']._lang_get_id(lang)
 
         result = super(WebsiteForm, self).insert_record(request, model, values, custom, meta=meta)
