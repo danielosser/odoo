@@ -49,14 +49,20 @@ class TestWebsiteResUsers(TransactionCase):
             user_belle.login = 'Pou'
 
     def test_same_website_message(self):
+        # Use a test cursor because retrying() does commit.
         self.env.registry.enter_test_mode(self.env.cr)
         self.addCleanup(self.env.registry.leave_test_mode)
-
         env = self.env(context={'lang': 'en_US'}, cr=self.env.registry.cursor())
-        new_test_user(env, login='Pou', website_id=self.website_1.id)
 
-        # Should be a ValidationError, not an IntegrityError. Do not use
-        # self.assertRaises as it would try to create and rollback to
-        # a savepoint that is removed by the rollback in retrying().
+        def create_user_pou():
+            return new_test_user(env, login='Pou', website_id=self.website_1.id)
+
+        # First user creation works.
+        create_user_pou()
+
+        # Second user creation fails with ValidationError instead of
+        # IntegrityError. Do not use self.assertRaises as it would try
+        # to create and rollback to a savepoint that is removed by the
+        # rollback in retrying().
         with TestCase.assertRaises(self, ValidationError), mute_logger('odoo.sql_db'):
-            retrying(partial(new_test_user, env, login='Pou', website_id=self.website_1.id), env)
+            retrying(create_user_pou, env)

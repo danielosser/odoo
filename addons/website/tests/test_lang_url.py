@@ -40,7 +40,6 @@ class TestLangUrl(HttpCase):
     def test_03_url_cook_lang_not_available(self):
         """ An activated res.lang should not be displayed in the frontend if not a website lang. """
         self.website.language_ids = self.env.ref('base.lang_en')
-        self.website.flush()
         r = self.url_open('/fr/contactus')
         doc = lxml.html.document_fromstring(r.text)
         self.assertEqual(doc.get('lang'), 'en-US', "french should not be displayed as not a frontend lang")
@@ -69,7 +68,6 @@ class TestLangUrl(HttpCase):
         # 2. Remove en_US from frontend
         self.website.language_ids = self.lang_fr
         self.website.default_lang_id = self.lang_fr
-        self.website.flush()
 
         # 3. Ensure visiting /contactus do not crash
         url = '/contactus'

@@ -67,14 +67,16 @@ def filter_kwargs(func, kwargs):
     """
     leftovers = set(kwargs)
     for p in signature(func).parameters.values():
-        if p.kind == Parameter.VAR_KEYWORD:  # **kwargs
-            return kwargs
-
         if p.kind in (Parameter.POSITIONAL_OR_KEYWORD, Parameter.KEYWORD_ONLY):
             leftovers.discard(p.name)
+        elif p.kind == Parameter.VAR_KEYWORD:  # **kwargs
+            leftovers.clear()
+            break
 
-    return {keyword: kwargs[keyword] for keyword in set(kwargs) - leftovers}
+    if not leftovers:
+        return kwargs
 
+    return {key: kwargs[key] for key in kwargs if key not in leftovers}
 
 def synchronized(lock_attr='_lock'):
     def decorator(func):

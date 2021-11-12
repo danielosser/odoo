@@ -1288,24 +1288,20 @@ class Website(models.Model):
         """Returns the canonical URL for the current request with translatable
         elements appropriately translated in `lang`.
 
-        If `request.endpoint` is not true, returns the current `path` instead.
+        If it is not possible to rebuild a path, use the current one instead.
 
         `url_quote_plus` is applied on the returned path.
         """
         self.ensure_one()
         try:
-            if hasattr(request, '_website_cached_rule_args'):
-                rule, args = request._website_cached_rule_args
-            else:
-                # Re-match the controller where the request path routes.
-                rule, args = self.env['ir.http']._match(request.httprequest.path)
-                for key, val in list(args.items()):
-                    if isinstance(val, models.BaseModel):
-                        if isinstance(val._uid, RequestUID):
-                            args[key] = val = val.with_user(request.env.uid)
-                        if val.env.context.get('lang') != lang.code:
-                            args[key] = val = val.with_context(lang=lang.code)
-                request._website_cached_rule_args = rule, args
+            # Re-match the controller where the request path routes.
+            rule, args = self.env['ir.http']._match(request.httprequest.path)
+            for key, val in list(args.items()):
+                if isinstance(val, models.BaseModel):
+                    if isinstance(val._uid, RequestUID):
+                        args[key] = val = val.with_user(request.env.uid)
+                    if val.env.context.get('lang') != lang.code:
+                        args[key] = val = val.with_context(lang=lang.code)
 
             router = http.app.get_db_router(request.db).bind('')
             path = router.build(rule.endpoint, args)

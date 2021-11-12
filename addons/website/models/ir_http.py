@@ -218,7 +218,7 @@ class Http(models.AbstractModel):
     def _get_default_lang(cls):
         if getattr(request, 'is_frontend', True):
             website = request.env['website'].sudo().get_current_website()
-            return request.env['res.lang'].browse([website.default_lang_id.id])
+            return request.env['res.lang'].browse([website._get_cached('default_lang_id')])
         return super(Http, cls)._get_default_lang()
 
     @classmethod

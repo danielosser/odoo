@@ -390,7 +390,7 @@ class Controller:
             def greeting(self):
                 return super().handler()
     """
-    direct_children = collections.defaultdict(list)  # indexed by module
+    children_classes = collections.defaultdict(list)  # indexed by module
 
     @classmethod
     def __init_subclass__(cls):
@@ -398,7 +398,7 @@ class Controller:
         if Controller in cls.__bases__:
             path = cls.__module__.split('.')
             module = path[2] if path[:2] == ['odoo', 'addons'] else ''
-            Controller.direct_children[module].append(cls)
+            Controller.children_classes[module].append(cls)
 
 
 def route(route=None, **routing):
@@ -471,11 +471,11 @@ def _generate_routing_rules(modules, nodb_only, converters=None):
         path = cls.__module__.split('.')
         return path[:2] == ['odoo', 'addons'] and path[2] in modules
 
-    def get_bottom_most_classes(cls):
+    def get_leaf_classes(cls):
         result = []
         for subcls in cls.__subclasses__():
             if is_valid(subcls):
-                result.extend(get_bottom_most_classes(subcls))
+                result.extend(get_leaf_classes(subcls))
         if not result and is_valid(cls):
             result.append(cls)
         return result
@@ -483,15 +483,15 @@ def _generate_routing_rules(modules, nodb_only, converters=None):
     def build_controllers():
         top_most_controllers = []
         for module in modules:
-            top_most_controllers.extend(Controller.direct_children.get(module, []))
+            top_most_controllers.extend(Controller.children_classes.get(module, []))
 
         for top_ctrl in top_most_controllers:
-            bot_most_controllers = list(unique(get_bottom_most_classes(top_ctrl)))
+            leaf_controllers = list(unique(get_leaf_classes(top_ctrl)))
             name = '{} (extended by {})'.format(
                 top_ctrl.__name__,
-                ', '.join(bot_ctrl.__name__ for bot_ctrl in bot_most_controllers),
+                ', '.join(bot_ctrl.__name__ for bot_ctrl in leaf_controllers),
             )
-            Ctrl = type(name, tuple(reversed(bot_most_controllers)), {})
+            Ctrl = type(name, tuple(reversed(leaf_controllers)), {})
             yield Ctrl()
 
     for ctrl in build_controllers():
@@ -718,7 +718,7 @@ class Request:
     def cr(self, value):
         if value is None:
             raise NotImplementedError("Close the cursor instead.")
-        raise NotImplementedError("Use request.update_env instead.")
+        raise ValueError("You cannot replace the cursor attached to the current request.")
 
     _cr = cr
 
@@ -739,7 +739,11 @@ class Request:
         return lang
 
     def _get_profiler_context_manager(self):
-        """ Return a context manager that combines a profiler and ``request``. """
+        """
+        Get a profiler when the profiling is enabled and the requested
+        URL is profile-safe. Otherwise, get a context-manager that does
+        nothing.
+        """
         if self.session.profile_session and self.db:
             if self.session.profile_expiration < str(datetime.now()):
                 # avoid having session profiling for too long if user forgets to disable profiling
@@ -1310,7 +1314,7 @@ class Request:
             werkzeug.exceptions.abort(self._inject_future_response(Response()))
 
         if self.type != routing['type']:
-            _logger.warning("Request's content type is %s but '%s' is type %s.", self.type, routing['routes'][0], routing['type'])
+            _logger.warning("Request's content type is %s but %r is type %s.", self.type, routing['routes'][0], routing['type'])
             raise BadRequest(f"Request's content type is {self.type} but '{routing['routes'][0]}' is type {routing['type']}.")
 
     def _serve_static(self):
