@@ -19,7 +19,7 @@ class ImportModule(Controller):
 
     def check_user(self, uid=None):
         if uid is None:
-            uid = request.uid
+            uid = request.env.uid
         is_admin = request.env['res.users'].browse(uid)._is_admin()
         if not is_admin:
             raise AccessError(_("Only administrators can upload a module"))

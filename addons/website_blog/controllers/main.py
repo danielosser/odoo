@@ -48,7 +48,7 @@ class WebsiteBlog(http.Controller):
 
             locale = get_lang(request.env).code
             start = pytz.UTC.localize(fields.Datetime.from_string(start))
-            tzinfo = pytz.timezone(request.context.get('tz', 'utc') or 'utc')
+            tzinfo = pytz.timezone(request.env.context.get('tz', 'utc') or 'utc')
 
             group['month'] = babel.dates.format_datetime(start, format='MMMM', tzinfo=tzinfo, locale=locale)
             group['year'] = babel.dates.format_datetime(start, format='yyyy', tzinfo=tzinfo, locale=locale)

@@ -123,7 +123,7 @@ class AuthSignupHome(Home):
         if values.get('password') != qcontext.get('confirm_password'):
             raise UserError(_("Passwords do not match; please retype them."))
         supported_lang_codes = [code for code, _ in request.env['res.lang'].get_installed()]
-        lang = request.context.get('lang', '')
+        lang = request.env.context.get('lang', '')
         if lang in supported_lang_codes:
             values['lang'] = lang
         return values
@@ -137,7 +137,7 @@ class AuthSignupHome(Home):
     def _signup_with_values(self, token, values):
         db, login, password = request.env['res.users'].sudo().signup(values, token)
         request.env.cr.commit()     # as authenticate will use its own cursor we need to commit the current transaction
-        uid = request.session.authenticate(db, login, password)
+        uid = request.session_authenticate_start(login, password)
         if not uid:
             raise SignupError(_('Authentication Failed.'))
 

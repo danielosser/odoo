@@ -682,9 +682,14 @@ def get_and_group_by_company(cr, uid, obj, ids, context=None):
     return get_and_group_by_field(cr, uid, obj, ids, field='company_id', context=context)
 
 # port of python 2.6's attrgetter with support for dotted notation
-def resolve_attr(obj, attr):
+raise_error = object()  # sentinel
+def resolve_attr(obj, attr, default=raise_error):
     for name in attr.split("."):
-        obj = getattr(obj, name)
+        obj = getattr(obj, name, default)
+        if obj is raise_error:
+            raise AttributeError(f"'{obj}' object has no attribute '{name}'")
+        if obj == default:
+            break
     return obj
 
 def attrgetter(*items):

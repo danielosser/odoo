@@ -11,7 +11,7 @@ class WebsiteEventSaleController(WebsiteEventController):
     @http.route()
     def event_register(self, event, **post):
         event = event.with_context(pricelist=request.website.id)
-        if not request.context.get('pricelist'):
+        if not request.env.context.get('pricelist'):
             pricelist = request.website.get_current_pricelist()
             if pricelist:
                 event = event.with_context(pricelist=pricelist.id)

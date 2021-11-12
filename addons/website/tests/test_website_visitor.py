@@ -311,7 +311,7 @@ class WebsiteVisitorTests(MockVisitor, HttpCaseWithUserDemo):
         self.url_open(self.tracked_page.url)
         new_visitor = self._get_last_visitor()
         self.assertFalse(new_visitor.partner_id)
-        self.assertTrue(new_visitor.id > old_visitor.id, "A new visitor should have been created.")
+        self.assertGreater(new_visitor.id, old_visitor.id, "A new visitor should have been created.")
         self.assertVisitorTracking(new_visitor, self.tracked_page)
 
         with self.mock_visitor_from_request(force_visitor=new_visitor):

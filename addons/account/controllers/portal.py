@@ -110,7 +110,7 @@ class PortalAccount(CustomerPortal):
     def details_form_validate(self, data):
         error, error_message = super(PortalAccount, self).details_form_validate(data)
         # prevent VAT/name change if invoices exist
-        partner = request.env['res.users'].browse(request.uid).partner_id
+        partner = request.env.user.partner_id
         if not partner.can_edit_vat():
             if 'vat' in data and (data['vat'] or False) != (partner.vat or False):
                 error['vat'] = 'error'

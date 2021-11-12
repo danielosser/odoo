@@ -388,7 +388,7 @@ class MailPluginController(http.Controller):
 
         return {
             'partner': partner_response,
-            'user_companies': request.env['res.users'].browse(request.uid).company_ids.ids
+            'user_companies': request.env.user.company_ids.ids
         }
 
     def _mail_content_logging_models_whitelist(self):
@@ -416,7 +416,7 @@ class MailPluginController(http.Controller):
         return ['mail_plugin']
 
     def _prepare_translations(self):
-        lang = request.env['res.users'].browse(request.uid).lang
+        lang = request.env.user.lang
         translations_per_module = request.env["ir.translation"].get_translations_for_webclient(
             self._translation_modules_whitelist(), lang)[0]
         translations_dict = {}
