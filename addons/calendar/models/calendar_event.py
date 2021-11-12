@@ -11,7 +11,6 @@ from odoo.osv.expression import AND
 from odoo.addons.base.models.res_partner import _tz_get
 from odoo.addons.calendar.models.calendar_attendee import Attendee
 from odoo.addons.calendar.models.calendar_recurrence import weekday_to_field, RRULE_TYPE_SELECTION, END_TYPE_SELECTION, MONTH_BY_SELECTION, WEEKDAY_SELECTION, BYDAY_SELECTION
-from odoo.http import request
 from odoo.tools.translate import _
 from odoo.tools.misc import get_lang
 from odoo.tools import pycompat, html2plaintext, is_html_empty
@@ -89,7 +88,7 @@ class Meeting(models.Model):
     partner_id = fields.Many2one(
         'res.partner', string='Scheduled by', related='user_id.partner_id', readonly=True)
     location = fields.Char('Location', tracking=True, help="Location of Event")
-    videocall_location = fields.Char('Meeting URL', compute='_compute_videocall_location')
+    videocall_location = fields.Char('Meeting URL', compute='_compute_videocall_location', store=True)
     videocall_source = fields.Selection([('discuss', 'Discuss'), ('custom', 'Custom')], default="custom", required=True)
     videocall_channel = fields.Many2one('mail.channel', 'Discuss Channel')
     # visibility
@@ -349,12 +348,14 @@ class Meeting(models.Model):
     @api.depends('videocall_channel', 'videocall_source')
     def _compute_videocall_location(self):
         for event in self:
-            if event.videocall_source == 'discuss' and event.videocall_channel:
-                event.videocall_location = '%(base_url)s/chat/%(channel_id)s/%(uuid)s' % {
-                    'base_url': request.httprequest.host, 'channel_id': event.videocall_channel.id, 'uuid': event.videocall_channel.uuid
-                }
-            else:
-                event.videocall_location = ''
+            if event.videocall_source == 'discuss':
+                if event.videocall_channel:
+                    event.videocall_location = '/chat/%(channel_id)s/%(uuid)s' % {
+                        'channel_id': event.videocall_channel.id,
+                        'uuid': event.videocall_channel.uuid
+                    }
+                else:
+                    event.videocall_location = ''
 
     # ------------------------------------------------------------
     # CRUD
@@ -502,7 +503,6 @@ class Meeting(models.Model):
             if values.get('videocall_source') == 'discuss':
                 if not self.videocall_channel:
                     values['videocall_channel'] = self._create_videocall_channel(values.get('name', self.name), set(values.get('partner_ids', []) + list(self.partner_ids.ids)))
-        # if partner_ids and videocall_channel exists, add new partners to channel
 
         time_fields = self.env['calendar.event']._get_time_fields()
         if any([values.get(key) for key in time_fields]) or 'alarm_ids' in values:
@@ -696,6 +696,12 @@ class Meeting(models.Model):
             'view_id': False,
             'target': 'new',
             'context': compose_ctx,
+        }
+
+    def action_join_video_call(self):
+        return {
+            'type': 'ir.actions.act_url',
+            'url': self.videocall_location,
         }
 
     def action_join_meeting(self, partner_id):
