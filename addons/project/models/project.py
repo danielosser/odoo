@@ -104,6 +104,10 @@ class ProjectTaskType(models.Model):
 
     user_id = fields.Many2one('res.users', 'Stage Owner', index=True)
 
+    sms_template_id = fields.Many2one(
+        'sms.template', string="SMS Template",
+        domain=[('model', '=', ['project.task'])], help="Template used to render SMS reminder content.")
+
     def unlink_wizard(self, stage_view=False):
         self = self.with_context(active_test=False)
         # retrieves all the projects with a least 1 task in that stage
@@ -456,6 +460,11 @@ class Project(models.Model):
         project = super(Project, self).create(vals)
         if project.privacy_visibility == 'portal' and project.partner_id:
             project.message_subscribe(project.partner_id.ids)
+        if 'stage_id' in vals:
+            template = project.stage_id.sms_template_id
+            if template:
+                args = {'partner_id': project.partner_id.id, 'res_id': project.id, 'res_ids': project.ids, 'temp': template}
+                project.partner_id.action_send_sms(args)
         return project
 
     def write(self, vals):
@@ -486,6 +495,11 @@ class Project(models.Model):
                 project.message_subscribe(project.partner_id.ids)
         if vals.get('privacy_visibility'):
             self._change_privacy_visibility()
+        if 'stage_id' in vals:
+            template = self.stage_id.sms_template_id
+            if template:
+                args = {'partner_id': self.partner_id.id, 'res_id': self.id, 'res_ids': self.ids, 'temp': template}
+                self.partner_id.action_send_sms(args)
         if 'name' in vals and self.analytic_account_id:
             projects_read_group = self.env['project.project'].read_group(
                 [('analytic_account_id', 'in', self.analytic_account_id.ids)],
@@ -1660,6 +1674,11 @@ class Task(models.Model):
         for task in tasks:
             if task.project_id.privacy_visibility == 'portal':
                 task._portal_ensure_token()
+            if 'stage_id' in vals:
+                template = task.stage_id.sms_template_id
+                if template:
+                    args = {'partner_id': task.partner_id.id, 'res_id': task.id, 'res_ids': task.ids, 'temp': template}
+                    task.partner_id.action_send_sms(args)
         return tasks
 
     def write(self, vals):
@@ -1763,6 +1782,11 @@ class Task(models.Model):
 
         if 'user_ids' in vals:
             tasks._populate_missing_personal_stages()
+        if 'stage_id' in vals:
+            template = self.stage_id.sms_template_id
+            if template:
+                args = {'partner_id': self.partner_id.id, 'res_id': self.id, 'res_ids': self.ids, 'temp': template}
+                self.partner_id.action_send_sms(args)
 
         # rating on stage
         if 'stage_id' in vals and vals.get('stage_id'):
@@ -1788,6 +1812,9 @@ class Task(models.Model):
     # ---------------------------------------------------
     # Subtasks
     # ---------------------------------------------------
+
+    def find_template_id(self):
+        return self.stage_id.sms_template_id
 
     @api.depends('parent_id', 'project_id', 'display_project_id')
     def _compute_partner_id(self):

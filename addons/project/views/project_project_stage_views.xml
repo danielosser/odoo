@@ -8,6 +8,7 @@
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="mail_template_id" optional="hide" context="{'default_model': 'project.project'}"/>
+                <field name="sms_template_id" optional="hide"/>
                 <field name="fold" optional="show"/>
             </tree>
         </field>
@@ -39,6 +40,7 @@
                         <group>
                             <field name="active" invisible="1"/>
                             <field name="mail_template_id" context="{'default_model': 'project.project'}"/>
+                            <field name="sms_template_id"/>
                             <field name="sequence" groups="base.group_no_one"/>
                         </group>
                         <group>
@@ -80,6 +82,7 @@
         <field name="arch" type="xml">
             <search>
                 <field name="name"/>
+                <field name="sms_template_id"/>
                 <field name="mail_template_id"/>
                 <filter string="Archived" name="archived" domain="[('active', '=', False)]"/>
             </search>

@@ -18,3 +18,14 @@ class ResPartner(models.Model):
         """ This method returns the fields to use to find the number to use to
         send an SMS on a record. """
         return ['mobile', 'phone']
+
+    def action_send_sms(self, args):
+        self.ensure_one()
+        temp_body = args['temp']._render_field('body', args['res_ids'])[args['res_id']]
+        composer = self.env['sms.composer'].with_context(
+            default_res_model=self._name,
+            default_res_id=args['partner_id'],
+            default_composition_mode='comment',
+            default_body=temp_body,
+        ).create({})
+        return composer.action_send_sms()
