@@ -251,15 +251,15 @@ class Theme(models.AbstractModel):
         self.disable_view('website.option_footer_scrolltop')
 
     @api.model
-    def _toggle_asset(self, name, active):
+    def _toggle_asset(self, key, active):
         ThemeAsset = self.env['theme.ir.asset'].sudo().with_context(active_test=False)
-        obj = ThemeAsset.search([('name', '=', name)])
+        obj = ThemeAsset.search([('key', '=', key)])
         website = self.env['website'].get_current_website()
         if obj:
             obj = obj.copy_ids.filtered(lambda x: x.website_id == website)
         else:
             Asset = self.env['ir.asset'].sudo().with_context(active_test=False)
-            obj = Asset.search([('name', '=', name)])
+            obj = Asset.search([('key', '=', key)], limit=1)
             has_specific = obj.key and Asset.search_count([
                 ('key', '=', obj.key),
                 ('website_id', '=', website.id)
@@ -291,12 +291,12 @@ class Theme(models.AbstractModel):
         obj.write({'active': active})
 
     @api.model
-    def enable_asset(self, name):
-        self._toggle_asset(name, True)
+    def enable_asset(self, key):
+        self._toggle_asset(key, True)
 
     @api.model
-    def disable_asset(self, name):
-        self._toggle_asset(name, False)
+    def disable_asset(self, key):
+        self._toggle_asset(key, False)
 
     @api.model
     def enable_view(self, xml_id):
