@@ -5755,10 +5755,10 @@ Fields:
         if len(self._ids) > PREFETCH_MAX and self._prefetch_ids is self._ids:
             for ids in self.env.cr.split_for_in_conditions(reversed(self._ids)):
                 for id_ in ids:
-                    yield self.__class__(self.env, (id_,), ids)
+                    yield self._browse(self.env, (id_,), ids)
         else:
             for id_ in reversed(self._ids):
-                yield self.__class__(self.env, (id_,), ReversedGenerator(self._prefetch_ids))
+                yield self._browse(self.env, (id_,), ReversedGenerator(self._prefetch_ids))
 
     def __contains__(self, item):
         """ Test whether ``item`` (record or field name) is an element of ``self``.
