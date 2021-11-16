@@ -1055,7 +1055,7 @@ class Channel(models.Model):
         return channel_info
 
     @api.model
-    def create_group(self, partners_to, default_display_mode=False):
+    def create_group(self, partners_to, default_display_mode=False, name=''):
         """ Create a group channel.
             :param partners_to : list of res.partner ids to add to the conversation
             :returns: channel_info of the created channel
@@ -1065,7 +1065,7 @@ class Channel(models.Model):
             'channel_last_seen_partner_ids': [Command.create({'partner_id': partner_id}) for partner_id in partners_to],
             'channel_type': 'group',
             'default_display_mode': default_display_mode,
-            'name': '',  # default name is computed client side from the list of members
+            'name': name,  # default name is computed client side from the list of members
             'public': 'private',
         })
         channel._broadcast(partners_to)

@@ -644,14 +644,8 @@ class Meeting(models.Model):
         return attendee_commands
 
     def _create_videocall_channel(self, name, partner_ids):
-        videocall_channel = self.env['mail.channel'].create({
-            'name': name,
-            'channel_type': 'group',
-            'default_display_mode': 'video_full_screen',
-            'public': 'private',
-            'channel_partner_ids': [(6, 0, partner_ids)]
-        })
-        return videocall_channel.id
+        videocall_channel = self.env['mail.channel'].create_group(partner_ids, default_display_mode='video_full_screen', name=name)
+        return videocall_channel['id']
 
 
     # ------------------------------------------------------------
