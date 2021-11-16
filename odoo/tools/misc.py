@@ -1200,13 +1200,6 @@ class Reverse(object):
     def __le__(self, other): return self.val >= other.val
     def __lt__(self, other): return self.val > other.val
 
-@contextmanager
-def ignore(*exc):
-    try:
-        yield
-    except exc:
-        pass
-
 html_escape = markupsafe.escape
 
 def get_lang(env, lang_code=None):
