@@ -99,6 +99,8 @@ class DiscussController(http.Controller):
                         'shouldDisplayWelcomeViewInitially': True,
                     })
                 channel_sudo = channel_sudo.with_context(guest=guest)
+                if channel_sudo.public == 'groups':
+                    raise NotFound
         response = self._response_discuss_public_channel_template(channel_sudo=channel_sudo, discuss_public_view_data=discuss_public_view_data)
         if add_guest_cookie:
             # Discuss Guest ID: every route in this file will make use of it to authenticate
