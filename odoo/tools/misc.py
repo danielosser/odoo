@@ -364,9 +364,6 @@ except ImportError:
     xlsxwriter = None
 
 
-def to_xml(s):
-    return s.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;')
-
 def get_iso_codes(lang):
     if lang.find('_') != -1:
         if lang.split('_')[0] == lang.split('_')[1].lower():
@@ -472,57 +469,6 @@ class profile(object):
 
         return wrapper
 
-def detect_ip_addr():
-    """Try a very crude method to figure out a valid external
-       IP or hostname for the current machine. Don't rely on this
-       for binding to an interface, but it could be used as basis
-       for constructing a remote URL to the server.
-    """
-    def _detect_ip_addr():
-        from array import array
-        from struct import pack, unpack
-
-        try:
-            import fcntl
-        except ImportError:
-            fcntl = None
-
-        ip_addr = None
-
-        if not fcntl: # not UNIX:
-            host = socket.gethostname()
-            ip_addr = socket.gethostbyname(host)
-        else: # UNIX:
-            # get all interfaces:
-            nbytes = 128 * 32
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            names = array('B', '\0' * nbytes)
-            #print 'names: ', names
-            outbytes = unpack('iL', fcntl.ioctl( s.fileno(), 0x8912, pack('iL', nbytes, names.buffer_info()[0])))[0]
-            namestr = names.tostring()
-
-            # try 64 bit kernel:
-            for i in range(0, outbytes, 40):
-                name = namestr[i:i+16].split('\0', 1)[0]
-                if name != 'lo':
-                    ip_addr = socket.inet_ntoa(namestr[i+20:i+24])
-                    break
-
-            # try 32 bit kernel:
-            if ip_addr is None:
-                ifaces = [namestr[i:i+32].split('\0', 1)[0] for i in range(0, outbytes, 32)]
-
-                for ifname in [iface for iface in ifaces if iface if iface != 'lo']:
-                    ip_addr = socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, pack('256s', ifname[:15]))[20:24])
-                    break
-
-        return ip_addr or 'localhost'
-
-    try:
-        ip_addr = _detect_ip_addr()
-    except Exception:
-        ip_addr = 'localhost'
-    return ip_addr
 
 DEFAULT_SERVER_DATE_FORMAT = "%Y-%m-%d"
 DEFAULT_SERVER_TIME_FORMAT = "%H:%M:%S"
@@ -662,21 +608,6 @@ def split_every(n, iterable, piece_maker=tuple):
         yield piece
         piece = piece_maker(islice(iterator, n))
 
-def get_and_group_by_field(cr, uid, obj, ids, field, context=None):
-    """ Read the values of ``field´´ for the given ``ids´´ and group ids by value.
-
-       :param string field: name of the field we want to read and group by
-       :return: mapping of field values to the list of ids that have it
-       :rtype: dict
-    """
-    res = {}
-    for record in obj.read(cr, uid, ids, [field], context=context):
-        key = record[field]
-        res.setdefault(key[0] if isinstance(key, tuple) else key, []).append(record['id'])
-    return res
-
-def get_and_group_by_company(cr, uid, obj, ids, context=None):
-    return get_and_group_by_field(cr, uid, obj, ids, field='company_id', context=context)
 
 def discardattr(obj, key):
     """ Perform a ``delattr(obj, key)`` but without crashing if ``key`` is not present. """
