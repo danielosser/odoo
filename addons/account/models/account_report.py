@@ -39,36 +39,40 @@ class AccountReport(models.Model):
         required=True,
         default='always',
     )
+    """
+    TODO OCO tags:
+
+    - changement de pays sur le rapport: on voit si on peut changer le pays des tags ou non.
+
+    - changement de pays sur les tags : recalculer les expr de rapport liées (le M2m est donc un champ calculé sur les tags ET sur les expressions)
+
+    - on check les tags pour les créer au besoin au create
+
+    - pas d'unlink
+
+    - pas d'édition de noms de tags ; une contrainte qui s'assure qu'il y a toujours des tags qui correspondent quand on change la formule d'une ligne de rapport
+    """
 
     def write(self, vals):
-        # Overridden so that we change the country _id of the existing tags
-        # when writing the country_id of the report, or create new tags
-        # for the new country if the tags are shared with some other report.
-        #TODO OCO reDOC: tax tag management ... dommage mais pas le choix, je pense :/
+        #TODO OCO reDOC: tax tag management
 
         if 'country_id' in vals:
             tags_cache = {}
-            for record in self.filtered(lambda x: x.country_id.id != vals['country_id']):
-                for expression in record.line_ids.expression_ids.filtered(lambda x: x.engine == 'tax_tags'):
-                    if expression.tag_ids:
-                        #The tags for this country may have been created by a previous expression in this loop
-                        cache_key = (vals['country_id'], expression.formula)
-                        if cache_key not in tags_cache:
-                            tags_cache[cache_key] = self.env['account.account.tag']._get_tax_tags(expression.formula, vals['country_id'])
+            impacted_reports = self.filtered(lambda x: x.country_id.id != vals['country_id'])
+            tax_tags_expressions = impacted_reports.line_ids.expression_ids.filtered(lambda x: x.engine == 'tax_tags')
+            expressions_formulas = tax_tags_expressions.mapped('formula')
 
-                        new_tags = tags_cache[cache_key]
+            for formula in expressions_formulas:
+                tax_tags = self.env['account.account.tag']._get_tax_tags(formula, country.id)
+                tag_reports = tax_tags.tax_report_expression_ids.report_line_id.report_id
 
-                        if new_tags:
-                            expression._remove_tags_used_only_by_self()
-                            expression.write({'tag_ids': [(6, 0, new_tags.ids)]})
-
-                        elif expression.mapped('tag_ids.tax_report_line_ids.report_id').filtered(lambda x: x not in self):
-                            expression._remove_tags_used_only_by_self()
-                            expression.write({'tag_ids': [(5, 0, 0)] + expression._get_tags_create_vals(expression.tag_name, vals['country_id'])})
-                            tags_cache[cache_key] = expression.tag_ids
-
-                        else:
-                            expression.tag_ids.write({'country_id': vals['country_id']})
+                if all(report in self for report in tag_reports)
+                    # Only reports in self are using these tags; let's change their country
+                    tax_tags.write({'country_id': vals['country_id']})
+                else:
+                    # Another report uses these tags as well; let's keep them and create new tags in the target country
+                    tag_vals = self.env['account.report.expression']._get_tags_create_vals(formula, vals['country_id'])
+                    self.env['account.account.tag'].create(tag_vals)
 
         return super(AccountReport, self).write(vals)
 
@@ -83,13 +87,6 @@ class AccountReportLine(models.Model):
     _order = 'sequence, id'
 
     name = fields.Char(string="Name", required=True)
-    """
-    TODO OCO in the future, for columns:
-    cell_opt1: fields.many2One(comodel=formula)
-    cell_opt2: fields.many2One(comodel=formula)
-    cell_opt3 fields.many2One(comodel=formula)
-    TODO OCO+++> pour l'ordre des colonnes, il faudra un truc, alors. Parce que là, si cell_main est tjrs la première, on ne sait pas faire un control domain sur une des opt
-    """
     expression_ids = fields.One2many(string="Expressions", comodel_name='account.report.expression', inverse_name='report_line_id')
     report_id = fields.Many2one(string="Parent Report", comodel_name='account.report', required=True)
     groupby = fields.Char(string="Group By") # TODO OCO la valeur du group by doit être acceptée par le moteur de la formule (en cas de multi colonnes, par les moteurs de chaque formule de la ligne => ce sera marrant ...)
@@ -140,14 +137,11 @@ class AccountReportExpression(models.Model):
             country = rslt.report_line_id.report_id.country_id
             existing_tags = self.env['account.account.tag']._get_tax_tags(tag_name, country.id)
 
-            if existing_tags:
-                # We connect the new report line to the already existing tags
-                tags_command = [(6, 0, existing_tags.ids)]
-            else:
-                # We create new ones
+            if not existing_tags:
+                # We create new tags corresponding to this expression's formula.
+                # The compute function will associate them with the expression.
+                # TODO OCO s'assurer que le compute est bien appelé. ==> Mais dois-ce être un compute ? => Une fonction à appeler ?
                 tags_command = self._get_tags_create_vals(tag_name, country.id)
-
-            rslt.write({'tag_ids': tags_command})
 
         return rslt
 
@@ -176,26 +170,3 @@ class AccountReportExpression(models.Model):
         tags_to_unlink = all_tags.filtered(lambda x: not (x.tax_report_expression_ids - self))
         self.write({'tag_ids': [(3, tag.id, 0) for tag in tags_to_unlink]})
         self._delete_tags_from_taxes(tags_to_unlink.ids)
-
-    @api.model
-    def _delete_tags_from_taxes(self, tag_ids_to_delete):
-        """ Based on a list of tag ids, removes them first from the
-        repartition lines they are linked to, then deletes them
-        from the account move lines, and finally unlink them.
-        """
-        if not tag_ids_to_delete:
-            # Nothing to do, then!
-            return
-
-        self.env.cr.execute("""
-            delete from account_account_tag_account_tax_repartition_line_rel
-            where account_account_tag_id in %(tag_ids_to_delete)s;
-
-            delete from account_account_tag_account_move_line_rel
-            where account_account_tag_id in %(tag_ids_to_delete)s;
-        """, {'tag_ids_to_delete': tuple(tag_ids_to_delete)})
-
-        self.env['account.move.line'].invalidate_cache(fnames=['tax_tag_ids'])
-        self.env['account.tax.repartition.line'].invalidate_cache(fnames=['tag_ids'])
-
-        self.env['account.account.tag'].browse(tag_ids_to_delete).unlink()
