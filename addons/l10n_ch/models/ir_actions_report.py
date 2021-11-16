@@ -2,7 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 from odoo import api, models
-
+from odoo.exceptions import UserError
 from pathlib import Path
 from reportlab.graphics.shapes  import Image as ReportLabImage
 from reportlab.lib.units import mm
@@ -12,6 +12,15 @@ CH_QR_CROSS_FILE = Path('../static/src/img/CH-Cross_7mm.png') # Image file conta
 
 class IrActionsReport(models.Model):
     _inherit = 'ir.actions.report'
+
+    def retrieve_attachment(self, record):
+        if self.report_name == 'l10n_ch.qr_report_main':
+            record.ensure_one()
+            if not record.partner_bank_id._eligible_for_qr_code('ch_qr', record.partner_id, record.currency_id):
+                raise UserError("Invoice %s: cannot generate the QR-bill. Please check you have configured the address of your company and debtor. "
+                                "If you are using a QR-IBAN, also check the invoice's payment reference is a QR reference." % record.display_name)
+            record.l10n_ch_isr_sent = True
+        return super(IrActionsReport, self).retrieve_attachment(record)
 
     @api.model
     def get_available_barcode_masks(self):
