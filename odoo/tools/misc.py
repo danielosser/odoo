@@ -678,22 +678,6 @@ def get_and_group_by_field(cr, uid, obj, ids, field, context=None):
 def get_and_group_by_company(cr, uid, obj, ids, context=None):
     return get_and_group_by_field(cr, uid, obj, ids, field='company_id', context=context)
 
-# port of python 2.6's attrgetter with support for dotted notation
-def resolve_attr(obj, attr):
-    for name in attr.split("."):
-        obj = getattr(obj, name)
-    return obj
-
-def attrgetter(*items):
-    if len(items) == 1:
-        attr = items[0]
-        def g(obj):
-            return resolve_attr(obj, attr)
-    else:
-        def g(obj):
-            return tuple(resolve_attr(obj, attr) for attr in items)
-    return g
-
 def discardattr(obj, key):
     """ Perform a ``delattr(obj, key)`` but without crashing if ``key`` is not present. """
     try:
