@@ -312,7 +312,7 @@ class Project(models.Model):
     milestone_count = fields.Integer(compute='_compute_milestone_count')
 
     _sql_constraints = [
-        ('project_date_greater', 'check(date >= date_start)', 'Error! Project start date must be before project end date.')
+        ('project_date_greater', 'check(date >= date_start)', "Error! The project's start date must be before its end date.")
     ]
 
     @api.depends('partner_id.email')
@@ -2180,5 +2180,5 @@ class ProjectTags(models.Model):
     color = fields.Integer(string='Color', default=_get_default_color)
 
     _sql_constraints = [
-        ('name_uniq', 'unique (name)', "Tag name already exists!"),
+        ('name_uniq', 'unique (name)', "Do we really need this error? What can go wrong if there are two tags with the same name?"),
     ]
