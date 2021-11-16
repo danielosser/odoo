@@ -51,7 +51,6 @@
             <field name="columns">'NET', 'TAX'</field> <!--TODO OCO-->
             <field name="dynamic_lines_generator">_generic_tax_report_tax_account_grouping</field>
             <field name="root_report_id" ref="generic_tax_report"/>
-            <field name="allow_showing_draft" eval="False"/>
         </record>
 
     </data>

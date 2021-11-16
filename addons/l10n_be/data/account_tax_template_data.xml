@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+<!--
+  TODO OCO
         <record id="attn_VAT-OUT-21-L" model="account.tax.template">
             <field name="sequence">10</field>
             <field name="description">TVA 21%</field>
@@ -3109,7 +3111,7 @@
             ]"/>
         </record>
 
-        <record id="attn_VAT-IN-V83-06-ROW-CC" model="account.tax.template"> <!--merged group-->
+        <record id="attn_VAT-IN-V83-06-ROW-CC" model="account.tax.template">
             <field name="sequence">2330</field>
             <field name="description">TVA 6% Non EU</field>
             <field name="name">6% Non EU - Biens d'investissement</field>
@@ -3200,5 +3202,6 @@
                 }),
             ]"/>
         </record>
+-->
 
 </odoo>

@@ -14,36 +14,6 @@ class AccountTaxReport(models.Model):
     line_ids = fields.One2many(string="Report Lines", comodel_name='account.tax.report.line', inverse_name='report_id', help="Content of this tax report")
     root_line_ids = fields.One2many(string="Root Report Lines", comodel_name='account.tax.report.line', inverse_name='report_id', domain=[('parent_id', '=', None)], help="Subset of line_ids, containing the lines at the root of the report.")
 
-    def write(self, vals):
-        # Overridden so that we change the country _id of the existing tags
-        # when writing the country_id of the report, or create new tags
-        # for the new country if the tags are shared with some other report.
-
-        if 'country_id' in vals:
-            tags_cache = {}
-            for record in self.filtered(lambda x: x.country_id.id != vals['country_id']):
-                for line in record.line_ids:
-                    if line.tag_ids:
-                        #The tags for this country may have been created by a previous line in this loop
-                        cache_key = (vals['country_id'], line.tag_name)
-                        if cache_key not in tags_cache:
-                            tags_cache[cache_key] = self.env['account.account.tag']._get_tax_tags(line.tag_name, vals['country_id'])
-
-                        new_tags = tags_cache[cache_key]
-
-                        if new_tags:
-                            line._remove_tags_used_only_by_self()
-                            line.write({'tag_ids': [(6, 0, new_tags.ids)]})
-
-                        elif line.mapped('tag_ids.tax_report_line_ids.report_id').filtered(lambda x: x not in self):
-                            line._remove_tags_used_only_by_self()
-                            line.write({'tag_ids': [(5, 0, 0)] + line._get_tags_create_vals(line.tag_name, vals['country_id'])})
-                            tags_cache[cache_key] = line.tag_ids
-
-                        else:
-                            line.tag_ids.write({'country_id': vals['country_id']})
-
-        return super(AccountTaxReport, self).write(vals)
 
     def copy(self, default=None):
         # Overridden from regular copy, since the ORM does not manage
@@ -86,11 +56,6 @@ class AccountTaxReport(models.Model):
         self.ensure_one()
         return []
 
-    def validate_country_id(self):
-        for record in self:
-            if any(line.tag_ids.mapped('country_id') != record.country_id for line in record.line_ids):
-                raise ValidationError(_("The tags associated with tax report line objects should all have the same country set as the tax report containing these lines."))
-
 
 class AccountTaxReportLine(models.Model):
     _name = "account.tax.report.line"
@@ -99,7 +64,6 @@ class AccountTaxReportLine(models.Model):
     _parent_store = True
 
     name = fields.Char(string="Name", required=True, help="Complete name for this report line, to be used in report.")
-    tag_ids = fields.Many2many(string="Tags", comodel_name='account.account.tag', relation='account_tax_report_line_tags_rel', help="Tax tags populating this line")
     report_action_id = fields.Many2one(string="Report Action", comodel_name='ir.actions.act_window', help="The optional action to call when clicking on this line in accounting reports.")
     children_line_ids = fields.One2many(string="Children Lines", comodel_name='account.tax.report.line', inverse_name='parent_id', help="Lines that should be rendered as children of this one")
     parent_id = fields.Many2one(string="Parent Line", comodel_name='account.tax.report.line')
@@ -155,40 +119,7 @@ class AccountTaxReportLine(models.Model):
              "This means that the carryover could affect other lines if they are using this one in their computation."
     )
 
-    @api.model
-    def create(self, vals):
-        # Manage tags
-        tag_name = vals.get('tag_name', '')
-        if tag_name and vals.get('report_id'):
-            report = self.env['account.tax.report'].browse(vals['report_id'])
-            country = report.country_id
 
-            existing_tags = self.env['account.account.tag']._get_tax_tags(tag_name, country.id)
-
-            if existing_tags:
-                # We connect the new report line to the already existing tags
-                vals['tag_ids'] = [(6, 0, existing_tags.ids)]
-            else:
-                # We create new ones
-                vals['tag_ids'] = self._get_tags_create_vals(tag_name, country.id)
-
-        return super(AccountTaxReportLine, self).create(vals)
-
-    @api.model
-    def _get_tags_create_vals(self, tag_name, country_id):
-        minus_tag_vals = {
-          'name': '-' + tag_name,
-          'applicability': 'taxes',
-          'tax_negate': True,
-          'country_id': country_id,
-        }
-        plus_tag_vals = {
-          'name': '+' + tag_name,
-          'applicability': 'taxes',
-          'tax_negate': False,
-          'country_id': country_id,
-        }
-        return [(0, 0, minus_tag_vals), (0, 0, plus_tag_vals)]
 
     def write(self, vals):
         tag_name_postponed = None
@@ -266,39 +197,6 @@ class AccountTaxReportLine(models.Model):
         if children:
             children.unlink()
         return super(AccountTaxReportLine, self).unlink()
-
-    def _remove_tags_used_only_by_self(self):
-        """ Deletes and removes from taxes and move lines all the
-        tags from the provided tax report lines that are not linked
-        to any other tax report lines.
-        """
-        all_tags = self.mapped('tag_ids')
-        tags_to_unlink = all_tags.filtered(lambda x: not (x.tax_report_line_ids - self))
-        self.write({'tag_ids': [(3, tag.id, 0) for tag in tags_to_unlink]})
-        self._delete_tags_from_taxes(tags_to_unlink.ids)
-
-    @api.model
-    def _delete_tags_from_taxes(self, tag_ids_to_delete):
-        """ Based on a list of tag ids, removes them first from the
-        repartition lines they are linked to, then deletes them
-        from the account move lines, and finally unlink them.
-        """
-        if not tag_ids_to_delete:
-            # Nothing to do, then!
-            return
-
-        self.env.cr.execute("""
-            delete from account_account_tag_account_tax_repartition_line_rel
-            where account_account_tag_id in %(tag_ids_to_delete)s;
-
-            delete from account_account_tag_account_move_line_rel
-            where account_account_tag_id in %(tag_ids_to_delete)s;
-        """, {'tag_ids_to_delete': tuple(tag_ids_to_delete)})
-
-        self.env['account.move.line'].invalidate_cache(fnames=['tax_tag_ids'])
-        self.env['account.tax.repartition.line'].invalidate_cache(fnames=['tag_ids'])
-
-        self.env['account.account.tag'].browse(tag_ids_to_delete).unlink()
 
     @api.constrains('formula', 'tag_name')
     def _validate_formula(self):
