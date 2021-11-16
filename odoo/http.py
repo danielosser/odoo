@@ -2,10 +2,8 @@
 #----------------------------------------------------------
 # OpenERP HTTP layer
 #----------------------------------------------------------
-import ast
 import collections
 import contextlib
-import copy
 import datetime
 import functools
 import hashlib
@@ -26,8 +24,7 @@ from os.path import join as opj
 from zlib import adler32
 
 import babel.core
-from datetime import datetime, date
-import passlib.utils
+from datetime import datetime
 import psycopg2
 import json
 import werkzeug.datastructures
@@ -52,7 +49,7 @@ from .service.server import memory_info
 from .service import security, model as service_model
 from .tools.func import lazy_property
 from .tools import profiler
-from .tools import ustr, consteq, frozendict, pycompat, unique, date_utils
+from .tools import ustr, frozendict, unique, date_utils
 from .tools.mimetypes import guess_mimetype
 from .tools.misc import str2bool
 from .tools._vendor import sessions
@@ -426,7 +423,7 @@ class WebRequest(object):
         secret = self.env['ir.config_parameter'].sudo().get_param('database.secret')
         assert secret, "CSRF protection requires a configured database secret"
         hm_expected = hmac.new(secret.encode('ascii'), msg.encode('utf-8'), hashlib.sha1).hexdigest()
-        return consteq(hm, hm_expected)
+        return hmac.compare_digest(hm, hm_expected)
 
 def route(route=None, **kw):
     """Decorator marking the decorated method as being a handler for
