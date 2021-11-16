@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+from dateutil.relativedelta import relativedelta
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError, UserError
 
@@ -18,11 +19,12 @@ class LunchOrder(models.Model):
     product_id = fields.Many2one('lunch.product', string="Product", required=True)
     category_id = fields.Many2one(
         string='Product Category', related='product_id.category_id', store=True)
-    date = fields.Date('Order Date', required=True, readonly=True,
-                       states={'new': [('readonly', False)]},
-                       default=fields.Date.context_today)
+    date = fields.Date('Order Date', required=True, store=True, readonly=False, compute='_compute_date')
     supplier_id = fields.Many2one(
         string='Vendor', related='product_id.supplier_id', store=True, index=True)
+    available_today = fields.Boolean(related='supplier_id.available_today')
+    available_nextday = fields.Boolean(related='supplier_id.available_nextday')
+    order_deadline_passed = fields.Boolean(related='supplier_id.order_deadline_passed')
     user_id = fields.Many2one('res.users', 'User', readonly=True,
                               states={'new': [('readonly', False)]},
                               default=lambda self: self.env.uid)
@@ -31,8 +33,9 @@ class LunchOrder(models.Model):
     price = fields.Monetary('Total Price', compute='_compute_total_price', readonly=True, store=True)
     active = fields.Boolean('Active', default=True)
     state = fields.Selection([('new', 'To Order'),
-                              ('ordered', 'Ordered'),
-                              ('confirmed', 'Received'),
+                              ('ordered', 'Ordered'),       # "Internally" ordered
+                              ('sent', 'Sent'),             # Order sent to the supplier
+                              ('confirmed', 'Received'),    # Order received
                               ('cancelled', 'Cancelled')],
                              'Status', readonly=True, index=True, default='new')
     notified = fields.Boolean(default=False)
@@ -158,10 +161,14 @@ class LunchOrder(models.Model):
 
     @api.model
     def _find_matching_lines(self, values):
+        supplier = self.env['lunch.product'].browse(values.get('product_id')).supplier_id
+        date = fields.Date.today()
+        if supplier.order_deadline_passed and supplier.available_nextday:
+            date = date + relativedelta(days=1)
         domain = [
             ('user_id', '=', values.get('user_id', self.default_get(['user_id'])['user_id'])),
             ('product_id', '=', values.get('product_id', False)),
-            ('date', '=', fields.Date.today()),
+            ('date', '=', date),
             ('note', '=', values.get('note', False)),
         ]
         toppings = values.get('toppings', [])
@@ -179,7 +186,7 @@ class LunchOrder(models.Model):
             line.display_toppings = ' + '.join(toppings.mapped('name'))
 
     def update_quantity(self, increment):
-        for line in self.filtered(lambda line: line.state != 'confirmed'):
+        for line in self.filtered(lambda line: line.state not in ['sent', 'confirmed']):
             if line.quantity <= -increment:
                 # TODO: maybe unlink the order?
                 line.active = False
@@ -194,6 +201,15 @@ class LunchOrder(models.Model):
         """
         # YTI FIXME: Find a way to drop this.
         return True
+
+    @api.depends('state', 'order_deadline_passed', 'available_nextday')
+    def _compute_date(self):
+        today = fields.Date.today()
+        for order in self.filtered(lambda o: o.state == 'new'):
+            if order.order_deadline_passed and order.available_nextday:
+                order.date = today + relativedelta(days=1)
+            else:
+                order.date = today
 
     def _check_wallet(self):
         self.flush()
@@ -230,6 +246,9 @@ class LunchOrder(models.Model):
 
     def action_reset(self):
         self.write({'state': 'ordered'})
+
+    def action_send(self):
+        self.state = 'sent'
 
     def action_notify(self):
         self -= self.filtered('notified')
