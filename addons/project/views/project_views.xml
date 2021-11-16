@@ -27,6 +27,7 @@
                     <filter string="Unassigned" name="unassigned" domain="[('user_ids', '=', False)]"/>
                     <separator/>
                     <filter string="Starred" name="starred" domain="[('priority', 'in', [0, 1])]"/>
+                    <filter string="Not Starred" name="not_starred" domain="[('priority', 'not in', [0, 1])]"/>
                     <separator/>
                     <filter string="Late Tasks" name="late" domain="[('date_deadline', '&lt;', context_today().strftime('%Y-%m-%d'))]"/>
                     <separator/>
