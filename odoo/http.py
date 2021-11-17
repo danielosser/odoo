@@ -2,32 +2,39 @@
 r"""\
 Odoo HTTP layer / WSGI application
 
-The main duty of this module is to prepare and dispatch all http request
-to their corresponding controllers: from a raw http request arriving on
-the WSGI entrypoint to a :class:`~http.Request`: arriving at a module
-controller with a fully setup ORM available.
+The main duty of this module is to prepare and dispatch all http
+requests to their corresponding controllers: from a raw http request
+arriving on the WSGI entrypoint to a :class:`~http.Request`: arriving at
+a module controller with a fully setup ORM available.
 
-Application developpers mostly know this module thanks to the
-:class:`~odoo.http.Controller`: class and its compagnion the
+Application developers mostly know this module thanks to the
+:class:`~odoo.http.Controller`: class and its companion the
 :func:`~odoo.http.route`: method decorator. Together they are used to
 register methods responsible of delivering web content to matching URLS.
 
-The two are only the tip of the iceberg, below is an ascii graph that
-shows the various processing layers each request pass throught before
+Those two are only the tip of the iceberg, below is an ascii graph that
+shows the various processing layers each request passes through before
 ending at the @route decorated endpoint. Hopefully, this graph and the
-attached function descriptions help you understanding this module.
+attached function descriptions will help you understand this module.
 
 Here be dragons:
 
-
-                         Request._serve_static
-                       /
-Application.__call__ -+- Request._serve_nodb ------------------------------------------                               ------------------------
-                       \                                                               \                             /                        \
-                        \                                                               \ / Request.http_dispatch \ /                          \
-                         \                                                               +                         +                            +- route_wrapper - endpoint
-                          \                                                             / \ Request.json_dispatch / \                          /
-                            Request._serve_db - model.retrying - Request._serve_ir_http                               env['ir.http']._dispatch
+Application.__call__
+    |
+    +-> Request._serve_static
+    |
+    +-> Request._serve_nodb
+    |    -> App.nodb_routing_map.match
+    |    -> Request._pre_dispatch
+    |    ----------------------------------------------------------------->\
+    |                                                                       \                               ------------------------
+    +-> Request._serve_db                                                    \                             /                        \
+         -> model.retrying                                                    \ / Request.http_dispatch \ /                          \
+             -> Request._serve_ir_http                                         +                         +                            + route_wrapper
+                 -> env['ir.http']._match                                     / \ Request.json_dispatch / \                          /   -> endpoint
+                 -> env['ir.http']._authenticate                             /                              env['ir.http']._dispatch
+                 -> env['ir.http']._pre_dispatch -> Request._pre_dispatch   /
+                 --------------------------------------------------------->/
 
 Application.__call__
   WSGI entry point, it sanitizes the request, it wraps it in a werkzeug
@@ -52,13 +59,13 @@ Request._serve_nodb
 
 Request._serve_db
   Handle all requests that are not static when it is possible to connect
-  to a database. It open a session and initialize the ORM before
-  forwarding the request to ``retyring`` and ``_dispatch_ir_http``.
+  to a database. It opens a session and initializes the ORM before
+  forwarding the request to ``retrying`` and ``_dispatch_ir_http``.
 
 service.model.retrying
   Protect against SQL serialisation errors (when two different
-  transactions write on a same record), when such an error occurs this
-  function resets the session and the environment then re-dispatch the
+  transactions write on the same record), when such an error occurs this
+  function resets the session and the environment then re-dispatches the
   request.
 
 Request._serve_ir_http
@@ -71,23 +78,23 @@ Request._serve_ir_http
   (3) ensuring the user has access to the requested endpoint;
   (4) preparing the system before dispatching the request (e.g. saving
       '?debug=1' in the session);
-  (5) forwarding the request to the endpoint once the request body have
-      been deserialized by any of the two ``request._http_dispatch`` or
+  (5) forwarding the request to the endpoint once the request body has
+      been deserialized by either ``request._http_dispatch`` or
       ``request._json_dispatch``.
 
 Request.http_dispatch
   Handle requests to ``@route(type='http')`` endpoints, gather the
   arguments from the path, the query string, the body forms and the body
-  files. Performes cors and csrf checks then call the endpoint.
+  files. Perform cors and csrf checks then call the endpoint.
 
 Request.json_dispatch
   Handle requests to ``@route(type='json')`` endpoints, lobotomized
   implementation of jsonrpc2, it only uses the ``params`` of the JSON
-  serialized body and use it as kwargs for calling the endpoint.
+  serialized body and uses it as kwargs for calling the endpoint.
 
 env['ir.http']._dispatch
   Only in the context of a ``_serve_db`` request. It just calls the
-  route endpoint when no other modules than base is installed. Other
+  route endpoint when no other module than base is installed. Other
   modules may override the method and act as middleware. See also the
   ``env['ir.http']._pre_dispatch`` method (no 4 above).
 
@@ -212,14 +219,14 @@ ROUTING_KEYS = {
     'alias', 'host', 'methods',
 }
 
-# The duration of a user session before it is considered expirated,
+# The duration of a user session before it is considered expired,
 # three months.
 SESSION_LIFETIME = 60 * 60 * 24 * 90
 
 # The cache duration for static content from the filesystem, one week.
 STATIC_CACHE = 60 * 60 * 24 * 7
 
-# The cache duration for content where the url uniquely identify the
+# The cache duration for content where the url uniquely identifies the
 # content (usually using a hash), one year.
 STATIC_CACHE_LONG = 60 * 60 * 24 * 365
 
@@ -255,9 +262,9 @@ def db_filter(dbs, httprequest=None):
     as-is.
 
     :param Iterable[str] dbs: The list of database names to filter.
-    :param Optional[werkzeug.Request] httprequest: The request where to
-        extract the hostname and domain that are injected in the ``%d``
-        and ``%h`` dbfilter placeholders.
+    :param Optional[werkzeug.Request] httprequest: The request from
+        which to extract the hostname and domain that are injected in
+        the ``%d`` and ``%h`` dbfilter placeholders.
     :return List[str]: The original list filtered.
     """
 
@@ -363,12 +370,12 @@ class Controller:
 
     Each class :ref:`inheriting <python:tut-inheritance>` from
     :class:`~odoo.http.Controller` can use the :func:`~odoo.http.route`:
-    decorator to route matching incomming web requests to decorated
-    method.
+    decorator to route matching incoming web requests to decorated
+    methods.
 
     Like models, controllers can be extended by other modules. The
-    extension mechanism is different as controllers can work in a
-    database-free environment thus lack the necessary to use the
+    extension mechanism is different because controllers can work in a
+    database-free environment and therefore cannot use
     :class:~odoo.api.Registry:.
 
     To *override* a controller, :ref:`inherit <python:tut-inheritance>`
@@ -403,27 +410,27 @@ class Controller:
 
 def route(route=None, **routing):
     """
-    Decorate a controller method in order to route incomming requests
+    Decorate a controller method in order to route incoming requests
     matching the given URL and options to the decorated method.
 
     .. warning::
-        It is mandatory to re-decorate any method that is override in
+        It is mandatory to re-decorate any method that is overridden in
         controller extensions but the arguments can be omitted. See
         :class:`~odoo.http.Controller` for more details.
 
     :param Union[str, Iterable[str]] route: The paths that the decorated
-        method is serving. Incomming HTTP request paths matching this
+        method is serving. Incoming HTTP request paths matching this
         route will be routed to this decorated method. See `werkzeug
         routing documentation <http://werkzeug.pocoo.org/docs/routing/>`_
-        for the format of route expression.
+        for the format of route expressions.
     :param str type: The type of request, either ``'json'`` or
         ``'http'``. It describes where to find the request parameters
         and how to serialize the response.
-    :param str auth: The authentication method, can on of the following:
+    :param str auth: The authentication method, one of the following:
          * ``'user'``: The user must be authenticated and the current
-           request will perform using the rights of the user.
+           request will be executed using the rights of the user.
          * ``'public'``: The user may or may not be authenticated. If he
-           isn't, the current request will perform using the shared
+           isn't, the current request will be executed using the shared
            Public user.
          * ``'none'``: The method is always active, even if there is no
            database. Mainly used by the framework and authentication
@@ -481,11 +488,11 @@ def _generate_routing_rules(modules, nodb_only, converters=None):
         return result
 
     def build_controllers():
-        top_most_controllers = []
+        highest_controllers = []
         for module in modules:
-            top_most_controllers.extend(Controller.children_classes.get(module, []))
+            highest_controllers.extend(Controller.children_classes.get(module, []))
 
-        for top_ctrl in top_most_controllers:
+        for top_ctrl in highest_controllers:
             leaf_controllers = list(unique(get_leaf_classes(top_ctrl)))
             name = '{} (extended by {})'.format(
                 top_ctrl.__name__,
@@ -543,7 +550,7 @@ def _generate_routing_rules(modules, nodb_only, converters=None):
                 # original __dict__ (update_wrapper) to keep a reference
                 # to `original_routing` and `original_endpoint`, assign
                 # the merged routing ONLY on the duplicated function to
-                # ensure method's immuability.
+                # ensure method's immutability.
                 endpoint = functools.partial(method)
                 functools.update_wrapper(endpoint, method, assigned=())
                 endpoint.routing = merged_routing
@@ -593,11 +600,11 @@ class Response(werkzeug.wrappers.Response):
         :param result: The endpoint return value to load the Response from.
         :type result: Union[Response, werkzeug.wrappers.BaseResponse,
             werkzeug.exceptions.HTTPException, str, bytes, NoneType]
-        :param str fname: The enpoint function name where the result
-            emanated from, used for logging.
+        :param str fname: The endpoint function name wherefrom the
+            result emanated, used for logging.
         :return Response: The created :class:`~odoo.http.Response`.
         :raises TypeError: When ``result`` type is none of the above-
-            mentionned type.
+            mentioned type.
         """
         if isinstance(result, Response):
             return result
@@ -642,7 +649,7 @@ class Response(werkzeug.wrappers.Response):
 
 class FutureResponse:
     """ werkzeug.Response mock class that only serves as placeholder for
-        headers to inject in the final response. """
+        headers to be injected in the final response. """
     charset = 'utf-8'
     max_cookie_size = 4093
 
@@ -679,14 +686,14 @@ class Request:
     #------------------------------------------------------
     def update_env(self, user=None, context=None, su=None):
         """ Update the environment of the current request. """
-        cr = None  # None is a sentinel, it conserves the same cursor
+        cr = None  # None is a sentinel, it keeps the same cursor
         self.env = self.env(cr, user, context, su)
         threading.current_thread().uid = self.env.uid
 
     def update_context(self, **overrides):
         """
         Override the environment context of the current request with the
-        values of ``overrides``. To remplace the entire context, please
+        values of ``overrides``. To replace the entire context, please
         use :meth:`~update_env`: instead.
         """
         self.update_env(context=dict(self.env.context, **overrides))
@@ -783,21 +790,21 @@ class Request:
             be an empty string when the info is missing or could not be
             determined.
 
-        The session identifier is retrieve from the, in priority:
+        The session identifier is retrieved from the, in priority:
           * ``session_id`` query-string;
           * ``X-Openerp-Session-Id`` header (deprecated);
           * ``session_id`` cookie (usually set).
 
-        The database is retrieve from the, in priority:
+        The database is retrieved from the, in priority:
           * ``db`` query-string option;
           * ``session_id`` query-string option;
           * ``X-Openerp-Session-Id`` header (deprecated);
           * ``session_id`` cookie (usually set);
           * database list if there is only one database available.
 
-        Because the two information share the same query-string option,
-        cookie and header, the two are to be concatenated with a single
-        dot separating the two: ``<session_id>.<dbname>``.
+        Because the they both share the same query-string option, cookie
+        and header, they are concatenated with a single dot separating
+        them: ``<session_id>.<dbname>``.
         """
         sid, _, requested_db = (
                self.httprequest.args.get('session_id')
@@ -824,8 +831,8 @@ class Request:
         """
         Update the cookie session with a new session id and database.
 
-        :param str session_id: The (maybe empty) session id.
-        :param str dbname: The (maybe empty) database name.
+        :param str session_id: The (possibly empty) session id.
+        :param str dbname: The (possibly empty) database name.
         """
         self.future_response.set_cookie(
             'session_id', f'{session_id}.{dbname}',
@@ -955,7 +962,7 @@ class Request:
         Low-level file streaming utility with mime and cache handling,
         it takes a file-object or immediately the content as bytes/str.
 
-        Sends the contents of a file to the client. This will use the
+        Sends the content of a file to the client. This will use the
         most efficient method available and configured. By default it
         will try to use the WSGI server's file_wrapper support.
 
@@ -972,7 +979,7 @@ class Request:
         :param str mimetype: the mimetype of the file if provided,
             otherwise auto detection happens based on the name.
         :param datetime mtime: optional if file has a 'name' attribute,
-            last modification time used for contitional response.
+            last modification time used for conditional response.
         :param bool as_attachment: set to `True` if you want to send
             this file with a ``Content-Disposition: attachment`` header.
         :param int cache_timeout: set to `False` to disable etags and
@@ -1168,12 +1175,13 @@ class Request:
 
     def _http_handle_error(self, exc):
         """
-        Handle any exception that occured while dispatching a request to
-        a `type='http'` route. Also handle exceptions that occured when
-        no route matched the request path, that no fallback page could
-        be delivered and that the request ``Content-Type`` was not json.
+        Handle any exception that occurred while dispatching a request
+        to a `type='http'` route. Also handle exceptions that occurred
+        when no route matched the request path, when no fallback page
+        could be delivered and that the request ``Content-Type`` was not
+        json.
 
-        :param exc Exception: the exception that occured.
+        :param exc Exception: the exception that occurred.
         :return werkzeug.wrapper.Response: an HTTP response.
         """
         if isinstance(exc, SessionExpiredException):
@@ -1296,6 +1304,12 @@ class Request:
         return response
 
     def _pre_dispatch(self, rule, args):
+        """
+        Prepare the system before dispatching the request to its
+        controller. This method is often overridden in ir.http to
+        extract some info from the request query-string or headers and
+        to save them in the session or in the context.
+        """
         routing = rule.endpoint.routing
         set_header = self.future_response.headers.set
 
@@ -1315,7 +1329,7 @@ class Request:
 
         if self.type != routing['type']:
             _logger.warning("Request's content type is %s but %r is type %s.", self.type, routing['routes'][0], routing['type'])
-            raise BadRequest(f"Request's content type is {self.type} but '{routing['routes'][0]}' is type {routing['type']}.")
+            raise BadRequest(f"Request's inferred type is {self.type} but {routing['routes'][0]!r} is type={routing['type']!r}.")
 
     def _serve_static(self):
         """ Serve a static file from the file system. """
@@ -1350,10 +1364,10 @@ class Request:
         request to ``_serve_ir_http``.
 
         :param str dbname: the name of the database to connect to.
-        :param str session_id: optionnal secret session identifier to
-            use to fetch the user's session from the database. When
-            missing, a new random secret session identifier is granted
-            and saved in the response cookies.
+        :param str session_id: optional secret session identifier to use
+            to fetch the user's session from the database. When missing,
+            a new random secret session identifier is granted and saved
+            in the response cookies.
         """
         self.db = threading.current_thread().dbname = dbname
         self.session_id = session_id = session_id or secrets.token_urlsafe()

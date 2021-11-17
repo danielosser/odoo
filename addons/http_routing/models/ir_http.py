@@ -370,12 +370,12 @@ class IrHttp(models.AbstractModel):
     def _match(cls, path):
         """
         Grant multilang support to URL matching by using http
-        redirections and URL rewrite. This method also grant various
+        redirections and URL rewrite. This method also grants various
         attributes such as ``lang`` and ``is_frontend`` on the current
         ``request`` object.
 
         1/ Use the URL as-is when it matches a non-multilang compatible
-           endpoints.
+           endpoint.
 
         2/ Use the URL as-is when the lang is not present in the URL and
            that the default lang has been requested.
@@ -384,7 +384,7 @@ class IrHttp(models.AbstractModel):
            a bot and that the lang is missing from the URL.
 
         4/ Redirect the browser when the lang is missing from the URL
-           but another lang than the default one have be requested. The
+           but another lang than the default one has been requested. The
            requested lang is injected before the original path.
 
         5/ Redirect the browser when the lang is present in the URL but
@@ -404,7 +404,7 @@ class IrHttp(models.AbstractModel):
               lang.
         """
 
-        # The URL have been rewritten already
+        # The URL has been rewritten already
         if hasattr(request, 'is_frontend'):
             return super()._match(path)
 
@@ -603,7 +603,7 @@ class IrHttp(models.AbstractModel):
 
         is_frontend_request = bool(getattr(request, 'is_frontend', False))
         if not is_frontend_request or not isinstance(response, HTTPException):
-            # don't handle nor backend requests nor plain responses
+            # neither handle backend requests nor plain responses
             return response
 
         if not request.env.uid:

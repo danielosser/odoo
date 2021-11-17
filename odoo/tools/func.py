@@ -63,7 +63,7 @@ def conditional(condition, decorator):
 
 def filter_kwargs(func, kwargs):
     """ Filter the given keyword arguments to only return the kwargs
-        that bind to the function's signature.
+        that binds to the function's signature.
     """
     leftovers = set(kwargs)
     for p in signature(func).parameters.values():
