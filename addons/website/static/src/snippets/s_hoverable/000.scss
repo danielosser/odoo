@@ -1,0 +1,16 @@
+.s_hoverable {
+    position: absolute !important;
+    z-index: 1;
+    top: 0px;
+    left: 0px;
+    height: 100%;
+    width: 100%;
+    display: none;
+    background-color: rgba(0, 0, 0, 0.05);
+    text-align: center;
+    padding: $grid-gutter-width;
+
+    *:hover > & {
+        display: block;
+    }
+}

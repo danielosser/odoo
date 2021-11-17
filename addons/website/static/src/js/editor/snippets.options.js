@@ -2111,6 +2111,92 @@ options.registry.topMenuColor = options.Class.extend({
     },
 });
 
+const HoverableOption = options.Class.extend({
+    getHoverable() {
+        return this.$target.find('> .s_hoverable')[0];
+    }
+});
+
+/**
+ * Handles elements displayed when hovering the target.
+ */
+options.registry.ToggleHoverable = HoverableOption.extend({
+    isTopOption: true,
+
+    //--------------------------------------------------------------------------
+    // Options
+    //--------------------------------------------------------------------------
+
+    /**
+     * Adds or removes a section that will be displayed over the target on
+     * hover.
+     *
+     * @see this.selectClass for parameters
+     */
+    async toggleHoverable(previewMode, widgetValue, params) {
+        if (widgetValue) {
+            this.$target[0].classList.add('o_hoverable_edit', 'o_hoverable_displayed');
+            this.$target[0].insertAdjacentHTML('beforeend', await this._rpc({
+                model: 'ir.ui.view',
+                method: 'render_public_asset',
+                args: ['website.s_hoverable', {}],
+                kwargs: {context: this.options.context},
+            }));
+
+            this.trigger_up('activate_snippet', {
+                $snippet: $(this.getHoverable()),
+            });
+        } else {
+            this.$target[0].classList.remove('o_hoverable_edit', 'o_hoverable_displayed');
+            this.getHoverable().remove();
+        }
+    },
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     */
+    _computeWidgetState(methodName, params) {
+        if (methodName === 'toggleHoverable') {
+            return !!this.getHoverable();
+        }
+        return this._super(...arguments);
+    },
+});
+
+/**
+ * Selects the hoverable element and displays its options.
+ */
+options.registry.EditHoverable = HoverableOption.extend({
+    onFocus() {
+        this._super(...arguments);
+        if (this.getHoverable()) {
+            this.$target[0].classList.add('o_hoverable_edit');
+        }
+    },
+    onBlur() {
+        this._super(...arguments);
+        if (this.getHoverable()) {
+            //this.$target[0].classList.remove('o_hoverable_edit');
+        }
+    },
+    /**
+    * @override
+    */
+    cleanForSave() {
+        this.$target[0].classList.remove('o_hoverable_displayed', 'o_hoverable_edit');
+    },
+    async selectClass(previewMode, widgetValue, params) {
+        await this._super(...arguments);
+        this.trigger_up('activate_snippet', {
+            $snippet: widgetValue === 'o_hoverable_displayed' ? $(this.getHoverable()) : this.$target
+        });
+    },
+});
+
 /**
  * Manage the visibility of snippets on mobile.
  */

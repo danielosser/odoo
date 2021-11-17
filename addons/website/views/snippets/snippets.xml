@@ -469,7 +469,7 @@
     <t t-set="only_bg_image_selector" t-value="base_only_bg_image_selector"/>
     <t t-set="only_bg_image_exclude" t-value="''"/>
 
-    <t t-set="both_bg_color_image_selector" t-value="'section, .carousel-item, .s_masonry_block .row > div, .s_color_blocks_2 .row > div, .parallax'"/>
+    <t t-set="both_bg_color_image_selector" t-value="'section, .carousel-item, .s_masonry_block .row > div, .s_color_blocks_2 .row > div, .parallax, .s_hoverable'"/>
     <t t-set="both_bg_color_image_exclude" t-value="base_only_bg_image_selector + ', .s_carousel_wrapper, .s_color_blocks_2, .s_image_gallery .carousel-item, .s_google_map, .s_map, [data-snippet] :not(.oe_structure) > [data-snippet], .s_masonry_block, .s_masonry_block .s_col_no_resize'"/>
 
     <t t-call="web_editor.snippet_options_background_options">
@@ -511,6 +511,16 @@
         <we-button class="o_we_link o_we_mobile" data-show-on-mobile="true" data-no-preview="true"
                    data-img="/website/static/src/img/snippets_options/mobile_invisible.svg"
                    data-active-img="/website/static/src/img/snippets_options/mobile_visible.svg"/>
+    </div>
+
+    <div data-js="ToggleHoverable" data-selector="section, section .row > div:not(.s_hoverable)">
+        <we-button class="o_we_link fa fa-bolt" data-name="toggle_hoverable_opt" data-toggle-hoverable="true" data-no-preview="true"/>
+    </div>
+
+    <div data-js="EditHoverable" data-selector="section, section .row > div:not(.s_hoverable)">
+        <we-row string="Edit Hover Column">
+            <we-checkbox data-select-class="o_hoverable_displayed" data-dependencies="toggle_hoverable_opt" data-no-preview="true"/>
+        </we-row>
     </div>
 
     <div data-js="sizing_y"

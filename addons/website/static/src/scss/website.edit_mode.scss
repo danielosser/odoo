@@ -227,6 +227,21 @@ body.editor_enable {
     }
 }
 
+//s_hoverable
+body.editor_enable {
+    .o_hoverable_edit {
+        border: 2px solid green;
+
+        & > .s_hoverable {
+            display: none;
+        }
+        &.o_hoverable_displayed > .s_hoverable {
+            display: block;
+        }
+    }
+}
+
+
 // Website Animate
 .editor_enable.o_animated_text_highlighted {
     .o_animated_text {
