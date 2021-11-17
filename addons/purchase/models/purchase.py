@@ -24,17 +24,20 @@ class PurchaseOrder(models.Model):
     @api.depends('order_line.price_total')
     def _amount_all(self):
         for order in self:
-            amount_untaxed = amount_tax = 0.0
-            for line in order.order_line:
-                line._compute_amount()
-                amount_untaxed += line.price_subtotal
-                amount_tax += line.price_tax
-            currency = order.currency_id or order.partner_id.property_purchase_currency_id or self.env.company.currency_id
-            order.update({
-                'amount_untaxed': currency.round(amount_untaxed),
-                'amount_tax': currency.round(amount_tax),
-                'amount_total': amount_untaxed + amount_tax,
-            })
+            order_lines = order.order_line.filtered(lambda x: not x.display_type)
+            tax_results = self.env['account.tax']._compute_taxes(
+                [self.env['account.tax']._prepare_base_line(
+                    x,
+                    currency=order.currency_id,
+                    taxes=x.taxes_id,
+                    quantity=x.product_qty,
+                ) for x in order_lines],
+            )
+            totals = tax_results['totals'][order.currency_id]
+
+            order.amount_untaxed = totals['amount_untaxed']
+            order.amount_tax = totals['amount_tax']
+            order.amount_total = totals['amount_untaxed'] + totals['amount_tax']
 
     @api.depends('state', 'order_line.qty_to_invoice')
     def _get_invoiced(self):
@@ -202,14 +205,18 @@ class PurchaseOrder(models.Model):
 
     @api.depends('order_line.taxes_id', 'order_line.price_subtotal', 'amount_total', 'amount_untaxed')
     def  _compute_tax_totals_json(self):
-        def compute_taxes(order_line):
-            return order_line.taxes_id._origin.compute_all(**order_line._prepare_compute_all_values())
-
-        account_move = self.env['account.move']
         for order in self:
-            tax_lines_data = account_move._prepare_tax_lines_data_for_totals_from_object(order.order_line, compute_taxes)
-            tax_totals = account_move._get_tax_totals(order.partner_id, tax_lines_data, order.amount_total, order.amount_untaxed, order.currency_id)
-            order.tax_totals_json = json.dumps(tax_totals)
+            order_lines = order.order_line.filtered(lambda x: not x.display_type)
+            order.tax_totals_json = json.dumps(self.env['account.tax']._prepare_tax_totals_json(
+                [self.env['account.tax']._prepare_base_line(
+                    x,
+                    currency=order.currency_id,
+                    taxes=x.taxes_id,
+                    quantity=x.product_qty,
+                ) for x in order_lines],
+                order.partner_id,
+                order.currency_id,
+            ))
 
     @api.depends('company_id.account_fiscal_country_id', 'fiscal_position_id.country_id', 'fiscal_position_id.foreign_vat')
     def _compute_tax_country_id(self):
