@@ -2,6 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 import logging
 import werkzeug
+from werkzeug.urls import url_quote
 
 from odoo import http, _
 from odoo.addons.auth_signup.models.res_users import SignupError
@@ -85,6 +86,11 @@ class AuthSignupHome(Home):
                 _logger.exception('error when resetting password')
             except Exception as e:
                 qcontext['error'] = str(e)
+
+        elif 'p_mail' in qcontext:
+            partner = request.env['res.partner'].sudo().search([('email', '=', qcontext.get('p_mail'))])
+            if partner and all(u.state != 'new' for u in partner.user_ids):
+                return request.redirect('/web/login?login=%s' % url_quote(partner.email))
 
         response = request.render('auth_signup.reset_password', qcontext)
         response.headers['X-Frame-Options'] = 'DENY'
