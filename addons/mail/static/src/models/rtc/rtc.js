@@ -254,8 +254,9 @@ function factory(dependencies) {
          * @param {Object} [param0]
          * @param {string} [param0.requestAudioDevice] true if requesting the audio input device
          *                 from the user
+         * @param {boolean} [param0.playSoundEffect] true if we want to play the sound effect
          */
-        async toggleMicrophone({ requestAudioDevice = true } = {}) {
+        async toggleMicrophone({ requestAudioDevice = true, playSoundEffect = true } = {}) {
             const shouldMute = this.currentRtcSession.isDeaf || !this.currentRtcSession.isMuted;
             this.currentRtcSession.updateAndBroadcast({ isMuted: shouldMute || !this.audioTrack });
             if (!this.audioTrack && !shouldMute && requestAudioDevice) {
@@ -263,6 +264,38 @@ function factory(dependencies) {
                 await this.updateLocalAudioTrack(true);
             }
             await this.async(() => this._updateLocalAudioTrackEnabledState());
+            if (playSoundEffect) {
+                if (this.currentRtcSession.isMuted) {
+                    this.messaging.soundEffects.microphoneMute.play({ volume: 0.5, playbackRate: 3 });
+                } else {
+                    this.messaging.soundEffects.microphoneUnMute.play({ volume: 0.5, playbackRate: 3 });
+                }
+            }
+        }
+
+        /**
+         * Mutes and unmutes the peers (remote tracks).
+         */
+        async toggleDeaf() {
+            if (!this.currentRtcSession) {
+                return;
+            }
+            const willDeafen = !this.currentRtcSession.isDeaf;
+            this.currentRtcSession.updateAndBroadcast({
+                isDeaf: willDeafen,
+            });
+            for (const session of this.messaging.models['mail.rtc_session'].all()) {
+                if (!session.audioElement) {
+                    continue;
+                }
+                session.audioElement.muted = willDeafen;
+            }
+            await this.async(() => this._updateLocalAudioTrackEnabledState());
+            if (willDeafen) {
+                this.messaging.soundEffects.deafen.play({ playbackRate: 3 });
+            } else {
+                this.messaging.soundEffects.unDeafen.play({ playbackRate: 3 });
+            }
         }
 
         /**
@@ -345,29 +378,29 @@ function factory(dependencies) {
          */
         async updateVoiceActivation() {
             this._disconnectAudioMonitor && this._disconnectAudioMonitor();
-            if (this.messaging.userSetting.usePushToTalk || !this.channel || !this.audioTrack) {
-                this.currentRtcSession.update({ isTalking: false });
-                return;
+            this.currentRtcSession.update({ isTalking: false });
+            if (!this.messaging.userSetting.usePushToTalk && this.channel && this.audioTrack) {
+                try {
+                    this._disconnectAudioMonitor = await monitorAudio(this.audioTrack, {
+                        onThreshold: async (isAboveThreshold) => {
+                            this._setSoundBroadcast(isAboveThreshold);
+                        },
+                        volumeThreshold: this.messaging.userSetting.voiceActivationThreshold,
+                    });
+                } catch (e) {
+                    /**
+                     * The browser is probably missing audioContext,
+                     * in that case, voice activation is not enabled
+                     * and the microphone is always 'on'.
+                     */
+                    this.env.services.notification.notify({
+                        message: this.env._t("Your browser does not support voice activation"),
+                        type: 'warning',
+                    });
+                    this.currentRtcSession.update({ isTalking: true });
+                }
             }
-            try {
-                this._disconnectAudioMonitor = await monitorAudio(this.audioTrack, {
-                    onThreshold: async (isAboveThreshold) => {
-                        this._setSoundBroadcast(isAboveThreshold);
-                    },
-                    volumeThreshold: this.messaging.userSetting.voiceActivationThreshold,
-                });
-            } catch (e) {
-                /**
-                 * The browser is probably missing audioContext,
-                 * in that case, voice activation is not enabled
-                 * and the microphone is always 'on'.
-                 */
-                this.env.services.notification.notify({
-                    message: this.env._t("Your browser does not support voice activation"),
-                    type: 'warning',
-                });
-                this.currentRtcSession.update({ isTalking: true });
-            }
+            this._updateLocalAudioTrackEnabledState();
         }
 
         //----------------------------------------------------------------------
@@ -895,9 +928,7 @@ function factory(dependencies) {
                 return;
             }
             this.currentRtcSession.update({ isTalking });
-            if (!this.currentRtcSession.isMuted) {
-                await this._updateLocalAudioTrackEnabledState();
-            }
+            await this._updateLocalAudioTrackEnabledState();
         }
 
         /**
@@ -976,8 +1007,8 @@ function factory(dependencies) {
         }
 
         /**
-         * Sets the enabled property of the local audio track based on the
-         * current session state. And notifies peers of the new audio state.
+         * Sets the enabled property of the local audio track and notifies
+         * peers of the new state.
          *
          * @private
          */
@@ -985,14 +1016,14 @@ function factory(dependencies) {
             if (!this.audioTrack) {
                 return;
             }
-            this.audioTrack.enabled = !this.currentRtcSession.isMuted && this.currentRtcSession.isTalking;
+            this.audioTrack.enabled = !this.currentRtcSession.isMutedOrDeaf && this.currentRtcSession.isTalking;
             await this._notifyPeers(Object.keys(this._peerConnections), {
                 event: 'trackChange',
                 type: 'peerToPeer',
                 payload: {
                     type: 'audio',
                     state: {
-                        isTalking: this.currentRtcSession.isTalking && !this.currentRtcSession.isMuted,
+                        isTalking: this.audioTrack.enabled,
                         isMuted: this.currentRtcSession.isMuted,
                         isDeaf: this.currentRtcSession.isDeaf,
                     },

@@ -37,14 +37,24 @@ function factory(dependencies) {
          * @param {MouseEvent} ev
          */
         async onClickDeafen(ev) {
-            await this.messaging.rtc.currentRtcSession.toggleDeaf();
+            await this.messaging.rtc.toggleDeaf();
         }
 
         /**
          * @param {MouseEvent} ev
          */
         onClickMicrophone(ev) {
-            this.messaging.rtc.toggleMicrophone();
+            if (!this.messaging.rtc) {
+                return;
+            }
+            if (this.messaging.rtc.currentRtcSession.isDeaf) {
+                this.messaging.rtc.toggleDeaf();
+                if (this.messaging.rtc.currentRtcSession.isMuted) {
+                    this.messaging.rtc.toggleMicrophone({ playSoundEffect: false });
+                }
+            } else {
+                this.messaging.rtc.toggleMicrophone();
+            }
         }
 
         /**

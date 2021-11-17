@@ -15,8 +15,9 @@ function factory(dependencies) {
          * @param {Object} param0
          * @param {boolean} [param0.loop] true if we want to make the audio loop, will only stop if stop() is called
          * @param {boolean} [param0.volume]
+         * @param {double} [param0.playbackRate]
          */
-        play({ loop = false, volume = 1 } = {}) {
+        play({ loop = false, volume = 1, playbackRate = 1 } = {}) {
             if (typeof(Audio) === "undefined") {
                 return;
             }
@@ -30,6 +31,7 @@ function factory(dependencies) {
             this.audio.currentTime = 0;
             this.audio.loop = loop;
             this.audio.volume = volume;
+            this.audio.playbackRate = playbackRate;
             Promise.resolve(this.audio.play()).catch(()=>{});
         }
 

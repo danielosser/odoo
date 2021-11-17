@@ -18,12 +18,24 @@ function factory(dependencies) {
             default: insertAndReplace({ filename: 'channel_04_out' }),
             isCausal: true,
         }),
+        deafen: one2one('mail.sound_effect', {
+            default: insertAndReplace({ filename: 'share_01_out' }),
+            isCausal: true,
+        }),
         incomingCall: one2one('mail.sound_effect', {
             default: insertAndReplace({ filename: 'call_02_in_' }),
             isCausal: true,
         }),
         memberLeave: one2one('mail.sound_effect', {
             default: insertAndReplace({ filename: 'channel_01_out' }),
+            isCausal: true,
+        }),
+        microphoneMute: one2one('mail.sound_effect', {
+            default: insertAndReplace({ filename: 'channel_03_out' }),
+            isCausal: true,
+        }),
+        microphoneUnMute: one2one('mail.sound_effect', {
+            default: insertAndReplace({ filename: 'channel_03_in' }),
             isCausal: true,
         }),
         newMessage: one2one('mail.sound_effect', {
@@ -36,6 +48,10 @@ function factory(dependencies) {
         }),
         screenSharing: one2one('mail.sound_effect', {
             default: insertAndReplace({ filename: 'share_02' }),
+            isCausal: true,
+        }),
+        unDeafen: one2one('mail.sound_effect', {
+            default: insertAndReplace({ filename: 'share_01_in' }),
             isCausal: true,
         }),
     };
