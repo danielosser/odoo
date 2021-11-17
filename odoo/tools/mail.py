@@ -615,13 +615,14 @@ def formataddr(pair, charset='utf-8'):
     return f"{local}@{domain}"
 
 
-def encapsulate_email(old_email, new_email):
+def encapsulate_email(old_email, new_email, include_email=False):
     """Change the FROM of the message and use the old one as name.
 
     e.g.
     * Old From: "Admin" <admin@gmail.com>
     * New From: notifications@odoo.com
-    * Output:   "Admin (admin@gmail.com)" <notifications@odoo.com>
+    * Output:   "Admin (admin@gmail.com)" <notifications@odoo.com>  (if `include_email`)
+    *      or   "Admin" <notifications@odoo.com>  (it not `include_email`)
     """
     old_email_split = getaddresses([old_email])
     if not old_email_split or not old_email_split[0]:
@@ -631,10 +632,14 @@ def encapsulate_email(old_email, new_email):
     if not new_email_split or not new_email_split[0]:
         return
 
-    if old_email_split[0][0]:
-        name_part = '%s (%s)' % old_email_split[0]
+    old_name, old_email = old_email_split[0]
+    if old_name:
+        if include_email:
+            name_part = '%s (%s)' % (old_name, old_email)
+        else:
+            name_part = old_name
     else:
-        name_part = old_email_split[0][1]
+        name_part = old_email
 
     return formataddr((
         name_part,

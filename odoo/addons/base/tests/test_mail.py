@@ -8,7 +8,7 @@ import email.message
 import re
 import threading
 
-from odoo.tests.common import BaseCase, SavepointCase, TransactionCase
+from odoo.tests.common import BaseCase, SavepointCase, TransactionCase, tagged
 from odoo.tools import (
     is_html_empty, html_sanitize, append_content_to_html, plaintext2html,
     email_split,
@@ -473,8 +473,14 @@ class EmailConfigCase(SavepointCase):
         self.assertEqual(email_from, '"admin@test.example.com" <email_force@domain.com>')
         self.assertEqual(return_path, 'email_force@domain.com')
 
+        # name + email -> encapsulated with name only
         email_from, return_path = get_email_from('"Admin" <admin@test.example.com>')
-        self.assertEqual(email_from, '"Admin (admin@test.example.com)" <email_force@domain.com>')
+        self.assertEqual(email_from, '"Admin" <email_force@domain.com>')
+        self.assertEqual(return_path, 'email_force@domain.com')
+
+        # no-name + email -> encapsulated with email only
+        email_from, return_path = get_email_from('admin@test.example.com')
+        self.assertEqual(email_from, '"admin@test.example.com" <email_force@domain.com>')
         self.assertEqual(return_path, 'email_force@domain.com')
 
         # We always force the email FROM (notification email contains a name part)
@@ -483,7 +489,7 @@ class EmailConfigCase(SavepointCase):
         set_param('mail.catchall.domain', 'odoo.example.com')
 
         email_from, return_path = get_email_from('"Admin" <admin@test.example.com>')
-        self.assertEqual(email_from, '"Admin (admin@test.example.com)" <email_force@domain.com>',
+        self.assertEqual(email_from, '"Admin" <email_force@domain.com>',
                          msg='Should drop the name part of the forced email')
         self.assertEqual(return_path, 'email_force@domain.com')
 
@@ -493,7 +499,7 @@ class EmailConfigCase(SavepointCase):
         set_param('mail.catchall.domain', 'odoo.example.com')
 
         email_from, return_path = get_email_from('"Admin" <admin@test.example.com>')
-        self.assertEqual(email_from, '"Admin (admin@test.example.com)" <notification@odoo.example.com>',
+        self.assertEqual(email_from, '"Admin" <notification@odoo.example.com>',
                          msg='Domain is not the same as the catchall domain, we should force the email FROM')
         self.assertEqual(return_path, 'notification@odoo.example.com')
 
@@ -508,7 +514,7 @@ class EmailConfigCase(SavepointCase):
         set_param('mail.catchall.domain', 'odoo.example.com')
 
         email_from, return_path = get_email_from('"Admin" <admin@test.example.com>')
-        self.assertEqual(email_from, '"Admin (admin@test.example.com)" <notification@odoo.example.com>',
+        self.assertEqual(email_from, '"Admin" <notification@odoo.example.com>',
                          msg='Domain is not the same as the catchall domain, we should force the email FROM')
         self.assertEqual(return_path, 'notification@odoo.example.com')
 
