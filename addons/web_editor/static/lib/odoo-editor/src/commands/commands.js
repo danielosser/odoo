@@ -334,7 +334,7 @@ export const editorCommands = {
             ) {
                 setSelection(block, 0, block, nodeSize(block));
                 editor.historyPauseSteps();
-                editor.document.execCommand('removeFormat');
+                editor.execCommand('removeFormat');
                 editor.historyUnpauseSteps();
                 setTagName(block, tagName);
             } else {
@@ -371,7 +371,17 @@ export const editorCommands = {
     italic: editor => editor.document.execCommand('italic'),
     underline: editor => editor.document.execCommand('underline'),
     strikeThrough: editor => editor.document.execCommand('strikeThrough'),
-    removeFormat: editor => editor.document.execCommand('removeFormat'),
+    removeFormat: editor => {
+        editor.document.execCommand('removeFormat');
+        const selectedNodes = [...new Set(getTraversedNodes(editor.editable))];
+        for (let node of selectedNodes) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                node = node.parentNode;
+            }
+            // The only possible background image on text is the gradient.
+            node.style.backgroundImage = '';
+        }
+    },
 
     // Align
     justifyLeft: editor => align(editor, 'left'),
