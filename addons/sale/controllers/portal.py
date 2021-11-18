@@ -2,6 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 import binascii
+import urllib.parse
 
 from odoo import fields, http, _
 from odoo.exceptions import AccessError, MissingError, ValidationError
@@ -352,6 +353,18 @@ class PaymentPortal(payment_portal.PaymentPortal):
                 access_token, order_sudo.partner_id.id, amount, order_sudo.currency_id.id
             ):
                 raise ValidationError(_("The provided parameters are invalid."))
+
+            # Check the sale_order for subscription
+            if request.env['payment.acquirer'].sudo()._is_tokenization_required(
+                sale_order_id=order_sudo.id
+            ):
+                user_sudo = request.env.user
+                # The user needs to be logged if tokenization is required.
+                if user_sudo._is_public():
+                    return request.redirect(
+                        # Escape special characters to avoid loosing original params when redirected
+                        f'/web/login?redirect={urllib.parse.quote(request.httprequest.full_path)}'
+                    )
 
             kwargs.update({
                 'currency_id': order_sudo.currency_id.id,

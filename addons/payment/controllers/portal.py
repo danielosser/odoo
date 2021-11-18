@@ -61,7 +61,8 @@ class PaymentPortal(portal.CustomerPortal):
         :param str acquirer_id: The desired acquirer, as a `payment.acquirer` id
         :param str access_token: The access token used to authenticate the partner
         :param str invoice_id: The account move for which a payment id made, as a `account.move` id
-        :param dict kwargs: Optional data. This parameter is not used here
+        :param dict kwargs: Optional data. Used when sale_order_id is specified for customization
+                            like force tokenization or for donation.
         :return: The rendered checkout form
         :rtype: str
         :raise: werkzeug.exceptions.NotFound if the access token is invalid
@@ -109,7 +110,7 @@ class PaymentPortal(portal.CustomerPortal):
 
         # Select all acquirers and tokens that match the constraints
         acquirers_sudo = request.env['payment.acquirer'].sudo()._get_compatible_acquirers(
-            company_id, partner_sudo.id, currency_id=currency.id
+            company_id, partner_sudo.id, currency_id=currency.id, **kwargs
         )  # In sudo mode to read the fields of acquirers and partner (if not logged in)
         if acquirer_id in acquirers_sudo.ids:  # Only keep the desired acquirer if it's suitable
             acquirers_sudo = acquirers_sudo.browse(acquirer_id)
