@@ -208,3 +208,16 @@ class TestMrpCommon(common2.TestStockCommon):
             'tracking': 'none',
             'categ_id': cls.env.ref('product.product_category_all').id,
         })
+
+    @classmethod
+    def processUnbuild(self, unbuildForm):
+        unbuild_order = unbuildForm.save()
+        unbuild_order.action_confirm()
+        wizard_act = unbuild_order.button_mark_done()
+        wizard_form = Form(self.env[wizard_act['res_model']].with_context(wizard_act['context']))
+        wizard_form.save().process()
+
+    @classmethod
+    def unbuildForm(self, unbuild=False):
+        unbuild = unbuild or self.env['mrp.production'].with_context(default_unbuild=True)
+        return Form(unbuild, view=self.env.ref('mrp.mrp_unbuild_form_view'))

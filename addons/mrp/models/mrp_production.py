@@ -30,10 +30,10 @@ class MrpProduction(models.Model):
     @api.model
     def _get_default_picking_type(self):
         company_id = self.env.context.get('default_company_id', self.env.company.id)
-        return self.env['stock.picking.type'].search([
-            ('code', '=', 'mrp_operation'),
-            ('warehouse_id.company_id', '=', company_id),
-        ], limit=1).id
+        warehouse = self.env['stock.warehouse'].search([('company_id', '=', company_id)], limit=1)
+        if self.env.context.get('default_unbuild'):
+            return warehouse.unbuild_type_id.id
+        return warehouse.manu_type_id.id
 
     @api.model
     def _get_default_location_src_id(self):
@@ -164,6 +164,12 @@ class MrpProduction(models.Model):
         ('type', '=', 'normal')]""",
         check_company=True,
         help="Bill of Materials allow you to define the list of required components to make a finished product.")
+    production_id = fields.Many2one(
+        'mrp.production', "Manufacturing Order", readonly=True,
+        domain=[('state', '=', 'done'), ('unbuild', '=', False)],
+        states={'draft': [('readonly', False)]})
+    unbuild_ids = fields.One2many('mrp.production', 'production_id', "Unbuild Orders", readonly=True)
+    unbuild_count = fields.Integer(compute='_compute_unbuild_count', string='Unbuilds Count')
 
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -266,6 +272,7 @@ class MrpProduction(models.Model):
     show_lot_ids = fields.Boolean('Display the serial number shortcut on the moves', compute='_compute_show_lot_ids')
     forecasted_issue = fields.Boolean(compute='_compute_forecasted_issue')
     show_serial_mass_produce = fields.Boolean('Display the serial mass product wizard action moves', compute='_compute_show_serial_mass_produce')
+    unbuild = fields.Boolean('Unbuild Order ?')
 
     @api.depends('procurement_group_id.stock_move_ids.created_production_id.procurement_group_id.mrp_production_ids')
     def _compute_mrp_production_child_count(self):
@@ -561,6 +568,11 @@ class MrpProduction(models.Model):
                 if virtual_available < 0:
                     order.forecasted_issue = True
 
+    @api.depends('unbuild_ids')
+    def _compute_unbuild_count(self):
+        for mo in self:
+            mo.unbuild_count = len(mo.unbuild_ids.filtered(lambda unbuild: unbuild.state != 'cancel'))
+
     @api.model
     def _search_delay_alert_date(self, operator, value):
         late_stock_moves = self.env['stock.move'].search([('delay_alert_date', operator, value)])
@@ -594,6 +606,11 @@ class MrpProduction(models.Model):
 
     @api.onchange('product_qty', 'product_uom_id')
     def _onchange_product_qty(self):
+        if self.production_id and self.product_qty > self.production_id.qty_produced:
+            self.product_qty = self.production_id.qty_produced
+            return {'warning': {
+                'message': _("You cannot unbuild more than what was initially produced in the source manufacturing order"),
+            }}
         for workorder in self.workorder_ids:
             workorder.product_uom_id = self.product_uom_id
             if self._origin.product_qty:
@@ -603,11 +620,19 @@ class MrpProduction(models.Model):
             if workorder.date_planned_start and workorder.duration_expected:
                 workorder.date_planned_finished = workorder.date_planned_start + relativedelta(minutes=workorder.duration_expected)
 
+    @api.onchange('production_id')
+    def _onchange_production_id(self):
+        if self.production_id:
+            self.product_id = self.production_id.product_id.id
+            self.bom_id = self.production_id.bom_id
+            self.product_uom_id = self.production_id.product_uom_id
+            self.product_qty = self.product_tracking == 'serial' and 1 or self.production_id.qty_producing
+
     @api.onchange('bom_id')
     def _onchange_bom_id(self):
         if not self.product_id and self.bom_id:
             self.product_id = self.bom_id.product_id or self.bom_id.product_tmpl_id.product_variant_ids[0]
-        self.product_qty = self.bom_id.product_qty or 1.0
+        self.product_qty = self.production_id.qty_producing or self.bom_id.product_qty or 1.0
         self.product_uom_id = self.bom_id and self.bom_id.product_uom_id.id or self.product_id.uom_id.id
         self.move_raw_ids = [(2, move.id) for move in self.move_raw_ids.filtered(lambda m: m.bom_line_id)]
         self.move_finished_ids = [(2, move.id) for move in self.move_finished_ids]
@@ -664,14 +689,16 @@ class MrpProduction(models.Model):
     @api.onchange('location_src_id', 'move_raw_ids', 'bom_id')
     def _onchange_location(self):
         source_location = self.location_src_id
-        self.move_raw_ids.update({
-            'warehouse_id': source_location.warehouse_id.id,
+        updated_values = {
             'location_id': source_location.id,
-        })
+            'warehouse_id': source_location.warehouse_id.id,
+        }
+        self['move_finished_ids' if self.unbuild else 'move_raw_ids'].update(updated_values)
 
     @api.onchange('location_dest_id', 'move_finished_ids', 'bom_id')
     def _onchange_location_dest(self):
-        destination_location = self.location_dest_id
+        prod_location = self.product_id.with_company(self.company_id).property_stock_production
+        destination_location = prod_location if self.unbuild else self.location_dest_id
         update_value_list = []
         for move in self.move_finished_ids:
             update_value_list += [(1, move.id, ({
@@ -694,7 +721,7 @@ class MrpProduction(models.Model):
 
     @api.onchange('lot_producing_id')
     def _onchange_lot_producing(self):
-        if self.product_id.tracking == 'serial' and self.lot_producing_id:
+        if not self.unbuild and self.product_id.tracking == 'serial' and self.lot_producing_id:
             message, dummy = self.env['stock.quant']._check_serial_number(self.product_id,
                                                                       self.lot_producing_id,
                                                                       self.company_id)
@@ -873,6 +900,8 @@ class MrpProduction(models.Model):
                 workorder.duration_expected = workorder._get_duration_expected()
 
     def _get_move_finished_values(self, product_id, product_uom_qty, product_uom, operation_id=False, byproduct_id=False, cost_share=0):
+        dest_location = self.location_dest_id
+        prod_location_id = self.product_id.with_company(self.company_id).property_stock_production.id
         group_orders = self.procurement_group_id.mrp_production_ids
         move_dest_ids = self.move_dest_ids
         if len(group_orders) > 1:
@@ -891,11 +920,11 @@ class MrpProduction(models.Model):
             'date': date_planned_finished,
             'date_deadline': self.date_deadline,
             'picking_type_id': self.picking_type_id.id,
-            'location_id': self.product_id.with_company(self.company_id).property_stock_production.id,
-            'location_dest_id': self.location_dest_id.id,
+            'location_id': prod_location_id if not self.unbuild else dest_location.id,
+            'location_dest_id': dest_location.id if not self.unbuild else prod_location_id,
             'company_id': self.company_id.id,
             'production_id': self.id,
-            'warehouse_id': self.location_dest_id.warehouse_id.id,
+            'warehouse_id': dest_location.warehouse_id.id,
             'origin': self.name,
             'group_id': self.procurement_group_id.id,
             'propagate_cancel': self.propagate_cancel,
@@ -965,6 +994,7 @@ class MrpProduction(models.Model):
 
     def _get_move_raw_values(self, product_id, product_uom_qty, product_uom, operation_id=False, bom_line=False):
         source_location = self.location_src_id
+        prod_location_id = self.product_id.with_company(self.company_id).property_stock_production.id
         origin = self.name
         if self.orderpoint_id:
             origin = self.origin.replace(
@@ -980,8 +1010,8 @@ class MrpProduction(models.Model):
             'product_id': product_id.id,
             'product_uom_qty': product_uom_qty,
             'product_uom': product_uom.id,
-            'location_id': source_location.id,
-            'location_dest_id': self.product_id.with_company(self.company_id).property_stock_production.id,
+            'location_id': source_location.id if not self.unbuild else prod_location_id,
+            'location_dest_id': prod_location_id if not self.unbuild else source_location.id,
             'raw_material_production_id': self.id,
             'company_id': self.company_id.id,
             'operation_id': operation_id,
@@ -1127,6 +1157,17 @@ class MrpProduction(models.Model):
             'view_mode': 'tree,form',
         }
 
+    def action_view_unbuild_orders(self):
+        self.ensure_one()
+        action = self.env['ir.actions.actions']._for_xml_id('mrp.mrp_unbuild_action')
+        action['domain'] = [('unbuild', '=', True), ('production_id', '=', self.id), ('state', '!=', 'cancel')]
+        action['context'] = {
+            'default_company_id': self.company_id.id,
+            'default_production_id': self.id,
+            'default_unbuild': True,
+        }
+        return action
+
     def action_generate_serial(self):
         self.ensure_one()
         self.lot_producing_id = self.env['stock.production.lot'].create({
@@ -1171,6 +1212,27 @@ class MrpProduction(models.Model):
             production.move_raw_ids._adjust_procure_method()
             (production.move_raw_ids | production.move_finished_ids)._action_confirm(merge=False)
             production.workorder_ids._action_confirm()
+            if production.unbuild and production.production_id:
+                # For an unbuilt, gets back the finished LN/SN if the product is tracked.
+                if production.product_tracking != 'none':
+                    production.lot_producing_id = production.production_id.lot_producing_id
+                # Prefills move line LN/SN with reusing the unbuild's MO ones.
+                for move in production.move_raw_ids:
+                    if move.has_tracking == 'none':
+                        continue
+                    # Gets corresponding move then loops on its lines and copy its lot and quantity.
+                    production_move = production.production_id.move_raw_ids.filtered(lambda mv: mv.bom_line_id.id == move.bom_line_id.id)[:1]
+                    for move_line in production_move.move_line_ids:
+                        ub_move_line = move.move_line_ids.filtered(lambda ml: not ml.lot_id)[:1] or move.move_line_ids[-1]
+                        if not ub_move_line.lot_id:
+                            ub_move_line.lot_id = move_line.lot_id
+                            ub_move_line.product_uom_qty = move_line.qty_done
+                        else:
+                            ub_move_line.copy({
+                                'lot_id': move_line.lot_id.id,
+                                'product_uom_qty': move_line.qty_done,
+                            })
+                    move.move_line_ids[0].lot_id = production_move.move_line_ids[0].lot_id
         # run scheduler for moves forecasted to not have enough in stock
         self.move_raw_ids._trigger_scheduler()
         self.picking_ids.filtered(
@@ -1291,7 +1353,7 @@ class MrpProduction(models.Model):
         if self.env.context.get('skip_consumption', False) or self.env.context.get('skip_immediate', False):
             return issues
         for order in self:
-            if order.consumption == 'flexible' or not order.bom_id or not order.bom_id.bom_line_ids:
+            if order.consumption == 'flexible' or not order.bom_id or not order.bom_id.bom_line_ids or order.unbuild:
                 continue
             expected_move_values = order._get_moves_raw_values()
             expected_qty_by_product = defaultdict(float)
@@ -1461,7 +1523,9 @@ class MrpProduction(models.Model):
             'move_finished_ids': None,
             'product_qty': self._get_quantity_to_backorder(),
             'lot_producing_id': False,
-            'origin': self.origin
+            'production_id': self.production_id.id,
+            'origin': self.origin,
+            'unbuild': self.unbuild,
         }
 
     def _generate_backorder_productions(self, close_mo=True):
@@ -1628,7 +1692,28 @@ class MrpProduction(models.Model):
     def _button_mark_done_sanity_checks(self):
         self._check_company()
         for order in self:
-            order._check_sn_uniqueness()
+            if order.unbuild:
+                precision = self.env['decimal.precision'].precision_get('Product Unit of Measure')
+                available_qty = self.env['stock.quant']._get_available_quantity(order.product_id, order.location_src_id, order.lot_producing_id, strict=True)
+                unbuild_qty = order.product_uom_id._compute_quantity(order.product_qty, order.product_id.uom_id)
+                if float_compare(available_qty, unbuild_qty, precision_digits=precision) < 0:
+                    return {
+                        'name': order.product_id.display_name + _(': Insufficient Quantity To Unbuild'),
+                        'view_mode': 'form',
+                        'res_model': 'stock.warn.insufficient.qty.unbuild',
+                        'view_id': self.env.ref('mrp.stock_warn_insufficient_qty_unbuild_form_view').id,
+                        'type': 'ir.actions.act_window',
+                        'context': {
+                            'default_product_id': order.product_id.id,
+                            'default_location_id': order.location_src_id.id,
+                            'default_unbuild_id': order.id,
+                            'default_quantity': unbuild_qty,
+                            'default_product_uom_name': order.product_id.uom_name
+                        },
+                        'target': 'new'
+                    }
+            else:
+                order._check_sn_uniqueness()
 
     def do_unreserve(self):
         self.move_raw_ids.filtered(lambda x: x.state not in ('done', 'cancel'))._do_unreserve()
@@ -1712,15 +1797,14 @@ class MrpProduction(models.Model):
         return {
             'name': _('Unbuild: %s', self.product_id.display_name),
             'view_mode': 'form',
-            'res_model': 'mrp.unbuild',
-            'view_id': self.env.ref('mrp.mrp_unbuild_form_view_simplified').id,
+            'res_model': 'mrp.production',
+            'view_id': self.env.ref('mrp.mrp_unbuild_form_view').id,
             'type': 'ir.actions.act_window',
-            'context': {'default_product_id': self.product_id.id,
-                        'default_mo_id': self.id,
-                        'default_company_id': self.company_id.id,
-                        'default_location_id': self.location_dest_id.id,
-                        'default_location_dest_id': self.location_src_id.id,
-                        'create': False, 'edit': False},
+            'context': {
+                'default_production_id': self.id,
+                'default_unbuild': True,
+                'create': False, 'edit': False
+            },
             'target': 'new',
         }
 
@@ -1786,10 +1870,6 @@ class MrpProduction(models.Model):
                     number=move_line.lot_id.name,
                     product_name=move_line.product_id.name)
                 co_prod_move_lines = self.move_finished_ids.move_line_ids.filtered(lambda ml: ml.product_id != self.product_id)
-                domain_unbuild = domain + [
-                    ('production_id', '=', False),
-                    ('location_dest_id.usage', '=', 'production')
-                ]
 
                 # Check presence of same sn in previous productions
                 duplicates = self.env['stock.move.line'].search_count(domain + [
@@ -1797,9 +1877,11 @@ class MrpProduction(models.Model):
                 ])
                 if duplicates:
                     # Maybe some move lines have been compensated by unbuild
-                    duplicates_unbuild = self.env['stock.move.line'].search_count(domain_unbuild + [
-                        ('move_id.unbuild_id', '!=', False)
-                    ])
+                    domain_unbuild = domain + [
+                        ('production_id.unbuild', '=', True),
+                        ('location_dest_id.usage', '=', 'production'),
+                    ]
+                    duplicates_unbuild = self.env['stock.move.line'].search_count(domain_unbuild)
                     removed = self.env['stock.move.line'].search_count([
                         ('lot_id', '=', move_line.lot_id.id),
                         ('state', '=', 'done'),
@@ -1828,10 +1910,6 @@ class MrpProduction(models.Model):
                     number=move_line.lot_id.name,
                     component=move_line.product_id.name)
                 co_prod_move_lines = self.move_raw_ids.move_line_ids
-                domain_unbuild = domain + [
-                    ('production_id', '=', False),
-                    ('location_id.usage', '=', 'production')
-                ]
 
                 # Check presence of same sn in previous productions
                 duplicates = self.env['stock.move.line'].search_count(domain + [
@@ -1839,9 +1917,11 @@ class MrpProduction(models.Model):
                 ])
                 if duplicates:
                     # Maybe some move lines have been compensated by unbuild
-                    duplicates_unbuild = self.env['stock.move.line'].search_count(domain_unbuild + [
-                            ('move_id.unbuild_id', '!=', False)
-                        ])
+                    domain_unbuild = domain + [
+                        ('production_id.unbuild', '=', True),
+                        ('location_id.usage', '=', 'production'),
+                    ]
+                    duplicates_unbuild = self.env['stock.move.line'].search_count(domain_unbuild)
                     removed = self.env['stock.move.line'].search_count([
                         ('lot_id', '=', move_line.lot_id.id),
                         ('state', '=', 'done'),

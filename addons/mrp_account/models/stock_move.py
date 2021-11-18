@@ -27,18 +27,18 @@ class StockMove(models.Model):
         return super()._get_analytic_account()
 
     def _get_src_account(self, accounts_data):
-        if not self.unbuild_id:
+        if not self.production_id.unbuild:
             return super()._get_src_account(accounts_data)
         else:
             return self.location_dest_id.valuation_out_account_id.id or accounts_data['stock_input'].id
 
     def _get_dest_account(self, accounts_data):
-        if not self.unbuild_id:
+        if not self.production_id.unbuild:
             return super()._get_dest_account(accounts_data)
         else:
             return self.location_id.valuation_in_account_id.id or accounts_data['stock_output'].id
 
     def _is_returned(self, valued_type):
-        if self.unbuild_id:
+        if self.production_id.unbuild:
             return True
         return super()._is_returned(valued_type)
