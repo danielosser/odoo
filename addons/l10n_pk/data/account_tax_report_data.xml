@@ -1,0 +1,238 @@
+<odoo>
+    <data>
+        <record id="tax_report_st_filing" model="account.tax.report">
+            <field name="name">Sales Taxes Filing Report</field>
+            <field name="country_id" ref="base.pk"/>
+        </record>
+        <record id="tax_report_line_st_all_sales_base" model="account.tax.report.line">
+            <field name="name">Sales Taxes on Sales and all other Outputs (Base)</field>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="sequence" eval="1"/>
+        </record>
+        <record id="tax_report_line_rated_19_5_base" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 19.5% (Base)</field>
+            <field name="tag_name">Service Taxes Rates 19.5% (Base)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_base"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S19_5_SALE_B</field>
+            <field name="sequence" eval="1"/>
+        </record>
+        <record id="tax_report_line_rated_17_base" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 17% (Base)</field>
+            <field name="tag_name">Service Taxes Rates 17% (Base)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_base"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S17_SALE_B</field>
+            <field name="sequence" eval="2"/>
+        </record>
+        <record id="tax_report_line_rated_16_base" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 16% (Base)</field>
+            <field name="tag_name">Service Taxes Rates 16% (Base)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_base"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S16_SALE_B</field>
+            <field name="sequence" eval="3"/>
+        </record>
+        <record id="tax_report_line_rated_15_base" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 15% (Base)</field>
+            <field name="tag_name">Service Taxes Rates 15% (Base)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_base"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S15_SALE_B</field>
+            <field name="sequence" eval="4"/>
+        </record>
+        <record id="tax_report_line_rated_13_base" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 13% (Base)</field>
+            <field name="tag_name">Service Taxes Rates 13% (Base)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_base"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S13_SALE_B</field>
+            <field name="sequence" eval="5"/>
+        </record>
+        <record id="tax_report_line_rated_10_base" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 10% (Base)</field>
+            <field name="tag_name">Service Taxes Rates 10% (Base)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_base"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S10_SALE_B</field>
+            <field name="sequence" eval="6"/>
+        </record>
+        <record id="tax_report_line_rated_8_base" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 8% (Base)</field>
+            <field name="tag_name">Service Taxes Rates 8% (Base)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_base"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S8_SALE_B</field>
+            <field name="sequence" eval="7"/>
+        </record>
+        <record id="tax_report_line_rated_5_base" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 5% (Base)</field>
+            <field name="tag_name">Service Taxes Rates 5% (Base)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_base"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S5_SALE_B</field>
+            <field name="sequence" eval="8"/>
+        </record>
+        <record id="tax_report_line_rated_3_base" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 3% (Base)</field>
+            <field name="tag_name">Service Taxes Rates 3% (Base)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_base"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S3_SALE_B</field>
+            <field name="sequence" eval="9"/>
+        </record>
+        <record id="tax_report_line_rated_2_base" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 2% (Base)</field>
+            <field name="tag_name">Service Taxes Rates 2% (Base)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_base"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S2_SALE_B</field>
+            <field name="sequence" eval="10"/>
+        </record>
+        <record id="tax_report_line_rated_1_base" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 1% (Base)</field>
+            <field name="tag_name">Service Taxes Rates 1% (Base)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_base"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S1_SALE_B</field>
+            <field name="sequence" eval="11"/>
+        </record>
+        <record id="tax_report_line_rated_0_base" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 0% (Base)</field>
+            <field name="tag_name">Service Taxes Rates 0% (Base)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_base"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S0_SALE_B</field>
+            <field name="sequence" eval="12"/>
+        </record>
+        <record id="tax_report_line_standard_rated_17_base" model="account.tax.report.line">
+            <field name="name">Sales Tax Rated 17% (Base)</field>
+            <field name="tag_name">Sales Tax Rates 17% (Base)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_base"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">STD_SALE_B</field>
+            <field name="sequence" eval="13"/>
+        </record>
+        <record id="tax_report_line_st_all_sales_tax" model="account.tax.report.line">
+            <field name="name">Sales Taxes on Sales and all other Outputs (Tax)</field>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="sequence" eval="2"/>
+        </record>
+        <record id="tax_report_line_rated_19_5_tax" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 19.5% (Tax)</field>
+            <field name="tag_name">Service Taxes Rates 19.5% (Tax)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_tax"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S19_5_SALE_T</field>
+            <field name="sequence" eval="2"/>
+        </record>
+        <record id="tax_report_line_rated_17_tax" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 17% (Tax)</field>
+            <field name="tag_name">Service Taxes Rates 17% (Tax)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_tax"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S17_SALE_T</field>
+            <field name="sequence" eval="3"/>
+        </record>
+        <record id="tax_report_line_rated_16_tax" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 16% (Tax)</field>
+            <field name="tag_name">Service Taxes Rates 16% (Tax)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_tax"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S16_SALE_T</field>
+            <field name="sequence" eval="4"/>
+        </record>
+        <record id="tax_report_line_rated_15_tax" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 15% (Tax)</field>
+            <field name="tag_name">Service Taxes Rates 15% (Tax)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_tax"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S15_SALE_T</field>
+            <field name="sequence" eval="5"/>
+        </record>
+        <record id="tax_report_line_rated_13_tax" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 13% (Tax)</field>
+            <field name="tag_name">Service Taxes Rates 13% (Tax)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_tax"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S13_SALE_T</field>
+            <field name="sequence" eval="6"/>
+        </record>
+        <record id="tax_report_line_rated_10_tax" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 10% (Tax)</field>
+            <field name="tag_name">Service Taxes Rates 10% (Tax)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_tax"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S10_SALE_T</field>
+            <field name="sequence" eval="7"/>
+        </record>
+        <record id="tax_report_line_rated_8_tax" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 8% (Tax)</field>
+            <field name="tag_name">Service Taxes Rates 8% (Tax)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_tax"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S8_SALE_T</field>
+            <field name="sequence" eval="8"/>
+        </record>
+        <record id="tax_report_line_rated_5_tax" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 5% (Tax)</field>
+            <field name="tag_name">Service Taxes Rates 5% (Tax)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_tax"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S5_SALE_T</field>
+            <field name="sequence" eval="9"/>
+        </record>
+        <record id="tax_report_line_rated_3_tax" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 3% (Tax)</field>
+            <field name="tag_name">Service Taxes Rates 3% (Tax)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_tax"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S3_SALE_T</field>
+            <field name="sequence" eval="10"/>
+        </record>
+        <record id="tax_report_line_rated_2_tax" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 2% (Tax)</field>
+            <field name="tag_name">Service Taxes Rates 2% (Tax)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_tax"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S2_SALE_T</field>
+            <field name="sequence" eval="11"/>
+        </record>
+        <record id="tax_report_line_rated_1_tax" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 1% (Tax)</field>
+            <field name="tag_name">Service Taxes Rates 1% (Tax)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_tax"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S1_SALE_T</field>
+            <field name="sequence" eval="12"/>
+        </record>
+        <record id="tax_report_line_rated_0_tax" model="account.tax.report.line">
+            <field name="name">Service Taxes Rated 0% (Tax)</field>
+            <field name="tag_name">Service Taxes Rates 0% (Tax)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_tax"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">S0_SALE_T</field>
+            <field name="sequence" eval="13"/>
+        </record>
+        <record id="tax_report_line_standard_rated_17_tax" model="account.tax.report.line">
+            <field name="name">Sales Tax Rated 17% (Tax)</field>
+            <field name="tag_name">Sales Tax Rates 17% (Tax)</field>
+            <field name="parent_id" ref="tax_report_line_st_all_sales_tax"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="code">STD_SALE_T</field>
+            <field name="sequence" eval="14"/>
+        </record>
+        <record id="tax_report_line_net_st_due" model="account.tax.report.line">
+            <field name="name">Net ST Due</field>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="sequence" eval="3"/>
+        </record>
+        <record id="tax_report_line_total_value_of_due_tax_for_the_period" model="account.tax.report.line">
+            <field name="name">Total value of due tax for the period</field>
+            <field name="parent_id" ref="tax_report_line_net_st_due"/>
+            <field name="report_id" ref="tax_report_st_filing"/>
+            <field name="formula">S0_SALE_T + S1_SALE_T + S2_SALE_T + S3_SALE_T  + S5_SALE_T + S8_SALE_T + S10_SALE_T + S13_SALE_T + S15_SALE_T + S16_SALE_T  + STD_SALE_T + S17_SALE_T + S19_5_SALE_T</field>
+            <field name="sequence" eval="2"/>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,1335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="pk_sales_tax_17" model="account.tax.template">
+            <field name="name">Standard Sales Tax 17%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">17</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Standard Sales Tax 17%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_standard_rated_17_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_standard_rated_17_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_standard_rated_17_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_standard_rated_17_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_19_5" model="account.tax.template">
+            <field name="name">Sales Tax Telecommunication Services 19.5%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">19.5</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Sales Tax Telecommunication Services 19.5%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_19_5_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_19_5_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_19_5_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_19_5_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_17" model="account.tax.template">
+            <field name="name">Sales Tax Services 17%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">17</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Sales Tax Services 17%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_17_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_17_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_17_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_17_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_16" model="account.tax.template">
+            <field name="name">Sales Tax Services 16%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">16</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Sales Tax Services 16%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_16_Punjab" model="account.tax.template">
+            <field name="name">Standard Sales Service Tax Punjab 16%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">16</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Standard Sales Service Tax Punjab 16%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_16_ICT" model="account.tax.template">
+            <field name="name">Standard Sales Service Tax ICT 16%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">16</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Standard Sales Service Tax Islamabad Capital Territory 16%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_16_AJK" model="account.tax.template">
+            <field name="name">Standard Sales Service Tax AJK 16%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">16</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Standard Sales Service Tax Azad Jammu and Kashmir 16%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_15" model="account.tax.template">
+            <field name="name">Sales Tax Services 15%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">15</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Sales Tax Services 15%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_15_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_15_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_15_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_15_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_15_KP" model="account.tax.template">
+            <field name="name">Standard Sales Service Tax KP 15%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">15</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Standard Sales Service Tax Khyber Pakhtunkhwa 15%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_15_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_15_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_15_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_15_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_15_Balochistan" model="account.tax.template">
+            <field name="name">Standard Sales Service Tax Balochistan 15%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">15</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Standard Sales Service Tax Balochistan 15%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_15_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_15_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_15_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_15_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_13" model="account.tax.template">
+            <field name="name">Sales Tax Services 13%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">13</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Sales Tax Services 13%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_13_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_13_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_13_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_13_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_13_Sindh" model="account.tax.template">
+            <field name="name">Standard Sales Tax Services 13% Sindh</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">13</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Standard Sales Tax Services 13% Sindh</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_13_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_13_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_13_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_13_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_10" model="account.tax.template">
+            <field name="name">Sales Tax Services 10%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">10</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Sales Tax Services 10%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_10_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_10_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_10_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_10_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_8" model="account.tax.template">
+            <field name="name">Sales Tax Services 8%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">8</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Sales Tax Services 8%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_8_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_8_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_8_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_8_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_5" model="account.tax.template">
+            <field name="name">Sales Tax Services 5%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">5</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Sales Tax Services 5%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_5_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_5_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_5_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_5_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_3" model="account.tax.template">
+            <field name="name">Sales Tax Services 3%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">3</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Sales Tax Services 3%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_3_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_3_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_3_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_3_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_2" model="account.tax.template">
+            <field name="name">Sales Tax Services 2%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">2</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Sales Tax Services 2%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_2_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_2_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_2_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_2_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_1" model="account.tax.template">
+            <field name="name">Sales Tax Services 1%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">1</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Sales Tax Services 1%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_1_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_1_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_1_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_1_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_sales_tax_services_0" model="account.tax.template">
+            <field name="name">Sales Tax Services 0%</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount">0</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Sales Tax Services 0%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_sales"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_0_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_0_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_0_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_0_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_17" model="account.tax.template">
+            <field name="name">Standard Purchases Tax 17%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">17</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Standard Purchases Tax 17%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_standard_rated_17_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_standard_rated_17_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_standard_rated_17_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_standard_rated_17_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_19_5" model="account.tax.template">
+            <field name="name">Purchases Tax Telecommunication Services 19.5%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">19.5</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Purchases Tax Telecommunication Services 19.5%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_19_5_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_19_5_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_19_5_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_19_5_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_17" model="account.tax.template">
+            <field name="name">Purchases Tax Services 17%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">17</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Purchases Tax Services 17%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_17_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_17_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_17_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_17_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_16" model="account.tax.template">
+            <field name="name">Purchases Tax Services 16%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">16</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Purchases Tax Services 16%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_16_Punjab" model="account.tax.template">
+            <field name="name">Standard Purchases Service Tax Punjab 16%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">16</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Standard Purchases Service Tax Punjab 16%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_16_ICT" model="account.tax.template">
+            <field name="name">Standard Purchases Service Tax ICT 16%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">16</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Standard Purchases Service Tax Islamabad Capital Territory 16%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_16_AJK" model="account.tax.template">
+            <field name="name">Standard Purchases Service Tax AJK 16%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">16</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Standard Purchases Service Tax Azad Jammu and Kashmir 16%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_16_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_15" model="account.tax.template">
+            <field name="name">Purchases Tax Services 15%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">15</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Purchases Tax Services 15%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_15_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_15_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_15_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_15_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_15_KP" model="account.tax.template">
+            <field name="name">Standard Purchases Service Tax KP 15%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">15</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Standard Purchases Service Tax Khyber Pakhtunkhwa 15%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_15_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_15_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_15_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_15_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_15_Balochistan" model="account.tax.template">
+            <field name="name">Standard Purchases Service Tax Balochistan 15%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">15</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Standard Purchases Service Tax Balochistan 15%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_15_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_15_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_15_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_15_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_13" model="account.tax.template">
+            <field name="name">Purchases Tax Services 13%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">13</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Purchases Tax Services 13%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_13_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_13_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_13_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_13_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_13_Sindh" model="account.tax.template">
+            <field name="name">Standard Purchases Tax Services 13% Sindh</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">13</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Standard Purchases Tax Services 13% Sindh</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_13_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_13_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_13_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_13_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_10" model="account.tax.template">
+            <field name="name">Purchases Tax Services 10%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">10</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Purchases Tax Services 10%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_10_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_10_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_10_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_10_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_8" model="account.tax.template">
+            <field name="name">Purchases Tax Services 8%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">8</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Purchases Tax Services 8%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_8_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_8_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_8_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_8_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_5" model="account.tax.template">
+            <field name="name">Purchases Tax Services 5%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">5</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Purchases Tax Services 5%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_5_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_5_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_5_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_5_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_3" model="account.tax.template">
+            <field name="name">Purchases Tax Services 3%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">3</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Purchases Tax Services 3%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_3_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_3_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_3_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_3_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_2" model="account.tax.template">
+            <field name="name">Purchases Tax Services 2%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">2</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Purchases Tax Services 2%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_2_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_2_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_2_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_2_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_1" model="account.tax.template">
+            <field name="name">Purchases Tax Services 1%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">1</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Purchases Tax Services 1%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_1_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_1_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_1_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_1_tax')],
+                }),
+            ]"/>
+        </record>
+        <record id="pk_purchases_tax_services_0" model="account.tax.template">
+            <field name="name">Purchases Tax Services 0%</field>
+            <field name="type_tax_use">purchase</field>
+            <field name="amount">0</field>
+            <field name="amount_type">percent</field>
+            <field name="description">Purchases Tax Services 0%</field>
+            <field name="tax_group_id" ref="pk_tax_group_taxes_purchases"/>
+            <field name="chart_template_id" ref="l10n_pk_chart_template"/>
+            <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'plus_report_line_ids': [ref('tax_report_line_rated_0_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'plus_report_line_ids': [ref('tax_report_line_rated_0_tax')],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'minus_report_line_ids': [ref('tax_report_line_rated_0_base')],
+                }),
+                (0,0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'account_id': ref('l10n_pk_2221005'),
+                    'minus_report_line_ids': [ref('tax_report_line_rated_0_tax')],
+                }),
+            ]"/>
+        </record>
+    </data>
+</odoo>
