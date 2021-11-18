@@ -56,7 +56,7 @@ class EventType(models.Model):
     # registration
     has_seats_limitation = fields.Boolean('Limited Seats')
     seats_max = fields.Integer(
-        'Maximum Registrations', compute='_compute_default_registration',
+        'Maximum Registrations', compute='_compute_default_seats_max',
         readonly=False, store=True,
         help="It will select this default maximum value when you choose this event")
     auto_confirm = fields.Boolean(
@@ -74,7 +74,7 @@ class EventType(models.Model):
         help="This information will be printed on your tickets.")
 
     @api.depends('has_seats_limitation')
-    def _compute_default_registration(self):
+    def _compute_default_seats_max(self):
         for template in self:
             if not template.has_seats_limitation:
                 template.seats_max = 0
@@ -137,25 +137,23 @@ class EventEvent(models.Model):
     seats_limited = fields.Boolean('Limit Attendees', required=True, compute='_compute_seats_limited',
                                    readonly=False, store=True)
     seats_reserved = fields.Integer(
-        string='Number of Registrations',
-        store=True, readonly=True, compute='_compute_seats')
+        string='Number of Registrations', readonly=True, compute='_compute_seats')
     seats_available = fields.Integer(
-        string='Available Seats',
-        store=True, readonly=True, compute='_compute_seats')
+        string='Available Seats', readonly=True, compute='_compute_seats')
     seats_unconfirmed = fields.Integer(
-        string='Unconfirmed Registrations',
-        store=True, readonly=True, compute='_compute_seats')
+        string='Unconfirmed Registrations', readonly=True, compute='_compute_seats')
     seats_used = fields.Integer(
-        string='Number of Attendees',
-        store=True, readonly=True, compute='_compute_seats')
+        string='Number of Attendees', readonly=True, compute='_compute_seats')
     seats_expected = fields.Integer(
-        string='Number of Expected Attendees',
-        compute_sudo=True, readonly=True, compute='_compute_seats_expected')
+        string='Number of Expected Attendees', readonly=True, compute='_compute_seats')
     # Registration fields
     auto_confirm = fields.Boolean(
         string='Autoconfirmation', compute='_compute_auto_confirm', readonly=False, store=True,
         help='Autoconfirm Registrations. Registrations will automatically be confirmed upon creation.')
     registration_ids = fields.One2many('event.registration', 'event_id', string='Attendees')
+    available_event_ticket_ids = fields.One2many(
+        'event.event.ticket', 'event_id', string="Event Tickets with available seats",
+        readonly=True, compute='_compute_available_event_ticket_ids')
     event_ticket_ids = fields.One2many(
         'event.event.ticket', 'event_id', string='Event Ticket', copy=True,
         compute='_compute_event_ticket_ids', readonly=False, store=True)
@@ -234,16 +232,19 @@ class EventEvent(models.Model):
             for event_id, state, num in res:
                 results[event_id][state_field[state]] = num
 
-        # compute seats_available
+        # compute seats_available and expected
         for event in self:
             event.update(results.get(event._origin.id or event.id, base_vals))
             if event.seats_max > 0:
                 event.seats_available = event.seats_max - (event.seats_reserved + event.seats_used)
 
-    @api.depends('seats_unconfirmed', 'seats_reserved', 'seats_used')
-    def _compute_seats_expected(self):
-        for event in self:
             event.seats_expected = event.seats_unconfirmed + event.seats_reserved + event.seats_used
+
+    @api.depends('event_ticket_ids')
+    def _compute_available_event_ticket_ids(self):
+        for event in self:
+            event.available_event_ticket_ids = event.event_ticket_ids.filtered(
+                lambda ticket: ticket.sale_available)
 
     @api.depends('date_tz', 'start_sale_datetime')
     def _compute_event_registrations_started(self):
@@ -494,13 +495,19 @@ class EventEvent(models.Model):
                is_html_empty(event.event_type_id.ticket_instructions):
                 event.ticket_instructions = event.event_type_id.ticket_instructions
 
-    @api.constrains('seats_max', 'seats_available', 'seats_limited')
-    def _check_seats_limit(self):
+    @api.constrains('seats_max', 'seats_limited', 'registration_ids')
+    def _check_seats_availability(self, n_registrations=0):
+        """Used either
+        * as classic constraint
+        * to test before trying to confirm one or several registrations that
+           there are enough seats available for this event."""
         for event in self:
-            if event.seats_limited and event.seats_max and event.seats_available < 0:
-                raise ValidationError(_('No more available seats for %s. '
-                                        'Raise the limit or remove some other confirmed registrations first.',
-                                        event.name))
+            if (event.seats_limited and event.seats_max
+                    and event.seats_available < n_registrations):
+                raise ValidationError(
+                    _('There are no more available seats for %s. '
+                      'Raise the limit or remove some other confirmed registrations first.',
+                      event.name))
 
     @api.constrains('date_begin', 'date_end')
     def _check_closing_date(self):

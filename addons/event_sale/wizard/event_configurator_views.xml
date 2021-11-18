@@ -15,12 +15,13 @@
                         required="1"
                         options="{'no_open': True, 'no_create': True}"
                     />
+                    <field name="available_event_ticket_ids" invisible="1"/>
                     <field
                         name="event_ticket_id"
                         domain="[
                             ('event_id', '=', event_id),
                             ('product_id','=',product_id),
-                            '|', ('seats_limited', '=', False), ('seats_available', '>', 0)
+                            '|', ('seats_limited', '=', False), ('id', 'in', available_event_ticket_ids)
                         ]"
                         attrs="{
                             'invisible': [('event_id', '=', False)],

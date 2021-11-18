@@ -155,20 +155,6 @@
            <field name="view_mode">tree,kanban,form,calendar,graph</field>
         </record>
 
-        <!-- EVENT.EVENT VIEWS -->
-        <record id="event_event_action_pivot" model="ir.actions.act_window" >
-            <field name="name">Events Analysis</field>
-            <field name="res_model">event.event</field>
-            <field name="view_mode">pivot,graph</field>
-            <field name="help" type="html">
-                <p class="o_view_nocontent_smiling_face">
-                    No Event data yet!
-                </p><p>
-                    Use this report to compare or aggregate event performances.
-                </p>
-            </field>
-        </record>
-
         <record model="ir.ui.view" id="view_event_form">
             <field name="name">event.event.form</field>
             <field name="model">event.event</field>
@@ -484,12 +470,6 @@
         <record id="event.menu_event_event" model="ir.ui.menu">
             <field name="action" ref="event.action_event_view"/>
         </record>
-        <menuitem name="Events"
-            id="event_event_menu_pivot_report"
-            action="event_event_action_pivot"
-            sequence="3"
-            parent="event.menu_reporting_events"
-            groups="event.group_event_user"/>
 
         <!-- EVENT.REGISTRATION VIEWS -->
         <record model="ir.ui.view" id="view_event_registration_tree">
@@ -553,11 +533,9 @@
                             </group>
                             <group string="Event Information" name="event">
                                 <field class="o_text_overflow" name="event_id" attrs="{'readonly': [('state', '!=', 'draft')]}" options="{'no_create': True}"/>
+                                <field name="available_event_ticket_ids" invisible="1"/>
                                 <field name="event_ticket_id"
-                                    domain="[
-                                        ('event_id', '=', event_id),
-                                        '|', ('seats_limited', '=', False), ('seats_available', '>', 0)
-                                    ]"
+                                    domain="[('id', 'in', available_event_ticket_ids)]"
                                     attrs="{'invisible': [('event_id', '=', False)]}"
                                     options="{'no_open': True, 'no_create': True}"/>
                                 <field name="date_open" groups="base.group_no_one"/>

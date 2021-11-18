@@ -67,10 +67,10 @@ class EventTicket(models.Model):
     sale_available = fields.Boolean(string='Is Available', compute='_compute_sale_available', compute_sudo=True)
     registration_ids = fields.One2many('event.registration', 'event_ticket_id', string='Registrations')
     # seats
-    seats_reserved = fields.Integer(string='Reserved Seats', compute='_compute_seats', store=True)
-    seats_available = fields.Integer(string='Available Seats', compute='_compute_seats', store=True)
-    seats_unconfirmed = fields.Integer(string='Unconfirmed Seats', compute='_compute_seats', store=True)
-    seats_used = fields.Integer(string='Used Seats', compute='_compute_seats', store=True)
+    seats_reserved = fields.Integer(string='Reserved Seats', compute='_compute_seats')
+    seats_available = fields.Integer(string='Available Seats', compute='_compute_seats')
+    seats_unconfirmed = fields.Integer(string='Unconfirmed Seats', compute='_compute_seats')
+    seats_used = fields.Integer(string='Used Seats', compute='_compute_seats')
 
     @api.depends('end_sale_datetime', 'event_id.date_tz')
     def _compute_is_expired(self):
@@ -127,14 +127,19 @@ class EventTicket(models.Model):
             if ticket.start_sale_datetime and ticket.end_sale_datetime and ticket.start_sale_datetime > ticket.end_sale_datetime:
                 raise UserError(_('The stop date cannot be earlier than the start date.'))
 
-    @api.constrains('seats_available', 'seats_max')
-    def _constrains_seats_available(self):
-        for record in self:
-            if record.seats_max and record.seats_available < 0:
+    @api.constrains('registration_ids', 'seats_max')
+    def _check_seats_availability(self, n_registrations=0):
+        """Used either
+        * as classic constraint
+        * to test before trying to confirm one or several registrations that
+           there are enough seats available for this ticket."""
+        for ticket in self:
+            if ticket.seats_max and ticket.seats_available < n_registrations:
                 raise ValidationError(
-                    _('No more available seats for the ticket %s (%s). '
+                    _('Impossible to have a number of confirmed registrations '
+                      'above the seat limit for the ticket %s (%s). '
                       'Raise the limit or remove some other confirmed registrations first.',
-                      record.name, record.event_id.name))
+                      ticket.name, ticket.event_id.name))
 
     def _get_ticket_multiline_description(self):
         """ Compute a multiline description of this ticket. It is used when ticket

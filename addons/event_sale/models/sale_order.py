@@ -63,10 +63,18 @@ class SaleOrderLine(models.Model):
     event_id = fields.Many2one(
         'event.event', string='Event',
         help="Choose an event and it will automatically create a registration for this event.")
+    available_event_ticket_ids = fields.Many2many(
+        'event.event.ticket', string='Available Event Tickets', compute='_compute_available_event_ticket_ids')
     event_ticket_id = fields.Many2one(
         'event.event.ticket', string='Event Ticket',
-        help="Choose an event ticket and it will automatically create a registration for this event ticket.")
+        help="Choose an event ticket and it will automatically create a registration for this event ticket.",
+        domain=['id', 'in', available_event_ticket_ids])
     event_ok = fields.Boolean(compute='_compute_event_ok')
+
+    @api.depends('event_id')
+    def _compute_available_event_ticket_ids(self):
+        for record in self:
+            record.available_event_ticket_ids = record.event_id.available_event_ticket_ids
 
     @api.depends('product_id.detailed_type')
     def _compute_event_ok(self):
@@ -78,6 +86,11 @@ class SaleOrderLine(models.Model):
         event_lines = self.filtered(lambda line: line.event_id)
         event_lines.update({'product_uom_readonly': True})
         super(SaleOrderLine, self - event_lines)._compute_product_uom_readonly()
+
+    @api.depends('event_id')
+    def _compute_available_tickets(self):
+        for line in self:
+            line.available_event_ticket_ids = line.event_id.available_event.ticket_ids
 
     def _update_registrations(self, confirm=True, cancel_to_draft=False, registration_data=None, mark_as_paid=False):
         """ Create or update registrations linked to a sales order line. A sale

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
+import itertools
+from collections import Counter
 
 from dateutil.relativedelta import relativedelta
 
@@ -18,6 +20,9 @@ class EventRegistration(models.Model):
     event_id = fields.Many2one(
         'event.event', string='Event', required=True,
         readonly=True, states={'draft': [('readonly', False)]})
+    available_event_ticket_ids = fields.One2many(
+        'event.event.ticket', string='Available Event Tickets',
+        compute='_compute_available_event_ticket_ids', readonly=True)
     event_ticket_id = fields.Many2one(
         'event.event.ticket', string='Event Ticket', readonly=True, ondelete='restrict',
         states={'draft': [('readonly', False)]})
@@ -71,6 +76,11 @@ class EventRegistration(models.Model):
             if registration.partner_id:
                 registration.update(registration._synchronize_partner_values(registration.partner_id))
 
+    @api.depends('event_id')
+    def _compute_available_event_ticket_ids(self):
+        for record in self:
+            record.available_event_ticket_ids = record.event_id.available_event_ticket_ids
+
     @api.depends('partner_id')
     def _compute_name(self):
         for registration in self:
@@ -116,18 +126,17 @@ class EventRegistration(models.Model):
                 else:
                     registration.date_closed = False
 
-    @api.constrains('event_id', 'state')
-    def _check_seats_limit(self):
-        for registration in self:
-            event_id = registration.event_id
-            if event_id.seats_limited and event_id.seats_max and event_id.seats_available < (1 if registration.state == 'draft' and event_id.auto_confirm else 0):
-                raise ValidationError(_('There are no more available seats for %s. Raise the limit or remove some other confirmed registrations first.', event_id.name))
+    @api.constrains('event_id', 'event_ticket_id', 'state')
+    def _check_seats_availability(self):
+        """Checks that neither the event nor the ticket have more confirmed
+        seats than allowed by their respective seats_max.
 
-    @api.constrains('event_ticket_id', 'state')
-    def _check_ticket_seats_limit(self):
-        for record in self:
-            if record.event_ticket_id.seats_max and record.event_ticket_id.seats_available < 0:
-                raise ValidationError(_('No more available seats for this ticket'))
+        :param self: Registration records requiring available seats an event
+            (ticket) (states: "open", "done" and "draft" if event `auto_confirm`)
+        """
+        for record in itertools.chain(set(self.mapped("event_id")),
+                                      set(self.mapped("event_ticket_id"))):
+            record ._check_seats_availability()
 
     @api.constrains('event_id', 'event_ticket_id')
     def _check_event_ticket(self):
@@ -151,6 +160,10 @@ class EventRegistration(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         registrations = super(EventRegistration, self).create(vals_list)
+        registrations_to_check_for_seats = registrations.filtered(
+            lambda reg: reg.event_id.auto_confirm if reg.state == "draft" else reg.state != "canceled"
+        )
+        registrations_to_check_for_seats._check_if_seats_available_before_confirming()
 
         # auto_confirm if possible; if not automatically confirmed, call mail schedulers in case
         # some were created already open
@@ -207,6 +220,30 @@ class EventRegistration(models.Model):
                (not registration.event_id.seats_available and registration.event_id.seats_limited) for registration in self):
             return False
         return True
+
+    def toggle_active(self):
+        archived_registrations = self.filtered(lambda r: not r.active)
+        if archived_registrations:
+            registrations_to_check_for_seats = archived_registrations.filtered(
+                lambda reg: reg.event_id.auto_confirm if reg.state == "draft" else reg.state != "canceled"
+            )
+            registrations_to_check_for_seats._check_if_seats_available_before_confirming()
+
+        super().toggle_active()
+
+    def _check_if_seats_available_before_confirming(self):
+        """Checks the event and event tickets have enough available seats to
+        confirm all the registrations in `self`.
+
+        :param self: Registration records requiring available seats an event
+            (ticket) (states: "open", "done" and "draft" if event `auto_confirm`)
+        """
+        event_seats_required = Counter(self.mapped("event_id"))
+        event_ticket_seats_required = Counter(self.mapped("event_ticket_id"))
+
+        for record, n_registrations in itertools.chain(
+                event_seats_required.items(), event_ticket_seats_required.items()):
+            record._check_seats_availability(n_registrations)
 
     # ------------------------------------------------------------
     # ACTIONS / BUSINESS
