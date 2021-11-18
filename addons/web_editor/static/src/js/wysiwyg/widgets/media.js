@@ -463,7 +463,9 @@ var FileWidget = SearchableMediaWidget.extend({
             }
             href += 'unique=' + img.checksum + '&download=true';
             this.$media.attr('href', href);
-            this.$media.addClass('o_image').attr('title', img.name);
+            this.$media.attr('title', img.name);
+            this.media.dataset.fileName = img.name;
+            this.media.textContent = img.name;
         }
 
         this.$media.attr('alt', img.alt || img.description || '');

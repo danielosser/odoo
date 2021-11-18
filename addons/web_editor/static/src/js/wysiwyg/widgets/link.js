@@ -111,6 +111,8 @@ const Link = Widget.extend({
         if (/(?:s_website_form_send|o_submit)/.test(this.data.className)) {
             this.isButton = true;
         }
+
+        this._setLinkContent = !/o_image/.test(this.data.iniClassName);
     },
     /**
      * @override
@@ -189,7 +191,7 @@ const Link = Widget.extend({
         if (!this.$link.attr('target')) {
             this.$link[0].removeAttribute('target');
         }
-        if (data.content !== this.data.originalText || data.url !== this.data.url) {
+        if (this._setLinkContent && (data.content !== this.data.originalText || data.url !== this.data.url)) {
             const content = (data.content && data.content.length) ? data.content : data.url;
             // If there is a this.data.originalText, it means that we selected
             // the text and we could not change the content through the text
