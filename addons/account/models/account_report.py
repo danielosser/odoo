@@ -66,7 +66,7 @@ class AccountReport(models.Model):
                 tax_tags = self.env['account.account.tag']._get_tax_tags(formula, country.id)
                 tag_reports = tax_tags.tax_report_expression_ids.report_line_id.report_id
 
-                if all(report in self for report in tag_reports)
+                if all(report in self for report in tag_reports):
                     # Only reports in self are using these tags; let's change their country
                     tax_tags.write({'country_id': vals['country_id']})
                 else:
@@ -108,7 +108,7 @@ class AccountReportExpression(models.Model):
     _name = 'account.report.expression' #TODO OCO ou rebaptiser line.cell pour éviter la confusion avec le champ formula ?
 
     # TODO OCO repasser sur le phrasing
-    report_line_id = fields.Many2one(string="Report Line", comodel_name='account.report.line', required=True)
+    report_line_id = fields.Many2one(string="Report Line", comodel_name='account.report.line', required=True, ondelete='cascade')
     total = fields.Char(string="Total", required=True)
     engine = fields.Selection(
         string="Computation Engine",
@@ -125,11 +125,11 @@ class AccountReportExpression(models.Model):
     formula = fields.Char(string="Formula")
     subformula = fields.Char(string="Subformula")
     date_scope = fields.Char(string="Date Scope") # TODO OCO généralisation du special_date_changer. Il faudra en faire un champ sélection (calculé depuis une valeur par défaut sur le rapport ??) :> ceci est temporaire.
-    tag_ids = fields.Many2many(string="Tags", comodel_name='account.account.tag', relation='account_report_expression_tags_rel', help="Tax tags populating this expression")
+    tag_ids = fields.Many2many(string="Tags", comodel_name='account.account.tag', relation='account_report_expression_tags_rel', compute="_compute_tag_ids", help="Tax tags populating this expression")
 
+    #TODO OCO tester les flux de création et renommage de tags
     @api.model
-    def create(self, vals):
-        # Manage tags
+    def create(self, vals): #TODO OCO au write aussi ? A tester, c'est vrai que ça peut vite être bizarre sans ça ... Si tu modifies une formule, quid ?
         rslt = super(AccountReportExpression, self).create(vals)
 
         tag_name = rslt.formula if rslt.engine == 'tax_tags' else None
@@ -141,7 +141,34 @@ class AccountReportExpression(models.Model):
                 # We create new tags corresponding to this expression's formula.
                 # The compute function will associate them with the expression.
                 # TODO OCO s'assurer que le compute est bien appelé. ==> Mais dois-ce être un compute ? => Une fonction à appeler ?
-                tags_command = self._get_tags_create_vals(tag_name, country.id)
+                tag_vals = self._get_tags_create_vals(tag_name, country.id)
+                self.env['account.account.tag'].create(tag_vals)
+
+        return rslt
+
+    def write(self, vals):
+        rslt = super(AccountReportExpression, self).create(vals)
+
+        if 'formula' in vals:
+            tax_tags_expressions = expressions.filtered(lambda x: x.engine == 'tax_tags')
+            expressions_formulas = tax_tags_expressions.mapped('formula')
+
+            formulas_by_country = defaultdict(lambda: [])
+            for expr in tax_tags_expressions:
+                formulas_by_country[expr.report_line_id.report_id.country_id].append(expr.formula)
+
+            for country, formula in formulas_by_country.items():
+                tax_tags = self.env['account.account.tag']._get_tax_tags(formula, country.id)
+
+                if all(tag_expr in self for tag_expr in tax_tags.tax_report_expression_ids):
+                    # If we're changing the formula of all the expressions using that tag, rename the tag
+                    negative_tags = tax_tags.filtered(lambda x: x.tax_negate)
+                    negative_tags.write({'name': '-%s' % formula})
+                    (tax_tags - negative_tags).write({'name': '+%s' % formula})
+                else:
+                    # Else, create a new tag. Its the compute functions will make sure it is properly linked to the expressions
+                    tag_vals = self.env['account.report.expression']._get_tags_create_vals(formula, country.id)
+                    self.env['account.account.tag'].create(tag_vals)
 
         return rslt
 
@@ -159,14 +186,14 @@ class AccountReportExpression(models.Model):
           'tax_negate': False,
           'country_id': country_id,
         }
-        return [(0, 0, minus_tag_vals), (0, 0, plus_tag_vals)]
+        return [(minus_tag_vals), (plus_tag_vals)]
 
-    def _remove_tags_used_only_by_self(self): #TODO OCO reDOC et sans doute reNAME aussi
-        """ Deletes and removes from taxes and move lines all the
-        tags from the provided tax report lines that are not linked
-        to any other tax report lines.
-        """
-        all_tags = self.tag_ids
-        tags_to_unlink = all_tags.filtered(lambda x: not (x.tax_report_expression_ids - self))
-        self.write({'tag_ids': [(3, tag.id, 0) for tag in tags_to_unlink]})
-        self._delete_tags_from_taxes(tags_to_unlink.ids)
+    @api.depends('report_line_id.report_id.country_id', 'formula', 'engine')
+    def _compute_tag_ids(self):
+        # TODO OCO DOC compute-miroir avec _compute_tax_report_expression_ids
+        for record in self:
+            if record.engine == 'tax_tags':
+                country = record.report_line_id.report_id.country_id
+                record.tag_ids = self.env['account.account.tag']._get_tax_tags(record.formula, country.id)
+            else:
+                record.tag_ids = False

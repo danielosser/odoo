@@ -4261,11 +4261,11 @@ class AccountMoveLine(models.Model):
             for tag in record.tax_tag_ids:
                 tag_amount = (record.tax_tag_invert and -1 or 1) * (tag.tax_negate and -1 or 1) * record.balance
 
-                if tag.tax_report_line_ids:
+                if tag.tax_report_expression_ids:
                     #Then, the tag comes from a report line, and hence has a + or - sign (also in its name)
-                    for report_line in tag.tax_report_line_ids:
+                    for report_expr in tag.tax_report_expression_ids:
                         audit_str += separator if audit_str else ''
-                        audit_str += report_line.tag_name + ': ' + formatLang(self.env, tag_amount, currency_obj=currency)
+                        audit_str += report_expr.formula + ': ' + formatLang(self.env, tag_amount, currency_obj=currency)
                 else:
                     # Then, it's a financial tag (sign is always +, and never shown in tag name)
                     audit_str += separator if audit_str else ''

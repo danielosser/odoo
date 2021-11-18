@@ -5,7 +5,7 @@
         <record id="generic_tax_report" model="account.report">
             <field name="name">Generic Tax report</field>
             <field name="filter_multi_company" eval="True"/>
-            <field name="columns">'NET', 'TAX'</field> <!--TODO OCO chiant: en master on met NET + nom du mois et année ... On veut garder ça ?-->
+            <field name="columns">NET, TAX</field> <!--TODO OCO chiant: en master on met NET + nom du mois et année ... On veut garder ça ?-->
             <field name="dynamic_lines_generator">_generic_tax_report_default_grouping</field> <!--TODO OCO pareil: ça, c'est à ajouter en enterprise. Le champ aussi ?-->
             <!--TODO OCO fiscal_position à voir-->
         </record>
@@ -30,7 +30,7 @@
         <record id="generic_tax_report2" model="account.report"> <!--TODO OCO TEST-->
             <field name="name">Generic Tax report 2 (test)</field>
             <field name="filter_multi_company" eval="True"/>
-            <field name="columns">'NET2', 'TAX2'</field>
+            <field name="columns">NET2, TAX2</field>
             <field name="dynamic_lines_generator">_generic_tax_report_default_grouping</field>
             <field name="root_report_id" ref="generic_tax_report"/>
             <field name="allow_showing_draft" eval="False"/>
@@ -39,7 +39,7 @@
         <record id="generic_tax_report_account_tax" model="account.report">
             <field name="name">Group by: Account &gt; Tax </field>
             <field name="filter_multi_company" eval="True"/>
-            <field name="columns">'NET', 'TAX'</field> <!--TODO OCO-->
+            <field name="columns">NET, TAX</field> <!--TODO OCO-->
             <field name="dynamic_lines_generator">_generic_tax_report_account_tax_grouping</field>
             <field name="root_report_id" ref="generic_tax_report"/>
             <field name="allow_showing_draft" eval="False"/>
@@ -48,7 +48,7 @@
         <record id="generic_tax_report_tax_account" model="account.report">
             <field name="name">Group by: Tax &gt; Account </field>
             <field name="filter_multi_company" eval="True"/>
-            <field name="columns">'NET', 'TAX'</field> <!--TODO OCO-->
+            <field name="columns">NET, TAX</field> <!--TODO OCO-->
             <field name="dynamic_lines_generator">_generic_tax_report_tax_account_grouping</field>
             <field name="root_report_id" ref="generic_tax_report"/>
         </record>
