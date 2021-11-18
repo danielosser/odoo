@@ -422,8 +422,7 @@ class AccountMoveLine(models.Model):
                         ELSE sub.base_amount_currency
                         END
                     ) OVER (PARTITION BY tax_line.id) AS total_base_amount_currency,
-                    tax_line.amount_currency AS total_tax_amount_currency,
-                    base_line.quantity AS base_line_quantity
+                    tax_line.amount_currency AS total_tax_amount_currency
 
                 FROM base_tax_matching_base_amounts sub
                 JOIN account_move_line tax_line ON
@@ -480,7 +479,6 @@ class AccountMoveLine(models.Model):
                 ), 1, 0.0)
                 OVER (
                     PARTITION BY sub.tax_line_id ORDER BY sub.tax_id, sub.base_line_id
-                ) AS tax_amount_currency,
-                sub.base_line_quantity AS base_line_quantity
+                ) AS tax_amount_currency
             FROM base_tax_matching_all_amounts sub
         ''', group_taxes_params + where_params + where_params + where_params + fallback_params
