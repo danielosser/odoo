@@ -252,6 +252,7 @@ class AccountAnalyticLine(models.Model):
                 result[timesheet.id].update({
                     'amount': amount_converted,
                 })
+        print("\n\n\n result", result)
         return result
 
     def _is_timesheet_encode_uom_day(self):

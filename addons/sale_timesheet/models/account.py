@@ -10,6 +10,9 @@ from odoo.osv import expression
 class AccountAnalyticLine(models.Model):
     _inherit = 'account.analytic.line'
 
+    timesheet_revenues = fields.Float(string="Timesheet Revenues", default=0.0)
+    margin = fields.Float(string="Margin", default=0.0)
+
     def _default_sale_line_domain(self):
         domain = super(AccountAnalyticLine, self)._default_sale_line_domain()
         return expression.OR([domain, [('qty_delivered_method', '=', 'timesheet')]])
@@ -96,7 +99,27 @@ class AccountAnalyticLine(models.Model):
                 values['account_id'] = task.analytic_account_id.id
                 values['company_id'] = task.analytic_account_id.company_id.id
         values = super(AccountAnalyticLine, self)._timesheet_preprocess(values)
+
         return values
+
+    def _timesheet_postprocess_values(self, values):
+        result = super(AccountAnalyticLine, self)._timesheet_postprocess_values(values)
+
+        sudo_self = self.sudo()  # this creates only one env for all operation that required sudo()
+        # (re)compute the amount (depending on unit_amount, employee_id for the cost, and account_id for currency)
+        if any(field_name in values for field_name in ['unit_amount', 'employee_id', 'account_id', 'amount']):
+            for timesheet in sudo_self:
+                timesheet_revenues = timesheet.unit_amount * timesheet.so_line.price_unit
+                margin = timesheet_revenues - timesheet.amount
+                result[timesheet.id].update({
+                    'timesheet_revenues': timesheet_revenues,
+                    'margin': margin,
+                })
+
+        print("result sale", result)
+
+        return result
+
 
     def _timesheet_determine_sale_line(self):
         """ Deduce the SO line associated to the timesheet line:

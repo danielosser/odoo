@@ -181,7 +181,7 @@ class AccountAnalyticLine(models.Model):
 
     name = fields.Char('Description', required=True, translate=True)
     date = fields.Date('Date', required=True, index=True, default=fields.Date.context_today)
-    amount = fields.Monetary('Amount', required=True, default=0.0)
+    amount = fields.Monetary('Amount abc', required=True, default=0.0)
     unit_amount = fields.Float('Quantity', default=0.0)
     product_uom_id = fields.Many2one('uom.uom', string='Unit of Measure', domain="[('category_id', '=', product_uom_category_id)]")
     product_uom_category_id = fields.Many2one(related='product_uom_id.category_id', string='UoM Category', readonly=True)
