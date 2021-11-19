@@ -11,8 +11,8 @@ class IrHttp(models.AbstractModel):
     _inherit = 'ir.http'
 
     @classmethod
-    def _web_editor_context(cls):
-        """  """
+    def _get_web_editor_context(cls):
+        """ Check for ?editable and stuff in the query-string """
         return {
             key: True
             for key in CONTEXT_KEYS
@@ -22,7 +22,7 @@ class IrHttp(models.AbstractModel):
     @classmethod
     def _pre_dispatch(cls, rule, args):
         super()._pre_dispatch(rule, args)
-        ctx = cls._web_editor_context()
+        ctx = cls._get_web_editor_context()
         request.update_context(**ctx)
 
     @classmethod

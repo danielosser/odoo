@@ -178,6 +178,13 @@ class Http(models.AbstractModel):
                     raise werkzeug.exceptions.Forbidden()
 
     @classmethod
+    def _get_web_editor_context(cls):
+        ctx = super()._get_web_editor_context()
+        if request.is_frontend_multilang and request.lang == cls._get_default_lang():
+            ctx['edit_translations'] = False
+        return ctx
+
+    @classmethod
     def _frontend_pre_dispatch(cls):
         super()._frontend_pre_dispatch()
 
@@ -199,7 +206,8 @@ class Http(models.AbstractModel):
             website_id=website.id,
             allowed_company_ids=(
                 [company_id] if company_id in user.company_ids.ids else user.company_id.ids
-            )
+            ),
+            **cls._get_web_editor_context(),
         )
 
         request.website = website.with_context(request.env.context)
