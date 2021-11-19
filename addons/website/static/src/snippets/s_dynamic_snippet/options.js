@@ -59,20 +59,6 @@ const dynamicSnippetOptions = options.Class.extend({
     },
 
     //--------------------------------------------------------------------------
-    // Public
-    //--------------------------------------------------------------------------
-
-    /**
-     * @override
-     */
-    async updateUIVisibility() {
-        await this._super(...arguments);
-        const template = this._getCurrentTemplate();
-        const groupingMessage = this.el.querySelector('.o_grouping_message');
-        groupingMessage.classList.toggle('d-none', template && !!template.numOfEl && !!template.numOfElSm);
-    },
-
-    //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
 
@@ -93,16 +79,6 @@ const dynamicSnippetOptions = options.Class.extend({
         if (widgetName === 'filter_opt') {
             // Hide if exaclty one is available: show when none to help understand what is missing
             return Object.keys(this.dynamicFilters).length !== 1;
-        }
-
-        if (widgetName === 'number_of_elements_opt') {
-            const template = this._getCurrentTemplate();
-            return template && !template.numOfEl;
-        }
-
-        if (widgetName === 'number_of_elements_small_devices_opt') {
-            const template = this._getCurrentTemplate();
-            return template && !template.numOfElSm;
         }
 
         if (widgetName === 'number_of_records_opt') {
@@ -270,9 +246,13 @@ const dynamicSnippetOptions = options.Class.extend({
         const template = this.dynamicFilterTemplates[newTemplate];
         if (template.numOfEl) {
             this.$target[0].dataset.numberOfElements = template.numOfEl;
+        } else {
+            delete this.$target[0].dataset.numberOfElements;
         }
         if (template.numOfElSm) {
             this.$target[0].dataset.numberOfElementsSmallDevices = template.numOfElSm;
+        } else {
+            delete this.$target[0].dataset.numberOfElementsSmallDevices;
         }
         if (template.numOfElFetch) {
             this.$target[0].dataset.numberOfRecords = template.numOfElFetch;

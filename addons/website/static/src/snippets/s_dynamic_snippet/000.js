@@ -135,13 +135,10 @@ const DynamicSnippet = publicWidget.Widget.extend({
      * @private
      */
     _prepareContent: function () {
-        if (this.$target[0].dataset.numberOfElements && this.$target[0].dataset.numberOfElementsSmallDevices) {
-            this.renderedContent = core.qweb.render(
-                this.template_key,
-                this._getQWebRenderOptions());
-        } else {
-            this.renderedContent = '';
-        }
+        this.renderedContent = core.qweb.render(
+            this.template_key,
+            this._getQWebRenderOptions()
+        );
     },
     /**
      * Method to be overridden in child components in order to prepare QWeb
@@ -152,8 +149,8 @@ const DynamicSnippet = publicWidget.Widget.extend({
         return {
             chunkSize: parseInt(
                 config.device.isMobile
-                    ? this.$target[0].dataset.numberOfElementsSmallDevices
-                    : this.$target[0].dataset.numberOfElements
+                    ? this.$target[0].dataset.numberOfElementsSmallDevices || 1
+                    : this.$target[0].dataset.numberOfElements || 4
             ),
             data: this.data,
             uniqueId: this.uniqueId
