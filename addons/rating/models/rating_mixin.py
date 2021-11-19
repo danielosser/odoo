@@ -59,7 +59,7 @@ class RatingMixin(models.AbstractModel):
     rating_last_feedback = fields.Text('Rating Last Feedback', groups='base.group_user', related='rating_ids.feedback')
     rating_last_image = fields.Binary('Rating Last Image', groups='base.group_user', related='rating_ids.rating_image')
     rating_count = fields.Integer('Rating count', compute="_compute_rating_stats", compute_sudo=True)
-    rating_avg = fields.Float("Rating Average", compute='_compute_rating_stats', compute_sudo=True)
+    rating_avg = fields.Float("Rating Average", compute='_compute_rating_stats', compute_sudo=True, search='_search_rating_avg')
     rating_percentage_satisfaction = fields.Float("Rating Satisfaction", compute='_compute_rating_satisfaction', compute_sudo=True)
 
     @api.depends('rating_ids.rating', 'rating_ids.consumed')
@@ -77,6 +77,24 @@ class RatingMixin(models.AbstractModel):
         for record in self:
             record.rating_count = mapping.get(record.id, {}).get('rating_count', 0)
             record.rating_avg = mapping.get(record.id, {}).get('rating_avg', 0)
+
+    def _search_rating_avg(self, operator, value):
+        if operator not in ['=', '!=', '<=', '<', '>', '>=']:
+            raise NotImplementedError('This operator %s is not supported in this search method.' % operator)
+        if not isinstance(value, (int, float)):
+            raise NotImplementedError('The value must be an integer or a float value.')
+        query = f"""
+            SELECT doc.id
+              FROM {self._table} as doc
+        INNER JOIN rating_rating R ON R.res_id = doc.id AND res_model = %s
+          GROUP BY doc.id
+            HAVING avg(R.rating) {operator} %s
+        """
+        return [(
+            'id',
+            'inselect' if operator != '!=' else 'not inselect',
+            (query, (self._name, value,))
+        )]
 
     @api.depends('rating_ids.res_id', 'rating_ids.rating')
     def _compute_rating_satisfaction(self):
