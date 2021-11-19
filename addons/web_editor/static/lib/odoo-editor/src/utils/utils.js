@@ -1412,11 +1412,16 @@ export function fillEmpty(el) {
         blockEl.appendChild(br);
         fillers.br = br;
     }
-    if (!el.textContent.length && !isBlock(el)) {
+    if (
+        !el.textContent.length &&
+        !isBlock(el) &&
+        el.getAttribute("oe-zws-empty-inline") !== "1"
+    ) {
         // As soon as there is actual content in the node, the zero-width space
         // is removed by the sanitize function.
         const zws = document.createTextNode('\u200B');
         el.appendChild(zws);
+        el.setAttribute("oe-zws-empty-inline", "1");
         fillers.zws = zws;
     }
     return fillers;

@@ -319,6 +319,7 @@ export async function testEditor(Editor = OdooEditor, spec) {
         }
     }
 
+    editor.clean();
     // Same as above: disconnect mutation observers and other things, otherwise
     // reading the "[]" markers would broke the test.
     editor.destroy();

@@ -175,7 +175,6 @@ export class OdooEditor extends EventTarget {
         this.document = options.document || document;
 
         this.isMobile = matchMedia('(max-width: 767px)').matches;
-        this.isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
 
         // Keyboard type detection, happens only at the first keydown event.
         this.keyboardType = KEYBOARD_TYPES.UNKNOWN;
@@ -1336,8 +1335,7 @@ export class OdooEditor extends EventTarget {
             const el = closestElement(joinWith);
             const { zws } = fillEmpty(el);
             if (zws) {
-                // ZWS selection in OdooEditor is not working in current version of firefox (since v93.0)
-                setSelection(zws, 0, zws, this.isFirefox ? 0 : nodeSize(zws));
+                setSelection(zws, 0, zws, 0);
             }
         }
     }
@@ -2287,6 +2285,22 @@ export class OdooEditor extends EventTarget {
     }
     cleanForSave(element = this.editable) {
         this._pluginCall('cleanForSave', [element]);
+        // clean the remaining ZeroWidthspaces added by the `fillEmpty` function ( contain "oe-zws-empty-inline" attr)
+        // if the element contain more than just a ZWS, we remove it and clean the attribute
+        // if the element have a class, we only remove the attribute to ensure we don't break some style
+        // otherwise we remove the entire inline element
+        for (const emptyElement of this.document.querySelectorAll('[oe-zws-empty-inline="1"]')) {
+            if(emptyElement.textContent.length === 1 && emptyElement.textContent.includes('\u200B')) {
+                if (emptyElement.classList.length > 0) {
+                    emptyElement.removeAttribute("oe-zws-empty-inline");
+                } else {
+                    emptyElement.remove();
+                }
+            } else {
+                emptyElement.textContent = emptyElement.textContent.replace('\u200B', '');
+                emptyElement.removeAttribute("oe-zws-empty-inline");
+            }
+        }
     }
     /**
      * Handle the hint preview for the commandbar.

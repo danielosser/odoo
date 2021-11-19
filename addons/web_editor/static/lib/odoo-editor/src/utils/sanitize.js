@@ -52,11 +52,11 @@ export function areSimilarElements(node, node2) {
     ) {
         return false;
     }
-    if (node.tagName == 'LI' && node.classList.contains('oe-nested')) {
+    if (node.tagName === 'LI' && node.classList.contains('oe-nested')) {
         return (
             node.lastElementChild &&
             node2.firstElementChild &&
-            getListMode(node.lastElementChild) == getListMode(node2.firstElementChild)
+            getListMode(node.lastElementChild) === getListMode(node2.firstElementChild)
         );
     }
     if (['UL', 'OL'].includes(node.tagName)) {
@@ -120,16 +120,16 @@ class Sanitize {
                         sibling.length > 0
                 )
             ) &&
-            isUnremovable(node.parentElement) &&
             !isBlock(node.parentElement)
         ) {
             const restoreCursor = preserveCursor(this.root.ownerDocument);
             node.textContent = node.textContent.replace('\u200B', '');
+            node.parentElement.removeAttribute("oe-zws-empty-inline");
             restoreCursor();
         }
 
         // Remove empty blocks in <li>
-        if (node.nodeName == 'P' && node.parentElement.tagName == 'LI') {
+        if (node.nodeName === 'P' && node.parentElement.tagName === 'LI') {
             const next = node.nextSibling;
             const pnode = node.parentElement;
             if (isEmptyBlock(node)) {
