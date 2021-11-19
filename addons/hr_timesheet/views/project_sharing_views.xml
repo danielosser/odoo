@@ -39,21 +39,16 @@
                           attrs="{'invisible': [('analytic_account_active', '=', False)]}">
                         <tree string="Timesheet Activities" default_order="date" no_open="1">
                             <field name="date"/>
-                            <!-- [XBO] TODO: remove me in master -->
-                            <field name="user_id" invisible="1"/>
                             <field name="employee_id"/>
                             <field name="name"/>
                             <field name="unit_amount" widget="timesheet_uom" decoration-danger="unit_amount &gt; 24"/>
                         </tree>
                         <kanban class="o_kanban_mobile">
                             <field name="date"/>
-                            <!-- [XBO] TODO: remove me in master -->
-                            <field name="user_id" invisible="1"/>
                             <field name="employee_id"/>
                             <field name="name"/>
                             <field name="unit_amount" decoration-danger="unit_amount &gt; 24"/>
                             <field name="project_id"/>
-                            <field name="task_id" invisible="1"/>
                             <templates>
                                 <t t-name="kanban-box">
                                     <div t-attf-class="oe_kanban_card oe_kanban_global_click">
