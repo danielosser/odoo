@@ -1412,7 +1412,7 @@ export function fillEmpty(el) {
         blockEl.appendChild(br);
         fillers.br = br;
     }
-    if (!el.textContent.length && isUnremovable(el) && !isBlock(el)) {
+    if (!el.textContent.length && !isBlock(el)) {
         const zws = document.createTextNode('\u200B');
         el.appendChild(zws);
         fillers.zws = zws;
@@ -1435,7 +1435,7 @@ export function clearEmpty(node) {
 }
 
 export function setTagName(el, newTagName) {
-    if (el.tagName == newTagName) {
+    if (el.tagName === newTagName) {
         return el;
     }
     var n = document.createElement(newTagName);
