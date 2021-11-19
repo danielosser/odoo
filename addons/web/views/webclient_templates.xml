@@ -822,6 +822,8 @@
     </template>
 
     <template id="web.webclient_bootstrap">
+        <t t-set='company_ids' t-value="session_info.get('user_companies', {}).get('company_ids')" />
+        <t t-set="x_icon" t-value="company_ids and '/web/image/res.company/' + company_ids[0] + '/favicon/'"/>
         <t t-call="web.layout">
             <t t-set="head_web">
                 <script type="text/javascript">

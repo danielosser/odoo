@@ -62,9 +62,16 @@ class Http(models.AbstractModel):
                 "qweb": qweb_checksum,
                 "translations": translation_hash,
             }
+            company_ids = user.company_id
+            if request and hasattr(request, 'httprequest'):
+                company_ids = request.httprequest.cookies.get('cids', [str(user.company_id.id)]).split(",")
             session_info.update({
                 # current_company should be default_company
-                "user_companies": {'current_company': (user.company_id.id, user.company_id.name), 'allowed_companies': [(comp.id, comp.name) for comp in user.company_ids]},
+                "user_companies": {
+                    'current_company': (user.company_id.id, user.company_id.name),
+                    'allowed_companies': [(comp.id, comp.name) for comp in user.company_ids],
+                    "company_ids": company_ids,
+                },
                 "currencies": self.get_currencies(),
                 "show_effect": True,
                 "display_switch_company_menu": user.has_group('base.group_multi_company') and len(user.company_ids) > 1,
