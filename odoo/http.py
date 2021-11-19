@@ -106,7 +106,6 @@ endpoint
   The @route(...) decorated method.
 """
 
-import ast
 import collections
 import contextlib
 import functools
@@ -118,11 +117,8 @@ import json
 import logging
 import mimetypes
 import os
-import pprint
-import random
 import re
 import secrets
-import sys
 import threading
 import time
 import traceback
@@ -171,9 +167,9 @@ from .tools.func import filter_kwargs, lazy_property
 _logger = logging.getLogger(__name__)
 
 
-#----------------------------------------------------------
+# =========================================================
 # Lib fixes
-#----------------------------------------------------------
+# =========================================================
 
 # Add potentially missing (older ubuntu) font mime types
 mimetypes.add_type('application/font-woff', '.woff')
@@ -186,9 +182,9 @@ mimetypes.add_type('image/svg+xml', '.svg')
 babel.core.LOCALE_ALIASES['nb'] = 'nb_NO'
 
 
-#----------------------------------------------------------
+# =========================================================
 # Const
-#----------------------------------------------------------
+# =========================================================
 
 # The validity duration of a preflight response, one day.
 CORS_MAX_AGE = 60 * 60 * 24
@@ -231,9 +227,9 @@ STATIC_CACHE = 60 * 60 * 24 * 7
 STATIC_CACHE_LONG = 60 * 60 * 24 * 365
 
 
-#----------------------------------------------------------
+# =========================================================
 # Helpers
-#----------------------------------------------------------
+# =========================================================
 
 class SessionExpiredException(Exception):
     pass
@@ -281,10 +277,8 @@ def db_filter(dbs, httprequest=None):
         domain = host.partition('.')[0]
 
         dbfilter_re = re.compile(
-            config['dbfilter']
-                .replace('%h', re.escape(host))
-                .replace('%d', re.escape(domain))
-        )
+            config["dbfilter"].replace("%h", re.escape(host))
+                              .replace("%d", re.escape(domain)))
         return [db for db in dbs if dbfilter_re.match(db)]
 
     if config['db_name']:
@@ -358,10 +352,12 @@ def set_safe_image_headers(headers, content):
     return headers
 
 
-#----------------------------------------------------------
+# =========================================================
 # Controller and routes
-#----------------------------------------------------------
+# =========================================================
+
 addons_manifest = {}  # TODO @juc, move to odoo.modules.module
+
 
 class Controller:
     """
@@ -512,8 +508,8 @@ def _generate_routing_rules(modules, nodb_only, converters=None):
                 continue
 
             merged_routing = {
-                #'type': 'http',  # set below
-                'auth':'user',
+                # 'type': 'http',  # set below
+                'auth': 'user',
                 'methods': None,
                 'routes': [],
                 'readonly': False,
@@ -558,13 +554,14 @@ def _generate_routing_rules(modules, nodb_only, converters=None):
                 yield (url, endpoint)
 
 
-#----------------------------------------------------------
+# =========================================================
 # Request and Response
-#----------------------------------------------------------
+# =========================================================
 
 # Thread local global request object
 _request_stack = werkzeug.local.LocalStack()
 request = _request_stack()
+
 
 class Response(werkzeug.wrappers.Response):
     """
@@ -585,11 +582,12 @@ class Response(werkzeug.wrappers.Response):
     :class:`werkzeug.wrappers.Response`.
     """
     default_mimetype = 'text/html'
+
     def __init__(self, *args, **kw):
         template = kw.pop('template', None)
         qcontext = kw.pop('qcontext', None)
         uid = kw.pop('uid', None)
-        super(Response, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
         self.set_default(template, qcontext, uid)
 
     @classmethod
@@ -647,6 +645,7 @@ class Response(werkzeug.wrappers.Response):
             self.response.append(self.render())
             self.template = None
 
+
 class FutureResponse:
     """ werkzeug.Response mock class that only serves as placeholder for
         headers to be injected in the final response. """
@@ -659,6 +658,7 @@ class FutureResponse:
     @functools.wraps(werkzeug.Response.set_cookie)
     def set_cookie(self, *args, **kwargs):
         werkzeug.Response.set_cookie(self, *args, **kwargs)
+
 
 class Request:
     """
@@ -681,9 +681,9 @@ class Request:
         self._session_save = False
         self._session_data = None
 
-    #------------------------------------------------------
+    # =====================================================
     # Getters and setters
-    #------------------------------------------------------
+    # =====================================================
     def update_env(self, user=None, context=None, su=None):
         """ Update the environment of the current request. """
         cr = None  # None is a sentinel, it keeps the same cursor
@@ -729,9 +729,9 @@ class Request:
 
     _cr = cr
 
-    #------------------------------------------------------
+    # =====================================================
     # Helpers
-    #------------------------------------------------------
+    # =====================================================
     def default_lang(self):
         lang = self.httprequest.accept_languages.best or "en-US"
         try:
@@ -778,9 +778,9 @@ class Request:
 
         return contextlib.nullcontext()
 
-    #------------------------------------------------------
+    # =====================================================
     # Session
-    #------------------------------------------------------
+    # =====================================================
     def _get_session_id(self):
         """
         Get the session identifier and the database from the request,
@@ -838,7 +838,6 @@ class Request:
             'session_id', f'{session_id}.{dbname}',
             max_age=SESSION_LIFETIME, httponly=True
         )
-
 
     @contextlib.contextmanager
     def manage_session(self):
@@ -903,10 +902,10 @@ class Request:
         :ref:`session_authenticate_finalize`.
         """
         wsgienv = {
-            "interactive" : True,
-            "base_location" : self.httprequest.url_root.rstrip('/'),
-            "HTTP_HOST" : self.httprequest.environ['HTTP_HOST'],
-            "REMOTE_ADDR" : self.httprequest.environ['REMOTE_ADDR'],
+            "interactive": True,
+            "base_location": self.httprequest.url_root.rstrip('/'),
+            "HTTP_HOST": self.httprequest.environ['HTTP_HOST'],
+            "REMOTE_ADDR": self.httprequest.environ['REMOTE_ADDR'],
         }
         uid = self.env['res.users'].authenticate(self.db, login, password, wsgienv)
 
@@ -937,9 +936,9 @@ class Request:
             'session_token': self.env.user._compute_session_token(self.session_id),
         })
 
-    #------------------------------------------------------
+    # =====================================================
     # HTTP Controllers
-    #------------------------------------------------------
+    # =====================================================
     def send_filepath(self, path, **send_file_kwargs):
         """
         High-level file streaming utility, it takes a path to a file on
@@ -1077,7 +1076,6 @@ class Request:
         hm_expected = hmac.new(secret.encode('ascii'), msg, hashlib.sha1).hexdigest()
         return consteq(hm, hm_expected)
 
-
     def redirect(self, location, code=303, local=True):
         # compatibility, Werkzeug support URL as location
         if isinstance(location, URL):
@@ -1201,9 +1199,9 @@ class Request:
            else InternalServerError()  # hide the real error
         )
 
-    #------------------------------------------------------
+    # =====================================================
     # JSON-RPC2 Controllers
-    #------------------------------------------------------
+    # =====================================================
     def _json_dispatch(self, endpoint, args):
         """
         `JSON-RPC 2 <http://www.jsonrpc.org/specification>`_ over HTTP.
@@ -1296,9 +1294,9 @@ class Request:
 
         return self._json_response(error=error, request_id=getattr(self, 'jsonrequest', {}).get('id'))
 
-    #------------------------------------------------------
+    # =====================================================
     # Routing
-    #------------------------------------------------------
+    # =====================================================
     def _inject_future_response(self, response):
         response.headers.extend(self.future_response.headers)
         return response
@@ -1439,9 +1437,10 @@ class Request:
         return response
 
 
-#----------------------------------------------------------
+# =========================================================
 # WSGI Layer
-#----------------------------------------------------------
+# =========================================================
+
 class Application(object):
     """ Odoo WSGI application """
     # See also: https://www.python.org/dev/peps/pep-3333
@@ -1565,7 +1564,6 @@ class Application(object):
                     exc.error_response = request._http_handle_error(exc)
 
             return exc.error_response(environ, start_response)
-
 
         finally:
             _request_stack.pop()

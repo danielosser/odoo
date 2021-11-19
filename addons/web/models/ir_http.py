@@ -31,6 +31,7 @@ comma (eg: 'tests, assets').
 """
 ALLOWED_DEBUG_MODES = ['', '1', 'assets', 'tests']
 
+
 class Http(models.AbstractModel):
     _inherit = 'ir.http'
 
@@ -40,7 +41,7 @@ class Http(models.AbstractModel):
         debug = request.httprequest.args.get('debug', '')
         if debug:
             request.session.debug = ','.join(
-                    mode if mode in ALLOWED_DEBUG_MODES
+                     mode if mode in ALLOWED_DEBUG_MODES
                 else '1' if str2bool(mode, mode)
                 else ''
                 for mode in debug.split(',')

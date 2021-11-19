@@ -14,9 +14,9 @@ from odoo.service import dispatch_rpc
 from odoo.tools import lazy, ustr
 from odoo.tools.misc import frozendict
 
-#-----------------------------------------------------------
+# ==========================================================
 # XML-RPC helpers
-#-----------------------------------------------------------
+# ==========================================================
 
 # XML-RPC fault codes. Some care must be taken when changing these: the
 # constants are also defined client-side and must remain in sync.
@@ -27,6 +27,11 @@ RPC_FAULT_CODE_APPLICATION_ERROR = 1
 RPC_FAULT_CODE_WARNING = 2
 RPC_FAULT_CODE_ACCESS_DENIED = 3
 RPC_FAULT_CODE_ACCESS_ERROR = 4
+
+# ustr decodes as utf-8 or latin1 so we can search for the ASCII bytes
+#   Char ::= #x9 | #xA | #xD | [#x20-#xD7FF]
+XML_INVALID = re.compile(b'[\x00-\x08\x0B\x0C\x0F-\x1F]')
+
 
 def xmlrpc_handle_exception_int(e):
     if isinstance(e, odoo.exceptions.RedirectWarning):
@@ -39,12 +44,11 @@ def xmlrpc_handle_exception_int(e):
         fault = xmlrpc.client.Fault(RPC_FAULT_CODE_WARNING, str(e))
     else:
         info = sys.exc_info()
-        # Which one is the best ?
         formatted_info = "".join(traceback.format_exception(*info))
-        #formatted_info = odoo.tools.exception_to_unicode(e) + '\n' + info
         fault = xmlrpc.client.Fault(RPC_FAULT_CODE_APPLICATION_ERROR, formatted_info)
 
     return xmlrpc.client.dumps(fault, allow_none=None)
+
 
 def xmlrpc_handle_exception_string(e):
     if isinstance(e, odoo.exceptions.RedirectWarning):
@@ -65,16 +69,13 @@ def xmlrpc_handle_exception_string(e):
 
     return xmlrpc.client.dumps(fault, allow_none=None, encoding=None)
 
-# ustr decodes as utf-8 or latin1 so we can search for the ASCII bytes
-#   Char ::= #x9 | #xA | #xD | [#x20-#xD7FF]
-XML_INVALID = re.compile(b'[\x00-\x08\x0B\x0C\x0F-\x1F]')
+
 class OdooMarshaller(xmlrpc.client.Marshaller):
     dispatch = dict(xmlrpc.client.Marshaller.dispatch)
 
     def dump_frozen_dict(self, value, write):
         value = dict(value)
         self.dump_struct(value, write)
-    dispatch[frozendict] = dump_frozen_dict
 
     # By default, in xmlrpc, bytes are converted to xmlrpc.client.Binary object.
     # Historically, odoo is sending binary as base64 string.
@@ -89,26 +90,26 @@ class OdooMarshaller(xmlrpc.client.Marshaller):
             self.dump_unicode('', write)
         else:
             self.dump_unicode(ustr(value), write)
-    dispatch[bytes] = dump_bytes
 
     def dump_datetime(self, value, write):
         # override to marshall as a string for backwards compatibility
         value = Datetime.to_string(value)
         self.dump_unicode(value, write)
-    dispatch[datetime] = dump_datetime
 
     # convert date objects to strings in iso8061 format.
     def dump_date(self, value, write):
         value = Date.to_string(value)
         self.dump_unicode(value, write)
-    dispatch[date] = dump_date
 
     def dump_lazy(self, value, write):
         v = value._value
         return self.dispatch[type(v)](self, v, write)
-    dispatch[lazy] = dump_lazy
 
-    # 2many commands helpers are just aliases to int
+    dispatch[frozendict] = dump_frozen_dict
+    dispatch[bytes] = dump_bytes
+    dispatch[datetime] = dump_datetime
+    dispatch[date] = dump_date
+    dispatch[lazy] = dump_lazy
     dispatch[Command] = dispatch[int]
     dispatch[Markup] = lambda self, value, write: self.dispatch[str](self, str(value), write)
 
@@ -116,9 +117,9 @@ class OdooMarshaller(xmlrpc.client.Marshaller):
 # monkey-patch xmlrpc.client's marshaller
 xmlrpc.client.Marshaller = OdooMarshaller
 
-#-----------------------------------------------------------
+# ==========================================================
 # RPC Controller
-#-----------------------------------------------------------
+# ==========================================================
 class RPC(Controller):
     """Handle RPC connections."""
 

@@ -15,7 +15,7 @@ from functools import partial
 
 import odoo
 from odoo import api, models
-from odoo import registry, SUPERUSER_ID
+from odoo import SUPERUSER_ID
 from odoo.exceptions import AccessError
 from odoo.http import request
 from odoo.tools.safe_eval import safe_eval
@@ -64,12 +64,12 @@ class Http(models.AbstractModel):
 
     @classmethod
     def routing_map(cls, key=None):
-        return super(Http, cls).routing_map(key=key or request.website_routing)
+        return super().routing_map(key=key or request.website_routing)
 
     @classmethod
     def clear_caches(cls):
-        super(Http, cls)._clear_routing_map()
-        return super(Http, cls).clear_caches()
+        super()._clear_routing_map()
+        return super().clear_caches()
 
     @classmethod
     def _slug_matching(cls, adapter, endpoint, **kw):
@@ -88,7 +88,7 @@ class Http(models.AbstractModel):
         rewrites = dict([(x.url_from, x) for x in request.env['website.rewrite'].sudo().search(domain)])
         cls._rewrite_len[website_id] = len(rewrites)
 
-        for url, endpoint in super(Http, cls)._generate_routing_rules(modules, converters):
+        for url, endpoint in super()._generate_routing_rules(modules, converters):
             if url in rewrites:
                 rewrite = rewrites[url]
                 url_to = rewrite.url_to
@@ -113,7 +113,7 @@ class Http(models.AbstractModel):
             match Rule. This override adds the website ones.
         """
         return dict(
-            super(Http, cls)._get_converters(),
+            super()._get_converters(),
             model=ModelConverter,
         )
 
@@ -132,7 +132,7 @@ class Http(models.AbstractModel):
                     request.update_env(user=uid)
 
         if not request.env.uid:
-            super(Http, cls)._auth_method_public()
+            super()._auth_method_public()
 
     @classmethod
     def _register_website_track(cls, response):
@@ -194,16 +194,19 @@ class Http(models.AbstractModel):
         # propagate to the global context of the tab. If the company of
         # the website is not in the allowed companies of the user, set
         # the main company of the user.
+        company_id = website._get_cached('company_id')
         request.update_context(
             website_id=website.id,
-            allowed_company_ids=([website.company_id.id] if website.company_id in user.company_ids else user.company_id.ids)
+            allowed_company_ids=(
+                [company_id] if company_id in user.company_ids.ids else user.company_id.ids
+            )
         )
 
         request.website = website.with_context(request.env.context)
 
     @classmethod
     def _dispatch(cls, endpoint):
-        response = super(Http, cls)._dispatch(endpoint)
+        response = super()._dispatch(endpoint)
         cls._register_website_track(response)
         return response
 
@@ -219,11 +222,11 @@ class Http(models.AbstractModel):
         if getattr(request, 'is_frontend', True):
             website = request.env['website'].sudo().get_current_website()
             return request.env['res.lang'].browse([website._get_cached('default_lang_id')])
-        return super(Http, cls)._get_default_lang()
+        return super()._get_default_lang()
 
     @classmethod
     def _get_translation_frontend_modules_name(cls):
-        mods = super(Http, cls)._get_translation_frontend_modules_name()
+        mods = super()._get_translation_frontend_modules_name()
         installed = request.registry._init_modules.union(odoo.conf.server_wide_modules)
         return mods + [mod for mod in installed if mod.startswith('website')]
 
@@ -302,7 +305,7 @@ class Http(models.AbstractModel):
     @classmethod
     def _serve_fallback(cls):
         # serve attachment before
-        parent = super(Http, cls)._serve_fallback()
+        parent = super()._serve_fallback()
         if parent:  # attachment
             return parent
 
@@ -326,7 +329,7 @@ class Http(models.AbstractModel):
 
     @classmethod
     def _get_exception_code_values(cls, exception):
-        code, values = super(Http, cls)._get_exception_code_values(exception)
+        code, values = super()._get_exception_code_values(exception)
         if isinstance(exception, werkzeug.exceptions.NotFound) and request.website.is_publisher():
             code = 'page_404'
             values['path'] = request.httprequest.path[1:]
@@ -339,7 +342,7 @@ class Http(models.AbstractModel):
     @classmethod
     def _get_values_500_error(cls, env, values, exception):
         View = env["ir.ui.view"]
-        values = super(Http, cls)._get_values_500_error(env, values, exception)
+        values = super()._get_values_500_error(env, values, exception)
         if 'qweb_exception' in values:
             try:
                 # exception.name might be int, string
@@ -369,7 +372,7 @@ class Http(models.AbstractModel):
     def _get_error_html(cls, env, code, values):
         if code in ('page_404', 'protected_403'):
             return code.split('_')[1], env['ir.ui.view']._render_template('website.%s' % code, values)
-        return super(Http, cls)._get_error_html(env, code, values)
+        return super()._get_error_html(env, code, values)
 
     def binary_content(self, xmlid=None, model='ir.attachment', id=None, field='datas',
                        unique=False, filename=None, filename_field='name', download=False,
@@ -401,7 +404,7 @@ class Http(models.AbstractModel):
             if obj:
                 return obj[0]
 
-        return super(Http, cls)._xmlid_to_obj(env, xmlid)
+        return super()._xmlid_to_obj(env, xmlid)
 
     @api.model
     def get_frontend_session_info(self):

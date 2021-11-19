@@ -25,7 +25,7 @@ import werkzeug.wrappers
 import werkzeug.wsgi
 from lxml import etree, html
 from markupsafe import Markup
-from werkzeug.urls import url_encode, url_parse, iri_to_uri
+from werkzeug.urls import url_encode, url_parse
 
 import odoo
 import odoo.modules.registry
@@ -1054,7 +1054,7 @@ class Database(http.Controller):
                 raise Exception(_('Invalid database name. Only alphanumerical characters, underscore, hyphen and dot are allowed.'))
             dispatch_rpc('db', 'duplicate_database', [master_pwd, name, new_name])
             if request.env.cr:
-                request.env.cr.close() # duplicating a database leads to an unusable cursor
+                request.env.cr.close()  # duplicating a database leads to an unusable cursor
             return request.redirect('/web/database/manager')
         except Exception as e:
             error = "Database duplication error: %s" % (str(e) or repr(e))
