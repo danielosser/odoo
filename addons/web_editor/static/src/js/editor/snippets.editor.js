@@ -1655,7 +1655,7 @@ var SnippetsMenu = Widget.extend({
             $selectorSiblings = $(_.uniq(($selectorSiblings || $()).add($selectorChildren.children()).get()));
         }
 
-        var noDropZonesSelector = '[data-invisible="1"], .o_we_no_overlay, :not(:visible), .o_hoverable_displayed > :not(.s_hoverable) *';
+        var noDropZonesSelector = '[data-invisible="1"], .o_we_no_overlay, :not(:visible), :has(> .s_hoverable:not([data-invisible="1"])) > :not(.s_hoverable) *';
         if ($selectorSiblings) {
             $selectorSiblings.not(`.oe_drop_zone, .oe_drop_clone, ${noDropZonesSelector}`).each(function () {
                 var data;

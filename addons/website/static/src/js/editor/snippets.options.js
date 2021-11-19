@@ -2111,17 +2111,40 @@ options.registry.topMenuColor = options.Class.extend({
     },
 });
 
-const HoverableOption = options.Class.extend({
-    getHoverable() {
-        return this.$target.find('> .s_hoverable')[0];
-    }
-});
-
 /**
  * Handles elements displayed when hovering the target.
  */
-options.registry.ToggleHoverable = HoverableOption.extend({
-    isTopOption: true,
+options.registry.EditHoverable = options.Class.extend({
+    //--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
+
+    /**
+    * @override
+    */
+    cleanForSave() {
+        this.$target[0].classList.remove('o_hoverable_edit');
+    },
+    /**
+    * @override
+    */
+    onFocus() {
+        if (this.getHoverable()) {
+            this.$target[0].classList.add('o_hoverable_edit');
+        }
+    },
+    /**
+    * @override
+    */
+    onBlur() {
+        this.$target[0].classList.remove('o_hoverable_edit');
+    },
+    /**
+     * @returns The DOM element that is shown on hover if there is one.
+     */
+    getHoverable() {
+        return this.$target.find('> .s_hoverable')[0];
+    },
 
     //--------------------------------------------------------------------------
     // Options
@@ -2133,9 +2156,9 @@ options.registry.ToggleHoverable = HoverableOption.extend({
      *
      * @see this.selectClass for parameters
      */
-    async toggleHoverable(previewMode, widgetValue, params) {
+     async toggleHoverable(previewMode, widgetValue, params) {
         if (widgetValue) {
-            this.$target[0].classList.add('o_hoverable_edit', 'o_hoverable_displayed');
+            this.$target[0].classList.add('o_hoverable_edit');
             this.$target[0].insertAdjacentHTML('beforeend', await this._rpc({
                 model: 'ir.ui.view',
                 method: 'render_public_asset',
@@ -2143,13 +2166,27 @@ options.registry.ToggleHoverable = HoverableOption.extend({
                 kwargs: {context: this.options.context},
             }));
 
+            this.getHoverable().dataset.invisible = '0';
+            this.trigger_up('snippet_option_visibility_update', {show: true});
             this.trigger_up('activate_snippet', {
                 $snippet: $(this.getHoverable()),
             });
         } else {
-            this.$target[0].classList.remove('o_hoverable_edit', 'o_hoverable_displayed');
+            this.$target[0].classList.remove('o_hoverable_edit');
+            this.trigger_up('snippet_option_visibility_update', {show: false});
             this.getHoverable().remove();
         }
+    },
+    async selectDataAttribute(previewMode, widgetValue, params) {
+        if (params.attributeName !== 'invisible') {
+            await this._super(...arguments);
+        }
+
+        await this._super(previewMode, widgetValue === '0' ? '0' : '1', params);
+        this.trigger_up('snippet_option_visibility_update', {show: widgetValue === '0'});
+        this.trigger_up('activate_snippet', {
+            $snippet: widgetValue !== '0' ? this.$target.parent() : this.$target
+        });
     },
 
     //--------------------------------------------------------------------------
@@ -2159,41 +2196,14 @@ options.registry.ToggleHoverable = HoverableOption.extend({
     /**
      * @private
      */
-    _computeWidgetState(methodName, params) {
+     _computeWidgetState(methodName, params) {
         if (methodName === 'toggleHoverable') {
             return !!this.getHoverable();
         }
+        if (methodName === 'selectDataAttribute' && params.attributeName === 'invisible') {
+            return this.$target[0].dataset.invisible || '0';
+        }
         return this._super(...arguments);
-    },
-});
-
-/**
- * Selects the hoverable element and displays its options.
- */
-options.registry.EditHoverable = HoverableOption.extend({
-    onFocus() {
-        this._super(...arguments);
-        if (this.getHoverable()) {
-            this.$target[0].classList.add('o_hoverable_edit');
-        }
-    },
-    onBlur() {
-        this._super(...arguments);
-        if (this.getHoverable()) {
-            //this.$target[0].classList.remove('o_hoverable_edit');
-        }
-    },
-    /**
-    * @override
-    */
-    cleanForSave() {
-        this.$target[0].classList.remove('o_hoverable_displayed', 'o_hoverable_edit');
-    },
-    async selectClass(previewMode, widgetValue, params) {
-        await this._super(...arguments);
-        this.trigger_up('activate_snippet', {
-            $snippet: widgetValue === 'o_hoverable_displayed' ? $(this.getHoverable()) : this.$target
-        });
     },
 });
 

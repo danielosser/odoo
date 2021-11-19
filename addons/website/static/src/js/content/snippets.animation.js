@@ -1175,7 +1175,7 @@ registry.WebsiteAnimate = publicWidget.Widget.extend({
      * @private
      * @param {jQuery} $el
      */
-    _startAnimation($el, direction) {
+    _startAnimation($el) {
         // Forces the browser to redraw using setTimeout.
         setTimeout(() => {
             this._toggleOverflowXHidden(true);

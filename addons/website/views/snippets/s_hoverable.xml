@@ -2,7 +2,7 @@
 <odoo>
 
 <template id="s_hoverable" name="Hoverable" groups="base.group_user">
-    <div class="s_hoverable o_animable">
+    <div class="s_hoverable o_animable o_snippet_invisible">
         <div class="container">
             <p>Hover over me!</p>
         </div>
