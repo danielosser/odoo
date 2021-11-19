@@ -2,6 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 from odoo import models, fields, api, _
+from odoo.osv import expression
 
 
 class AccountReport(models.Model):
@@ -9,7 +10,12 @@ class AccountReport(models.Model):
 
     #TODO OCO garder filter_ en préfixe ?? => Peut-être ... Ou pas ... On pourrait le garder juste sur les fonctions.
     name = fields.Char(string="Name", required=True)
-    filter_multi_company = fields.Boolean(string="Multi-Company", default=False) # TODO OCO on pourrait en faire un champ sélection (no, with_selector, with_tax_units)
+    filter_multi_company = fields.Selection(
+        string="Multi-Company",
+        selection=[('disabled', "Disabled"), ('selector', "Use Company Selector"), ('tax_units', "Use Tax Units")],
+        default='disabled',
+        required=True,
+    ) # TODO OCO on pourrait en faire un champ sélection (no, with_selector, with_tax_units)
     filter_date_range = fields.Boolean(string="Use Date Range", default=True) # TODO OCO remplace filter_date > True si range, False si date unique.
     allow_showing_draft = fields.Boolean(string="Allow Showing Draft Entries", default=True) #TODO OCO remplace filter_all_entries (qui n'est jamais passé à True, dirait-on)
     allow_comparison = fields.Boolean(string="Allow Comparison", default=True)
@@ -39,6 +45,7 @@ class AccountReport(models.Model):
         required=True,
         default='always',
     )
+    filter_tax_exigible = fields.Boolean(string="Only Tax Exigible Lines", default=False, required=True)
     """
     TODO OCO tags:
 
@@ -64,7 +71,7 @@ class AccountReport(models.Model):
 
             for formula in expressions_formulas:
                 tax_tags = self.env['account.account.tag']._get_tax_tags(formula, country.id)
-                tag_reports = tax_tags.tax_report_expression_ids.report_line_id.report_id
+                tag_reports = tax_tags._get_related_tax_report_expressions().report_line_id.report_id
 
                 if all(report in self for report in tag_reports):
                     # Only reports in self are using these tags; let's change their country
@@ -124,8 +131,19 @@ class AccountReportExpression(models.Model):
 
     formula = fields.Char(string="Formula")
     subformula = fields.Char(string="Subformula")
-    date_scope = fields.Char(string="Date Scope") # TODO OCO généralisation du special_date_changer. Il faudra en faire un champ sélection (calculé depuis une valeur par défaut sur le rapport ??) :> ceci est temporaire.
-    tag_ids = fields.Many2many(string="Tags", comodel_name='account.account.tag', relation='account_report_expression_tags_rel', compute="_compute_tag_ids", help="Tax tags populating this expression")
+    date_scope = fields.Selection(
+        string="Date Scope",
+        #TODO OCO rename, redoc selection. This all could be clearer IMO :p
+        selection=[
+            ('from_beginning', 'From the beginning'),
+            ('to_beginning_of_period', 'At the beginning of the period'),
+            ('normal', 'Use the dates that should normally be used, depending on the account types'),
+            ('strict_range', 'Force given dates for all accounts and account types'),
+            ('from_fiscalyear', 'From the beginning of the fiscal year'),
+        ],
+        required=True,
+        default='strict_range',
+    ) #TODO OCO j'ai donc changé le default ; ce n'est plus 'normal'
 
     #TODO OCO tester les flux de création et renommage de tags
     @api.model
@@ -160,7 +178,7 @@ class AccountReportExpression(models.Model):
             for country, formula in formulas_by_country.items():
                 tax_tags = self.env['account.account.tag']._get_tax_tags(formula, country.id)
 
-                if all(tag_expr in self for tag_expr in tax_tags.tax_report_expression_ids):
+                if all(tag_expr in self for tag_expr in tax_tags._get_related_tax_report_expressions()):
                     # If we're changing the formula of all the expressions using that tag, rename the tag
                     negative_tags = tax_tags.filtered(lambda x: x.tax_negate)
                     negative_tags.write({'name': '-%s' % formula})
@@ -171,6 +189,18 @@ class AccountReportExpression(models.Model):
                     self.env['account.account.tag'].create(tag_vals)
 
         return rslt
+
+    def _get_matching_tags(self):
+        # TODO OCO DOC
+        tag_expressions = self.filtered(lambda x: x.engine == 'tax_tags')
+        if not tag_expressions:
+            return self.env['account.account.tag']
+
+        domain = []
+        for expression in tag_expressions:
+            domain = expression.OR(domain, self.env['account.account.tag']._get_tax_tags_domain(expression.formula, expression.country_id.id))
+
+        return self.env['account.account.tag'].search(domain)
 
     @api.model
     def _get_tags_create_vals(self, tag_name, country_id):
@@ -187,13 +217,3 @@ class AccountReportExpression(models.Model):
           'country_id': country_id,
         }
         return [(minus_tag_vals), (plus_tag_vals)]
-
-    @api.depends('report_line_id.report_id.country_id', 'formula', 'engine')
-    def _compute_tag_ids(self):
-        # TODO OCO DOC compute-miroir avec _compute_tax_report_expression_ids
-        for record in self:
-            if record.engine == 'tax_tags':
-                country = record.report_line_id.report_id.country_id
-                record.tag_ids = self.env['account.account.tag']._get_tax_tags(record.formula, country.id)
-            else:
-                record.tag_ids = False

@@ -4,7 +4,8 @@
 
         <record id="generic_tax_report" model="account.report">
             <field name="name">Generic Tax report</field>
-            <field name="filter_multi_company" eval="True"/>
+            <field name="filter_multi_company">tax_units</field>
+            <field name="filter_tax_exigible" eval="True"/>
             <field name="columns">NET, TAX</field> <!--TODO OCO chiant: en master on met NET + nom du mois et année ... On veut garder ça ?-->
             <field name="dynamic_lines_generator">_generic_tax_report_default_grouping</field> <!--TODO OCO pareil: ça, c'est à ajouter en enterprise. Le champ aussi ?-->
             <!--TODO OCO fiscal_position à voir-->
@@ -29,7 +30,8 @@
 
         <record id="generic_tax_report2" model="account.report"> <!--TODO OCO TEST-->
             <field name="name">Generic Tax report 2 (test)</field>
-            <field name="filter_multi_company" eval="True"/>
+            <field name="filter_multi_company">tax_units</field>
+            <field name="filter_tax_exigible" eval="True"/>
             <field name="columns">NET2, TAX2</field>
             <field name="dynamic_lines_generator">_generic_tax_report_default_grouping</field>
             <field name="root_report_id" ref="generic_tax_report"/>
@@ -38,7 +40,8 @@
 
         <record id="generic_tax_report_account_tax" model="account.report">
             <field name="name">Group by: Account &gt; Tax </field>
-            <field name="filter_multi_company" eval="True"/>
+            <field name="filter_multi_company">tax_units</field>
+            <field name="filter_tax_exigible" eval="True"/>
             <field name="columns">NET, TAX</field> <!--TODO OCO-->
             <field name="dynamic_lines_generator">_generic_tax_report_account_tax_grouping</field>
             <field name="root_report_id" ref="generic_tax_report"/>
@@ -47,11 +50,25 @@
 
         <record id="generic_tax_report_tax_account" model="account.report">
             <field name="name">Group by: Tax &gt; Account </field>
-            <field name="filter_multi_company" eval="True"/>
+            <field name="filter_multi_company">tax_units</field>
+            <field name="filter_tax_exigible" eval="True"/>
             <field name="columns">NET, TAX</field> <!--TODO OCO-->
             <field name="dynamic_lines_generator">_generic_tax_report_tax_account_grouping</field>
             <field name="root_report_id" ref="generic_tax_report"/>
         </record>
+
+        <!--TODO OCO pour simplifier ce genre de déclaration, je ferais bien un modèle account.report.config qui permette de définir des valeurs par défaut avec un seul m2o (je pense notamment au rapport de taxes, c'est mieux)
+          => Au write/create de config_id, on complète les valeurs en fonction de la config
+          => Au write d'un nouveau champ sur config_id, on corrige les rapports ? A voir.
+
+          ====> Tous les champs de config du rapport pourraient être des compute éditables vers la config, du coup. Peut-être too much
+
+          ===> OU BIEN
+          le champ config_id est required m2o. On la crée avec une commande ORM pour les cas simples, et on le crée à part pour les rapports de taxes,
+          de sorte qu'ils appellent tous la même. Mais du coup, pas de variante d'un sous rapport qui puisse changer un seul point de config sans changer
+          toute la config. On peut vivre avec, non ? Ca veut aussi dire qu'on est limités niveau customisation par l'utilisateur. À voir. Encore qu'on pourrait
+          mettre des champs related et les montrer dans la vue pour ça.
+        -->
 
     </data>
 </odoo>
