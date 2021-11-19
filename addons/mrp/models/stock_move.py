@@ -139,6 +139,8 @@ class StockMove(models.Model):
     product_qty_available = fields.Float('Product On Hand Quantity', related='product_id.qty_available')
     product_virtual_available = fields.Float('Product Forecasted Quantity', related='product_id.virtual_available')
     description_bom_line = fields.Char('Kit', compute='_compute_description_bom_line')
+    custom_consumption = fields.Boolean('Custom Consumption', states={'done': [('readonly', True)]},
+        help="If ticked, the registration of consumption for this component will exclusively have to be done manually.")
 
     @api.depends('bom_line_id')
     def _compute_description_bom_line(self):
@@ -379,7 +381,7 @@ class StockMove(models.Model):
         # Do not update extra product quantities
         if float_is_zero(self.product_uom_qty, precision_rounding=self.product_uom.rounding):
             return True
-        if self.has_tracking != 'none' or self.state == 'done':
+        if self.has_tracking != 'none' or self.state == 'done' or self.custom_consumption:
             return True
         return False
 

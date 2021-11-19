@@ -380,6 +380,8 @@ class MrpBomLine(models.Model):
         'mrp.bom.line', string="BOM lines of the referred bom",
         compute='_compute_child_line_ids')
     attachments_count = fields.Integer('Attachments Count', compute='_compute_attachments_count')
+    custom_consumption = fields.Boolean('Custom Consumption', default=False,
+        help="If ticked, the registration of consumption for this component will exclusively have to be done manually.")
 
     _sql_constraints = [
         ('bom_qty_zero', 'CHECK (product_qty>=0)', 'All product quantities must be greater or equal to 0.\n'

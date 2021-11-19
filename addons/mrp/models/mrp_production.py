@@ -992,6 +992,7 @@ class MrpProduction(models.Model):
             'warehouse_id': source_location.warehouse_id.id,
             'group_id': self.procurement_group_id.id,
             'propagate_cancel': self.propagate_cancel,
+            'custom_consumption': bom_line.custom_consumption if bom_line else False,
         }
         return data
 
