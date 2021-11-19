@@ -6,7 +6,7 @@ import re
 from odoo import api, fields, models, _
 from odoo.addons.base.models.res_bank import sanitize_account_number
 from odoo.addons.base_iban.models.res_partner_bank import normalize_iban, pretty_iban, validate_iban
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 from odoo.tools.misc import mod10r
 
 
@@ -330,13 +330,21 @@ class ResPartnerBank(models.Model):
                and reference == mod10r(reference[:-1])
 
     def _eligible_for_qr_code(self, qr_method, debtor_partner, currency):
+        #attention, erreurs non valides
         if qr_method == 'ch_qr':
-
-            return self.acc_type == 'iban' and \
-                   self.partner_id.country_id.code == 'CH' and \
-                   (not debtor_partner or debtor_partner.country_id.code == 'CH') \
-                   and currency.name in ('EUR', 'CHF')
-
+            error_msg = ""
+            if self.acc_type != 'iban':
+                error_msg += "Error : The account type isn't IBAN \n"
+            if self.partner_id.country_id.code != 'CH':
+                error_msg += "The country code isn't CH \n"
+            if not debtor_partner or debtor_partner.country_id.code == 'CH':
+                error_msg += "The debtor partner country code isn't CH \n"
+            if not currency.name in ('EUR', 'CHF'):
+                error_msg += "Currency is not eur or chf \n"
+            if error_msg != "":
+                raise UserError(error_msg)
+            return True
+        #attention, la facture est quand même créée (mais est invalide)
         return super()._eligible_for_qr_code(qr_method, debtor_partner, currency)
 
     def _check_for_qr_code_errors(self, qr_method, amount, currency, debtor_partner, free_communication, structured_communication):
