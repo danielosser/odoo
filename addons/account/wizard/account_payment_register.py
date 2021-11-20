@@ -388,16 +388,15 @@ class AccountPaymentRegister(models.TransientModel):
     @api.depends('source_amount', 'source_amount_currency', 'source_currency_id', 'company_id', 'currency_id', 'payment_date')
     def _compute_amount(self):
         for wizard in self:
-            if wizard.source_currency_id == wizard.currency_id:
-                # Same currency.
-                wizard.amount = wizard.source_amount_currency
-            elif wizard.currency_id == wizard.company_id.currency_id:
-                # Payment expressed on the company's currency.
-                wizard.amount = wizard.source_amount
+            if wizard.source_currency_id:
+                wizard.amount = wizard.source_currency_id._convert(
+                    wizard.source_amount_currency,
+                    wizard.currency_id,
+                    wizard.company_id,
+                    wizard.payment_date,
+                )
             else:
-                # Foreign currency on payment different than the one set on the journal entries.
-                amount_payment_currency = wizard.company_id.currency_id._convert(wizard.source_amount, wizard.currency_id, wizard.company_id, wizard.payment_date)
-                wizard.amount = amount_payment_currency
+                wizard.amount = None
 
     @api.depends('amount')
     def _compute_payment_difference(self):

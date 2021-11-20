@@ -1540,31 +1540,25 @@ class AccountMove(models.Model):
                 ('move_id.state', '=', 'posted'),
                 ('partner_id', '=', move.commercial_partner_id.id),
                 ('reconciled', '=', False),
-                '|', ('amount_residual', '!=', 0.0), ('amount_residual_currency', '!=', 0.0),
             ]
 
             payments_widget_vals = {'outstanding': True, 'content': [], 'move_id': move.id}
 
             if move.is_inbound():
-                domain.append(('balance', '<', 0.0))
+                domain.append(('amount_currency', '<', 0.0))
                 payments_widget_vals['title'] = _('Outstanding credits')
             else:
-                domain.append(('balance', '>', 0.0))
+                domain.append(('amount_currency', '>', 0.0))
                 payments_widget_vals['title'] = _('Outstanding debits')
 
             for line in self.env['account.move.line'].search(domain):
 
-                if line.currency_id == move.currency_id:
-                    # Same foreign currency.
-                    amount = abs(line.amount_residual_currency)
-                else:
-                    # Different foreign currencies.
-                    amount = move.company_currency_id._convert(
-                        abs(line.amount_residual),
-                        move.currency_id,
-                        move.company_id,
-                        line.date,
-                    )
+                amount = line.currency_id._convert(
+                    abs(line.amount_residual_currency),
+                    move.currency_id,
+                    line.company_id,
+                    line.date,
+                )
 
                 if move.currency_id.is_zero(amount):
                     continue
@@ -4242,27 +4236,54 @@ class AccountMoveLine(models.Model):
             This amount will be 0 for fully reconciled lines or lines from a non-reconcilable account, the original line amount
             for unreconciled lines, and something in-between for partially reconciled lines.
         """
-        for line in self:
-            if line.id and (line.account_id.reconcile or line.account_id.internal_type == 'liquidity'):
-                reconciled_balance = sum(line.matched_credit_ids.mapped('amount')) \
-                                     - sum(line.matched_debit_ids.mapped('amount'))
-                reconciled_amount_currency = sum(line.matched_credit_ids.mapped('debit_amount_currency'))\
-                                             - sum(line.matched_debit_ids.mapped('credit_amount_currency'))
+        candidate_lines = self.filtered(lambda x: x.account_id.reconcile)
+        aml_ids = tuple(candidate_lines.filtered(lambda x: x.move_id.state == 'posted').ids)
 
-                line.amount_residual = line.balance - reconciled_balance
+        if aml_ids:
+            self.env['account.partial.reconcile'].flush(self.env['account.partial.reconcile']._fields)
+            self.env['res.currency'].flush(['decimal_places'])
 
-                if line.currency_id:
-                    line.amount_residual_currency = line.amount_currency - reconciled_amount_currency
-                else:
-                    line.amount_residual_currency = 0.0
+            self._cr.execute('''
+                SELECT
+                    part.debit_move_id AS line_id,
+                    'debit' AS flag,
+                    COALESCE(SUM(part.amount), 0.0) AS amount,
+                    ROUND(CAST(SUM(part.debit_amount_currency) AS NUMERIC), curr.decimal_places) AS amount_currency
+                FROM account_partial_reconcile part
+                JOIN res_currency curr ON curr.id = part.debit_currency_id
+                WHERE part.debit_move_id IN %s
+                GROUP BY part.debit_move_id, curr.decimal_places
 
-                line.reconciled = line.company_currency_id.is_zero(line.amount_residual) \
-                                  and (not line.currency_id or line.currency_id.is_zero(line.amount_residual_currency))
-            else:
-                # Must not have any reconciliation since the line is not eligible for that.
-                line.amount_residual = 0.0
-                line.amount_residual_currency = 0.0
-                line.reconciled = False
+                UNION ALL
+
+                SELECT
+                    part.credit_move_id AS line_id,
+                    'credit' AS flag,
+                    COALESCE(SUM(part.amount), 0.0) AS amount,
+                    ROUND(CAST(SUM(part.credit_amount_currency) AS NUMERIC), curr.decimal_places) AS amount_currency
+                FROM account_partial_reconcile part
+                JOIN res_currency curr ON curr.id = part.credit_currency_id
+                WHERE part.credit_move_id IN %s
+                GROUP BY part.credit_move_id, curr.decimal_places
+            ''', [aml_ids, aml_ids])
+            a = self._cr.fetchall()
+            amounts_map = dict(((r[0], r[1]), (r[2], r[3])) for r in a)
+        else:
+            amounts_map = {}
+
+        for line in self - candidate_lines:
+            line.amount_residual = 0.0
+            line.amount_residual_currency = 0.0
+            line.reconciled = False
+
+        for line in candidate_lines:
+            debit_amount, debit_amount_currency = amounts_map.get((line.id, 'debit'), (0.0, 0.0))
+            credit_amount, credit_amount_currency = amounts_map.get((line.id, 'credit'), (0.0, 0.0))
+
+            line.amount_residual = line.balance - debit_amount + credit_amount
+            line.amount_residual_currency = line.currency_id.round(line.amount_currency - debit_amount_currency + credit_amount_currency)
+            line.reconciled = line.company_currency_id.is_zero(line.amount_residual) \
+                              and line.currency_id.is_zero(line.amount_residual_currency)
 
     @api.depends('tax_repartition_line_id.invoice_tax_id', 'tax_repartition_line_id.refund_tax_id')
     def _compute_tax_line_id(self):
@@ -4774,8 +4795,6 @@ class AccountMoveLine(models.Model):
         debit_amount_residual_currency = 0.0
         credit_amount_residual = 0.0
         credit_amount_residual_currency = 0.0
-        debit_line_currency = None
-        credit_line_currency = None
 
         partials_vals_list = []
 
@@ -4787,13 +4806,7 @@ class AccountMoveLine(models.Model):
                 if not debit_line:
                     break
                 debit_amount_residual = debit_line.amount_residual
-
-                if debit_line.currency_id:
-                    debit_amount_residual_currency = debit_line.amount_residual_currency
-                    debit_line_currency = debit_line.currency_id
-                else:
-                    debit_amount_residual_currency = debit_amount_residual
-                    debit_line_currency = debit_line.company_currency_id
+                debit_amount_residual_currency = debit_line.amount_residual_currency
 
             # Move to the next available credit line.
             if not credit_line:
@@ -4801,79 +4814,119 @@ class AccountMoveLine(models.Model):
                 if not credit_line:
                     break
                 credit_amount_residual = credit_line.amount_residual
+                credit_amount_residual_currency = credit_line.amount_residual_currency
 
-                if credit_line.currency_id:
-                    credit_amount_residual_currency = credit_line.amount_residual_currency
-                    credit_line_currency = credit_line.currency_id
-                else:
-                    credit_amount_residual_currency = credit_amount_residual
-                    credit_line_currency = credit_line.company_currency_id
+            partial_amount = min(debit_amount_residual, -credit_amount_residual)
+            if debit_line.currency_id == credit_line.currency_id:
+                # Same currency.
 
-            min_amount_residual = min(debit_amount_residual, -credit_amount_residual)
-            has_debit_residual_left = not debit_line.company_currency_id.is_zero(debit_amount_residual) and debit_amount_residual > 0.0
-            has_credit_residual_left = not credit_line.company_currency_id.is_zero(credit_amount_residual) and credit_amount_residual < 0.0
-            has_debit_residual_curr_left = not debit_line_currency.is_zero(debit_amount_residual_currency) and debit_amount_residual_currency > 0.0
-            has_credit_residual_curr_left = not credit_line_currency.is_zero(credit_amount_residual_currency) and credit_amount_residual_currency < 0.0
-
-            if debit_line_currency == credit_line_currency:
-                # Reconcile on the same currency.
-
-                # The debit line is now fully reconciled because:
-                # - either amount_residual & amount_residual_currency are at 0.
-                # - either the credit_line is not an exchange difference one.
-                if not has_debit_residual_curr_left and (has_credit_residual_curr_left or not has_debit_residual_left):
-                    debit_line = None
-                    continue
-
-                # The credit line is now fully reconciled because:
-                # - either amount_residual & amount_residual_currency are at 0.
-                # - either the debit is not an exchange difference one.
-                if not has_credit_residual_curr_left and (has_debit_residual_curr_left or not has_credit_residual_left):
-                    credit_line = None
-                    continue
-
-                min_amount_residual_currency = min(debit_amount_residual_currency, -credit_amount_residual_currency)
-                min_debit_amount_residual_currency = min_amount_residual_currency
-                min_credit_amount_residual_currency = min_amount_residual_currency
-
+                min_amount_currency = min(debit_amount_residual_currency, -credit_amount_residual_currency)
+                partial_debit_amount_currency = min_amount_currency
+                partial_credit_amount_currency = min_amount_currency
             else:
-                # Reconcile on the company's currency.
+                # Multi-currencies.
 
-                # The debit line is now fully reconciled since amount_residual is 0.
-                if not has_debit_residual_left:
-                    debit_line = None
-                    continue
+                debit_rates = (debit_line.currency_id + debit_line.company_currency_id + credit_line.currency_id)\
+                    ._get_rates(debit_line.company_id, debit_line.date)
+                if debit_line.date == credit_line.date:
+                    credit_rates = debit_rates
+                else:
+                    credit_rates = (credit_line.currency_id + credit_line.company_currency_id + debit_line.currency_id)\
+                        ._get_rates(credit_line.company_id, credit_line.date)
 
-                # The credit line is now fully reconciled since amount_residual is 0.
-                if not has_credit_residual_left:
-                    credit_line = None
-                    continue
+                # In multi-currencies, we need to manage asymmetric rates to determine which line is higher than
+                # the other.
+                # For example:
+                # - at date1, debit_line is link to currency1 and has an higher rate than credit_line.
+                # - at date2, credit_line is link to currency2 and has an higher rate than debit_line.
+                # It means between date1 and date2, there is a date where the currency1 rate equals the currency2
+                # rate.
 
-                min_debit_amount_residual_currency = credit_line.company_currency_id._convert(
-                    min_amount_residual,
-                    debit_line.currency_id,
-                    credit_line.company_id,
-                    credit_line.date,
+                # If we manage both currencies independently, the user will be able to reconcile multiple times the
+                # same lines.
+                # For example:
+                # - at date1, debit_line = 100 euros and 150 usd.
+                # - at date2, credit_line = 80 euros and 160 usd.
+                # If we reconcile min(100, 80) = 80 euros and min(150, 160) = 150 usd, the residual amounts will
+                # be 20 euros for debit_line and 10 usd for credit_line.
+                # The problem is the user will be able to reconcile them a second time. This must not happen.
+
+                # Instead, determine which line has the biggest amount based on the average rate:
+                # - on the debit side, the average rate is (100 + 80) / 2 = 90. 100 / 90 = 1.111111111.
+                # - on the credit side, the average rate is (150 + 160) / 2 = 155. 160 / 155 = 1.032258065.
+                # Since 1.111111111 > 1.032258065, the debit_line is considered as strictly higher than credit_line.
+
+                debit_amount_residual_credit_currency = credit_line.currency_id.round(
+                    debit_amount_residual_currency
+                    * debit_rates[credit_line.currency_id.id]
+                    / debit_rates[debit_line.currency_id.id],
                 )
-                min_credit_amount_residual_currency = debit_line.company_currency_id._convert(
-                    min_amount_residual,
-                    credit_line.currency_id,
-                    debit_line.company_id,
-                    debit_line.date,
+                credit_amount_residual_debit_currency = debit_line.currency_id.round(
+                    credit_amount_residual_currency
+                    * credit_rates[debit_line.currency_id.id]
+                    / credit_rates[credit_line.currency_id.id],
                 )
 
-            debit_amount_residual -= min_amount_residual
-            debit_amount_residual_currency -= min_debit_amount_residual_currency
-            credit_amount_residual += min_amount_residual
-            credit_amount_residual_currency += min_credit_amount_residual_currency
+                min_debit_amount_residual_currency = min(debit_amount_residual_currency, -credit_amount_residual_debit_currency)
+                min_credit_amount_residual_currency = min(-credit_amount_residual_currency, debit_amount_residual_credit_currency)
 
-            partials_vals_list.append({
-                'amount': min_amount_residual,
-                'debit_amount_currency': min_debit_amount_residual_currency,
-                'credit_amount_currency': min_credit_amount_residual_currency,
-                'debit_move_id': debit_line.id,
-                'credit_move_id': credit_line.id,
-            })
+                debit_compare_amounts = debit_line.currency_id.compare_amounts(
+                    debit_amount_residual_currency,
+                    -credit_amount_residual_debit_currency,
+                )
+                credit_compare_amounts = credit_line.currency_id.compare_amounts(
+                    -credit_amount_residual_currency,
+                    debit_amount_residual_credit_currency,
+                )
+
+                debit_average_rate = (debit_rates[debit_line.currency_id.id] + credit_rates[debit_line.currency_id.id]) / 2.0
+                credit_average_rate = (debit_rates[credit_line.currency_id.id] + credit_rates[credit_line.currency_id.id]) / 2.0
+
+                if (debit_compare_amounts > 0 and credit_compare_amounts > 0) or (debit_compare_amounts < 0 and credit_compare_amounts < 0):
+                    debit_growing_ratio = debit_rates[debit_line.currency_id.id] / debit_average_rate
+                    credit_growing_ratio = credit_rates[credit_line.currency_id.id] / credit_average_rate
+                    if debit_growing_ratio > credit_growing_ratio:
+                        partial_debit_amount_currency = min_debit_amount_residual_currency
+                        partial_credit_amount_currency = -credit_amount_residual_currency
+                    else:
+                        partial_debit_amount_currency = debit_amount_residual_currency
+                        partial_credit_amount_currency = min_credit_amount_residual_currency
+                elif debit_compare_amounts > 0 and credit_compare_amounts < 0:
+                    partial_debit_amount_currency = debit_amount_residual_currency \
+                                                    * min_credit_amount_residual_currency \
+                                                    / debit_amount_residual_credit_currency
+                    partial_credit_amount_currency = min_credit_amount_residual_currency
+                elif debit_compare_amounts < 0 and credit_compare_amounts > 0:
+                    partial_debit_amount_currency = min_debit_amount_residual_currency
+                    partial_credit_amount_currency = -credit_amount_residual_currency \
+                                                     * min_debit_amount_residual_currency \
+                                                     / -credit_amount_residual_debit_currency
+                else:
+                    partial_debit_amount_currency = min_debit_amount_residual_currency
+                    partial_credit_amount_currency = min_credit_amount_residual_currency
+
+            debit_amount_residual -= partial_amount
+            debit_amount_residual_currency -= partial_debit_amount_currency
+            credit_amount_residual += partial_amount
+            credit_amount_residual_currency += partial_credit_amount_currency
+
+            empty_partial_amount = debit_line.company_currency_id.is_zero(partial_amount)
+            empty_partial_debit_amount_currency = debit_line.currency_id.is_zero(partial_debit_amount_currency)
+            empty_partial_credit_amount_currency = credit_line.currency_id.is_zero(partial_credit_amount_currency)
+
+            if not empty_partial_amount or not empty_partial_debit_amount_currency or not empty_partial_credit_amount_currency:
+                partials_vals_list.append({
+                    'amount': partial_amount,
+                    'debit_amount_currency': partial_debit_amount_currency,
+                    'credit_amount_currency': partial_credit_amount_currency,
+                    'debit_move_id': debit_line.id,
+                    'credit_move_id': credit_line.id,
+                })
+
+            if debit_line.currency_id.is_zero(debit_amount_residual_currency):
+                debit_line = None
+            if credit_line.currency_id.is_zero(credit_amount_residual_currency):
+                credit_line = None
 
         return partials_vals_list
 
@@ -4913,17 +4966,7 @@ class AccountMoveLine(models.Model):
                 exchange_diff_move_vals['date'] = max(exchange_diff_move_vals['date'], line.date)
 
                 if not line.company_currency_id.is_zero(line.amount_residual):
-                    # amount_residual_currency == 0 and amount_residual has to be fixed.
-
                     if line.amount_residual > 0.0:
-                        exchange_line_account = journal.company_id.expense_currency_exchange_account_id
-                    else:
-                        exchange_line_account = journal.company_id.income_currency_exchange_account_id
-
-                elif line.currency_id and not line.currency_id.is_zero(line.amount_residual_currency):
-                    # amount_residual == 0 and amount_residual_currency has to be fixed.
-
-                    if line.amount_residual_currency > 0.0:
                         exchange_line_account = journal.company_id.expense_currency_exchange_account_id
                     else:
                         exchange_line_account = journal.company_id.income_currency_exchange_account_id
@@ -4936,7 +4979,7 @@ class AccountMoveLine(models.Model):
                         'name': _('Currency exchange rate difference'),
                         'debit': -line.amount_residual if line.amount_residual < 0.0 else 0.0,
                         'credit': line.amount_residual if line.amount_residual > 0.0 else 0.0,
-                        'amount_currency': -line.amount_residual_currency,
+                        'amount_currency': 0.0,
                         'account_id': line.account_id.id,
                         'currency_id': line.currency_id.id,
                         'partner_id': line.partner_id.id,
@@ -4946,7 +4989,7 @@ class AccountMoveLine(models.Model):
                         'name': _('Currency exchange rate difference'),
                         'debit': line.amount_residual if line.amount_residual > 0.0 else 0.0,
                         'credit': -line.amount_residual if line.amount_residual < 0.0 else 0.0,
-                        'amount_currency': line.amount_residual_currency,
+                        'amount_currency': 0.0,
                         'account_id': exchange_line_account.id,
                         'currency_id': line.currency_id.id,
                         'partner_id': line.partner_id.id,
@@ -5174,22 +5217,21 @@ class AccountMoveLine(models.Model):
         for source_line, sequence in to_reconcile:
             exchange_diff_line = exchange_move.line_ids[sequence]
 
-            if source_line.company_currency_id.is_zero(source_line.amount_residual):
-                exchange_field = 'amount_residual_currency'
-            else:
-                exchange_field = 'amount_residual'
-
-            if exchange_diff_line[exchange_field] > 0.0:
+            if exchange_diff_line.amount_residual > 0.0:
                 debit_line = exchange_diff_line
                 credit_line = source_line
+                debit_amount_currency = abs(exchange_diff_line.amount_currency)
+                credit_amount_currency = 0.0
             else:
                 debit_line = source_line
                 credit_line = exchange_diff_line
+                debit_amount_currency = 0.0
+                credit_amount_currency = abs(exchange_diff_line.amount_currency)
 
             partials_vals_list.append({
                 'amount': abs(source_line.amount_residual),
-                'debit_amount_currency': abs(debit_line.amount_residual_currency),
-                'credit_amount_currency': abs(credit_line.amount_residual_currency),
+                'debit_amount_currency': debit_amount_currency,
+                'credit_amount_currency': credit_amount_currency,
                 'debit_move_id': debit_line.id,
                 'credit_move_id': credit_line.id,
             })
@@ -5269,11 +5311,7 @@ class AccountMoveLine(models.Model):
 
         # ==== Check if a full reconcile is needed ====
 
-        if involved_lines[0].currency_id and all(line.currency_id == involved_lines[0].currency_id for line in involved_lines):
-            is_full_needed = all(line.currency_id.is_zero(line.amount_residual_currency) for line in involved_lines)
-        else:
-            is_full_needed = all(line.company_currency_id.is_zero(line.amount_residual) for line in involved_lines)
-
+        is_full_needed = all(line.currency_id.is_zero(line.amount_residual_currency) for line in involved_lines)
         if is_full_needed:
 
             # ==== Create the exchange difference move ====
@@ -5292,7 +5330,7 @@ class AccountMoveLine(models.Model):
                     exchange_diff_partials = exchange_move_lines.matched_debit_ids \
                                              + exchange_move_lines.matched_credit_ids
                     involved_partials += exchange_diff_partials
-                    results['partials'] += exchange_diff_partials
+                    results['exchange_partials'] = exchange_diff_partials
 
                     exchange_move._post(soft=False)
 

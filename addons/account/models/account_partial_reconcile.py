@@ -42,11 +42,9 @@ class AccountPartialReconcile(models.Model):
     amount = fields.Monetary(
         currency_field='company_currency_id',
         help="Always positive amount concerned by this matching expressed in the company currency.")
-    debit_amount_currency = fields.Monetary(
-        currency_field='debit_currency_id',
+    debit_amount_currency = fields.Float(
         help="Always positive amount concerned by this matching expressed in the debit line foreign currency.")
-    credit_amount_currency = fields.Monetary(
-        currency_field='credit_currency_id',
+    credit_amount_currency = fields.Float(
         help="Always positive amount concerned by this matching expressed in the credit line foreign currency.")
 
     # ==== Other fields ====
