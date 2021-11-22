@@ -17,7 +17,7 @@ from odoo import http, tools, _, SUPERUSER_ID
 from odoo.addons.http_routing.models.ir_http import slug, unslug
 from odoo.addons.web_editor.tools import get_video_url_data
 from odoo.exceptions import UserError
-from odoo.modules.module import get_resource_path
+from odoo.modules.module import get_resource_path, load_manifest
 from odoo.tools.mimetypes import guess_mimetype
 from odoo.tools.image import image_data_uri, base64_to_image
 from odoo.addons.base.models.assetsbundle import AssetsBundle
@@ -56,7 +56,7 @@ class Web_Editor(http.Controller):
         # Make sure we have at least size=1
         size = max(1, min(size, 512))
         # Initialize font
-        addons_path = http.addons_manifest['web']['addons_path']
+        addons_path = load_manifest('web')['addons_path']
         font_obj = ImageFont.truetype(addons_path + font, size)
 
         # if received character is not a number, keep old behaviour (icon is character)

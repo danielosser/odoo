@@ -59,9 +59,9 @@ class Graph(dict):
         len_graph = len(self)
         for module in module_list:
             # This will raise an exception if no/unreadable descriptor file.
-            # NOTE The call to load_information_from_description_file is already
-            # done by db.initialize, so it is possible to not do it again here.
-            info = odoo.modules.module.load_information_from_description_file(module)
+            # NOTE The call to load_manifest is already done by db.initialize,
+            # so it is possible to not do it again here.
+            info = odoo.modules.module.load_manifest(module)
             if info and info['installable']:
                 packages.append((module, info)) # TODO directly a dict, like in get_modules_with_version
             elif module != 'studio_customization':

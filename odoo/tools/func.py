@@ -108,6 +108,27 @@ def compose(a, b):
         return a(b(*args, **kwargs))
     return wrapper
 
+def mockable(func):
+    """ Add a thin wrapper around the decorated function so it is
+    possible to mock it in tests. The returned wrapped function exposes
+    the original one via its ``func`` attribute which can be changed via
+    a :meth:~odoo.tests.common.BaseCase.patch:.
+
+    .. code:
+        @mockable
+        def foo():
+            return 'foo'
+
+        class SomeTest(BaseCase):
+            def test_foo():
+                self.patch(foo, 'func', Mock(side_effect=lambda: 'bar'))
+                self.assertEqual(foo(), 'bar')
+    """
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        return wrapped.func(*args, **kwargs)
+    wrapped.func = func
+    return wrapped
 
 class _ClassProperty(property):
     def __get__(self, cls, owner):
