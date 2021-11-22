@@ -2,7 +2,7 @@ Source: odoo
 Section: net
 Priority: optional
 Maintainer: Odoo S.A. <info@odoo.com>
-Uploaders: Aaron Bohy <aab@odoo.com>, Simon Lejeune <sle@odoo.com>
+Uploaders: Christophe Monniez <moc@odoo.com>
 Build-Depends: debhelper-compat (= 12), dh-python, python3, rsync, python3-setuptools
 Standards-Version: 4.5.0
 Homepage: http://www.odoo.com/
@@ -15,6 +15,7 @@ Depends:
  ${misc:Depends},
  ${python3:Depends},
  adduser,
+ debconf (>= 1.5.61),
  fonts-inconsolata,
  fonts-font-awesome,
  fonts-roboto-unhinted,
@@ -60,6 +61,8 @@ Recommends:
  ${python3:Recommends},
  postgresql,
  python3-ldap,
+Suggests:
+ nginx,
 Description: Open Source Apps To Grow Your Business
  Odoo, formerly known as OpenERP, is a suite of open-source business apps
  written in Python and released under the LGPLv3 license. This suite of
