@@ -20,8 +20,8 @@
             ==> Ou bien on s'en tape parce qu'ici c'est juste le string ?
              -->
             <field name="expression_ids" eval="[
-                (0, 0, {'total': 'main', 'engine': 'custom', 'formula': '_tax_report_engine_generic', 'subformula': 'sales.tax','date_scope': 'test'}),
-                (0, 0, {'total': 'forty_two', 'engine': 'custom', 'formula': 'test_oco_always_42', 'date_scope': 'test'}),
+                (0, 0, {'total': 'main', 'engine': 'custom', 'formula': '_tax_report_engine_generic', 'subformula': 'sales.tax'}),
+                (0, 0, {'total': 'forty_two', 'engine': 'custom', 'formula': 'test_oco_always_42'}),
             ]"/>
             <!--TODO OCO pour le control, on pourrait du coup mettre control_main, control_opt, ... EASY-->
             <field name="column_values">main, forty_two</field>

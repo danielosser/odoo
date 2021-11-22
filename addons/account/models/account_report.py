@@ -19,7 +19,6 @@ class AccountReport(models.Model):
     filter_date_range = fields.Boolean(string="Use Date Range", default=True) # TODO OCO remplace filter_date > True si range, False si date unique.
     allow_showing_draft = fields.Boolean(string="Allow Showing Draft Entries", default=True) #TODO OCO remplace filter_all_entries (qui n'est jamais passé à True, dirait-on)
     allow_comparison = fields.Boolean(string="Allow Comparison", default=True)
-    #TODO OCO filter_comparison
     #TODO OCO filter_journals
     #TODO OCO filter_analytic
     #TODO OCO unfold_all
@@ -46,19 +45,6 @@ class AccountReport(models.Model):
         default='always',
     )
     filter_tax_exigible = fields.Boolean(string="Only Tax Exigible Lines", default=False, required=True)
-    """
-    TODO OCO tags:
-
-    - changement de pays sur le rapport: on voit si on peut changer le pays des tags ou non.
-
-    - changement de pays sur les tags : recalculer les expr de rapport liées (le M2m est donc un champ calculé sur les tags ET sur les expressions)
-
-    - on check les tags pour les créer au besoin au create
-
-    - pas d'unlink
-
-    - pas d'édition de noms de tags ; une contrainte qui s'assure qu'il y a toujours des tags qui correspondent quand on change la formule d'une ligne de rapport
-    """
 
     def write(self, vals):
         #TODO OCO reDOC: tax tag management
@@ -102,7 +88,7 @@ class AccountReportLine(models.Model):
     column_values = fields.Char(string="Columns")#TODO OCO pas requis ? => Si pas set, prend les totaux de toutes les expressions, alors ? (et puis quand on a aucune expression, il faut voir)
     hierarchy_level = fields.Integer(string="Level", default=1, required=True)
     code = fields.Char(string="Code") # TODO OCO est-ce encore utile ?? On pourrait s'en sortir avec l'xmlid seul => non parce qu'incompréhensible dans la form view uniquement :/
-
+    unfoldable = fields.Boolean(string="Unfoldable", default=False)
 
     # TODO OCO ajouter le niveau de hiérarchie
     # TODO OCO ajouter invisible ?
