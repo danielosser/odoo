@@ -1280,6 +1280,134 @@ class TestFields(common.TransactionCase):
         self.assertEqual(attribute_record.company.foo, 'DEF')
         self.assertEqual(attribute_record.bar, 'DEFDEF')
 
+    def test_28_company_dependent_search(self):
+        """ Test the search on company-dependent fields in all corner cases.
+            This assumes that get_multi/set_multi are correct, and that
+            filtered_domain() correctly mimics the search.
+        """
+        Property = self.env['ir.property']
+        Model = self.env['test_new_api.company']
+        date1, date2 = date(2021, 11, 22), date(2021, 11, 23)
+        moment1, moment2 = datetime(2021, 11, 22), datetime(2021, 11, 23)
+        tag1, tag2 = self.env['test_new_api.multi.tag'].create([{'name': 'one'}, {'name': 'two'}])
+
+        # description of cases: (field_name, truthy_record_values, {operation: test_values})
+        CASES = [
+            # boolean fields
+            ('truth', [True, True], {
+                '=': (True, False),
+                '!=': (True, False),
+            }),
+            # integer fields
+            ('count', [10, -2], {
+                '=': (10, -2, 0, False),
+                '!=': (10, -2, 0, False),
+                '<': (10, -2, 0),
+                '>=': (10, -2, 0),
+                '<=': (10, -2, 0),
+                '>': (10, -2, 0),
+            }),
+            # float fields
+            ('phi', [1.61803, -1], {
+                '=': (1.61803, -1, 0, False),
+                '!=': (1.61803, -1, 0, False),
+                '<': (1.61803, -1, 0),
+                '>=': (1.61803, -1, 0),
+                '<=': (1.61803, -1, 0),
+                '>': (1.61803, -1, 0),
+            }),
+            # char fields
+            ('foo', ['qwer', 'azer'], {
+                'like': ('qwer', 'azer'),
+                'ilike': ('qwer', 'azer'),
+                'not like': ('qwer', 'azer'),
+                'not ilike': ('qwer', 'azer'),
+                '=': ('qwer', 'azer', False),
+                '!=': ('qwer', 'azer', False),
+                'not in': (['qwer', 'azer'], ['qwer', False], [False], []),
+                'in': (['qwer', 'azer'], ['qwer', False], [False], []),
+            }),
+            # date fields
+            ('date', [date1, date2], {
+                '=': (date1, date2, False),
+                '!=': (date1, date2, False),
+                '<': (date1, date2),
+                '>=': (date1, date2),
+                '<=': (date1, date2),
+                '>': (date1, date2),
+            }),
+            # datetime fields
+            ('moment', [moment1, moment2], {
+                '=': (moment1, moment2, False),
+                '!=': (moment1, moment2, False),
+                '<': (moment1, moment2),
+                '>=': (moment1, moment2),
+                '<=': (moment1, moment2),
+                '>': (moment1, moment2),
+            }),
+            # many2one fields
+            ('tag_id', [tag1.id, tag2.id], {
+                'like': (tag1.name, tag2.name),
+                'ilike': (tag1.name, tag2.name),
+                'not like': (tag1.name, tag2.name),
+                'not ilike': (tag1.name, tag2.name),
+                '=': (tag1.id, tag2.id, False),
+                '!=': (tag1.id, tag2.id, False),
+                'in': ([tag1.id, tag2.id], [tag2.id, False], [False], []),
+                'not in': ([tag1.id, tag2.id], [tag2.id, False], [False], []),
+            }),
+        ]
+
+        def run_case(field_name, records, operators, default=None):
+            for operator, values in operators.items():
+                for value in values:
+                    domain = [(field_name, operator, value)]
+                    with self.subTest(domain=domain, default=default):
+                        search_result = Model.search([('id', 'in', records.ids)] + domain)
+                        filter_result = records.filtered_domain(domain)
+                        self.assertEqual(
+                            search_result, filter_result,
+                            f"Got values {[r[field_name] for r in search_result]} "
+                            f"instead of {[r[field_name] for r in filter_result]}",
+                        )
+
+        # create 4 records for all tests: two with explicit truthy values, one
+        # with an explicit falsy value, and one without an explicit value
+        records = Model.create([{}] * 4)
+
+        for field_name, values, operators in CASES:
+            # set ir.properties to all records except the last one
+            Property.set_multi(
+                field_name, Model._name,
+                {rec.id: val for rec, val in zip(records, values + [False])},
+                # Using this sentinel for 'default_value' forces the method to
+                # create 'ir.property' records for the value False. Without it,
+                # no property would be created because False is the default
+                # value.
+                default_value=object(),
+            )
+
+            # test without default value
+            run_case(field_name, records, operators)
+
+            # set default value to False
+            ir_field = self.env['ir.model.fields']._get(Model._name, field_name)
+            prop = Property.create({
+                'name': ir_field.name,
+                'type': ir_field.ttype,
+                'fields_id': ir_field.id,
+                'value': False,
+            })
+            prop.flush()
+            prop.invalidate_cache()
+            run_case(field_name, records, operators, False)
+
+            # set default value to values[0]
+            prop.write({'value': values[0]})
+            prop.flush()
+            prop.invalidate_cache()
+            run_case(field_name, records, operators, values[0])
+
     def test_30_read(self):
         """ test computed fields as returned by read(). """
         discussion = self.env.ref('test_new_api.discussion_0')
