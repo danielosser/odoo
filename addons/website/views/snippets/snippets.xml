@@ -1067,7 +1067,7 @@
             <we-button data-select-class="container"
                        data-img="/website/static/src/img/snippets_options/content_width_normal.svg"
                        title="Regular"/>
-            <we-button data-select-class="container-fluid"
+            <we-button data-dependencies="!layout_fluid_opt" data-select-class="container-fluid"
                        data-img="/website/static/src/img/snippets_options/content_width_full.svg"
                        title="Full"/>
         </we-button-group>
@@ -1287,6 +1287,7 @@
             <we-button data-customize-website-variable="'boxed'">Boxed</we-button>
             <we-button data-customize-website-variable="'framed'">Framed</we-button>
             <we-button data-customize-website-variable="'postcard'">Postcard</we-button>
+            <we-button data-customize-website-variable="'fluid'" data-name="layout_fluid_opt">Fluid</we-button>
         </we-select>
         <we-row string="⌙ Background" data-no-preview="true">
             <we-colorpicker data-dependencies="!layout_full_opt"

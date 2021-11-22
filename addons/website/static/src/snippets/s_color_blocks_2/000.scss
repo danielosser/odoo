@@ -1,4 +1,6 @@
 .s_color_blocks_2 {
+    @include print-variable(o-we-fluid-col-padding, 2%);
+
     // Needed to be able to stretch the inner container so that
     // the snippet works with the 50% and 100% height
     &.o_half_screen_height, &.o_full_screen_height {

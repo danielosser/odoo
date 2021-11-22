@@ -94,6 +94,11 @@ $-seen-urls: ();
     @include print-variable('custom-colors', $custom-colors);
 }
 
+:root {
+    // Layout Settings
+    @include print-variable(o-we-fluid-col-padding, 0);
+}
+
 #wrapwrap {
     @if o-website-value('body-image') {
         background-image: url("/#{str-slice(o-website-value('body-image'), 2)}");
@@ -108,7 +113,7 @@ $-seen-urls: ();
         }
     }
 
-    @if o-website-value('layout') != 'full' {
+    @if o-website-value('layout') != 'full' and o-website-value('layout') != 'fluid' {
         > main {
             background-color: o-color('o-cc1-bg');
         }
@@ -180,6 +185,24 @@ $-seen-urls: ();
                 .o_footer_copyright {
                     @include border-bottom-radius($-inner-border-radius);
                 }
+            }
+        }
+    } @else if o-website-value('layout') == 'fluid' {
+        header#top > nav {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .o_container_small {
+            @include media-breakpoint-up(md) {
+                max-width: 80%;
+            }
+        }
+
+        [class*="s_"] .container-fluid > .row {
+            > .col, > [class*="col-"] {
+                padding-right: var(--o-we-fluid-col-padding);
+                padding-left: var(--o-we-fluid-col-padding);
             }
         }
     }
@@ -353,8 +376,10 @@ font[class*='bg-'] {
 // Smaller container
 .o_container_small {
     @extend .container;
-    @include media-breakpoint-up(lg) {
-        max-width: map-get($container-max-widths, md);
+    @if o-website-value('layout') != 'fluid' {
+        @include media-breakpoint-up(lg) {
+            max-width: map-get($container-max-widths, md);
+        }
     }
 }
 
