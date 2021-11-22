@@ -1185,6 +1185,17 @@ class Task(models.Model):
             {'sequence': 7, 'name': _('Canceled'), 'user_id': user_id, 'fold': True},
         ]
 
+    @api.model
+    def create(self, vals):
+        print('hhhhhhhhhhhhhhhhh')
+        # Prevent double project creation
+        # self = self.with_context(mail_create_nosubscribe=True)
+        task = super(Task, self).create(vals)
+        # if project.privacy_visibility == 'portal' and project.partner_id:
+        #     project.message_subscribe(project.partner_id.ids)
+        print('task...................', task)
+        return task
+
     def _populate_missing_personal_stages(self):
         # Assign the default personal stage for those that are missing
         personal_stages_without_stage = self.env['project.task.stage.personal'].sudo().search([('task_id', 'in', self.ids), ('stage_id', '=', False)])
@@ -1212,8 +1223,8 @@ class Task(models.Model):
         print('self...e........',self)
         if self.child_ids:
             print('child_ids...',self.child_ids)
-        if subtype_ids:
-            print('self...........', self)
+        # if subtype_ids:
+        #     print('self...........', self)
         if not subtype_ids:
             print("keriiiiiiiii")
             project_followers = self.project_id.message_follower_ids.filtered(lambda f: f.partner_id.id in partner_ids)
