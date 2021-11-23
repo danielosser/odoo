@@ -647,8 +647,7 @@
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()" />
                                 <div class="js_product js_main_product mb-3">
                                     <div>
-                                        <t t-set="current_description_sale" t-value="combination_info['description_sale']"/>
-                                        <p t-field="product.description_sale"/>
+                                        <span id="product_description_sale" t-esc="combination_info['description_sale']"/>
                                     </div>
                                     <div>
                                         <t t-call="website_sale.product_price" />

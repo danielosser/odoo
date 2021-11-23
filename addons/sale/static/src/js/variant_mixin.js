@@ -472,6 +472,10 @@ var VariantMixin = {
         }
         this._toggleDisable($parent, isCombinationPossible);
 
+        if (combination.description_sale) {
+            $parent.find('#product_description_sale').text(combination.description_sale);
+        }
+
         if (combination.has_discounted_price) {
             $default_price
                 .closest('.oe_website_sale')
