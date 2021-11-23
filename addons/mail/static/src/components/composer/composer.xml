@@ -84,9 +84,9 @@
                         composerViewLocalId="composerView.localId"
                         hasMentionSuggestionsBelowPosition="props.hasMentionSuggestionsBelowPosition"
                         isCompact="props.isCompact"
-                        sendShortcuts="props.textInputSendShortcuts"
                         onComposerTextInputSendShortcut="_onComposerTextInputSendShortcut"
                         onPaste="_onPasteTextInput"
+                        t-on-o-composer-text-input-send-shortcut="_onComposerTextInputSendShortcut"
                         t-key="composerView.localId"
                         t-ref="textInput"
                     />
