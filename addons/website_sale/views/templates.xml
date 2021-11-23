@@ -643,10 +643,13 @@
                                     </t>
                                 </a>
                             </t>
-                            <p t-field="product.description_sale" class="text-muted my-2" placeholder="A short description that will also appear on documents." />
                             <form t-if="product._is_add_to_cart_possible()" action="/shop/cart/update" method="POST">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()" />
                                 <div class="js_product js_main_product mb-3">
+                                    <div>
+                                        <t t-set="current_description_sale" t-value="combination_info['description_sale']"/>
+                                        <p t-field="product.description_sale"/>
+                                    </div>
                                     <div>
                                         <t t-call="website_sale.product_price" />
                                         <small class="ml-1 text-muted o_base_unit_price_wrapper d-none" groups="website_sale.group_show_uom_price">

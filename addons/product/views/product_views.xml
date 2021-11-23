@@ -290,6 +290,9 @@
                                     context="{'tree_view_ref':'product.product_packaging_tree_view2'}"/>
                             </group>
                         </group>
+                        <group name="sale_description" string="Sales Description">
+                            <field name="description_sale" nolabel="1"/>
+                        </group>
                     </sheet>
                 </form>
             </field>
