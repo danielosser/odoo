@@ -932,7 +932,7 @@ class Request:
         self.session.update({
             'login': login,
             'uid': uid,
-            'context': self.env.context,
+            'context': submap(self.env.context, ['lang']),
             'session_token': self.env.user._compute_session_token(self.session_id),
         })
 
