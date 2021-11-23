@@ -1,7 +1,8 @@
 /** @odoo-module **/
 
 import { registerModel } from '@mail/model/model_core';
-import { attr } from '@mail/model/model_field';
+import { attr, one2one } from '@mail/model/model_field';
+import { clear, insertAndReplace } from '@mail/model/model_field_command';
 
 registerModel({
     name: 'mail.messaging_menu',
@@ -52,6 +53,16 @@ registerModel({
             const notificationPemissionCounter = this.messaging.isNotificationPermissionDefault ? 1 : 0;
             return inboxCounter + unreadChannelsCounter + notificationGroupsCounter + notificationPemissionCounter;
         },
+        /**
+         * @private
+         * @returns {MobileMessagingNavbarView|undefined}
+         */
+         _computeMobileMessagingNavbarView() {
+            if (this.messaging.device && this.messaging.device.isMobile) {
+                return insertAndReplace()
+            }
+            return clear();
+        },
     },
     fields: {
         /**
@@ -80,6 +91,11 @@ registerModel({
          */
         isOpen: attr({
             default: false,
+        }),
+        mobileMessagingNavbarView: one2one('MobileMessagingNavbarView', {
+            compute: '_computeMobileMessagingNavbarView',
+            inverse: 'messagingMenu',
+            isCausal: true,
         }),
     },
 });
