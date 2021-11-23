@@ -54,6 +54,7 @@ class Project(models.Model):
         default=_default_timesheet_product_id)
     warning_employee_rate = fields.Boolean(compute='_compute_warning_employee_rate')
     partner_id = fields.Many2one(compute='_compute_partner_id', store=True, readonly=False)
+    allocated_hours = fields.Float("Allocated Hours", compute='_compute_allocated_hours')
 
     @api.depends('sale_line_id', 'sale_line_employee_ids', 'allow_billable')
     def _compute_pricing_type(self):
@@ -333,6 +334,7 @@ class Project(models.Model):
             'value': remaining,
             'color': 'red' if remaining < 0 else 'black',
         }
+        print('sold items.............',sold_items)
         return sold_items
 
     def _get_profitability_items(self):

@@ -33,6 +33,15 @@
                 <!-- To be removed in master -->
                 <button name="action_make_billable" string="Create Sales Order" type="object" groups="sales_team.group_sale_salesman" invisible="1"/>
             </xpath>
+            <xpath expr="//field[@name='date_start']" position="after">
+<!--                <div class="o_td_label">-->
+<!--                    <label for="allocated_hours" string="Allocated Hours"-->
+<!--                           attrs="{'invisible': [('encode_uom_in_days', '=', True)]}"/>-->
+<!--                    <label for="allocated_hours" string="Allocated Days"-->
+<!--                           attrs="{'invisible': [('encode_uom_in_days', '=', False)]}"/>-->
+<!--                </div>-->
+                <field name="allocated_hours" widget="timesheet_uom_no_toggle"/>
+            </xpath>
             <xpath expr="//page[@name='settings']" position="after">
                 <page name="billing_employee_rate" string="Invoicing" attrs="{'invisible': ['|', ('allow_billable', '=', False), ('partner_id', '=', False)]}">
                     <group>
