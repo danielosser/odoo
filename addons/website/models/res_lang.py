@@ -16,7 +16,6 @@ class Lang(models.Model):
         return super(Lang, self).write(vals)
 
     @api.model
-    @tools.ormcache_context(keys=("website_id",))
     def get_available(self):
         if request and getattr(request, 'is_frontend', True):
             return self.env['website'].get_current_website().language_ids.get_sorted()
