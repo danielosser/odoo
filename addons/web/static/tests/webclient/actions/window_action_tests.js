@@ -2403,4 +2403,19 @@ QUnit.module("ActionManager", (hooks) => {
 
         assert.verifySteps(["/web/dataset/search_read"]);
     });
+
+    QUnit.test("action group_by of type string", async function (assert) {
+        assert.expect(2);
+        serverData.views["partner,false,pivot"] = `<pivot/>`;
+        const webClient = await createWebClient({ serverData });
+        await doAction(webClient, {
+            name: "Partner",
+            res_model: "partner",
+            type: "ir.actions.act_window",
+            views: [[3, "pivot"]],
+            context: { group_by: "foo" },
+        });
+        assert.containsOnce(webClient, ".o_pivot_view");
+        assert.containsN(webClient, ".o_pivot_view tbody th", 6);
+    });
 });

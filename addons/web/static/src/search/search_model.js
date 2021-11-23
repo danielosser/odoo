@@ -1591,8 +1591,7 @@ export class SearchModel extends EventBus {
                 }
             }
         }
-        const groupBy = groupBys.length ? groupBys : this.globalGroupBy.slice();
-        return typeof groupBy === "string" ? [groupBy] : groupBy;
+        return groupBys.length ? groupBys : this.globalGroupBy.slice();
     }
 
     /**
