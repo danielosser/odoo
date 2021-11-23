@@ -499,21 +499,71 @@ class AccountEdiFormat(models.Model):
         :param vat:     The vat number of the partner.
         :returns:       A partner or an empty recordset if not found.
         '''
-        domains = []
-        for value, domain in (
-            (name, [('name', 'ilike', name)]),
-            (phone, expression.OR([[('phone', '=', phone)], [('mobile', '=', phone)]])),
-            (mail, [('email', '=', mail)]),
-            (vat, [('vat', 'like', vat)]),
-        ):
-            if value is not None:
-                domains.append(domain)
+        def search_with_vat(extra_domain):
+            if not vat:
+                return None
 
-        domain = expression.AND([
-            expression.OR(domains),
-            [('company_id', 'in', [False, self.env.company.id])],
-        ])
-        return self.env['res.partner'].search(domain, limit=1)
+            # Sometimes, the vat is specified with some whitespaces.
+            normalized_vat = vat.replace(' ', '')
+
+            # Country prefix is optional.
+            country_prefix = normalized_vat[:2]
+            if country_prefix.isalpha():
+                normalized_vat = normalized_vat[2:]
+
+            try:
+                # We want to remove the zeros at the beginning of normalized_vat if it only consists of digits".
+                normalized_vat = str(int(normalized_vat))
+            except ValueError:
+                pass
+
+            query = self.env['res.partner']._where_calc([('active', '=', True)], extra_domain)
+            tables, where_clause, where_params = query.get_sql()
+
+            self._cr.execute(f'''
+                SELECT res_partner.id
+                FROM {tables}
+                WHERE {where_clause}
+                AND res_partner.vat ~ %s
+                LIMIT 1
+            ''', where_params + ['^([A-z]{2})?0*%s$' % normalized_vat])
+            partner_row = self._cr.fetchone()
+            return self.env['res.partner'].browse(partner_row[0]) if partner_row else None
+
+        def search_with_phone_mail(extra_domain):
+            domains = []
+            if phone:
+                domains.append([('phone', '=', phone)])
+                domains.append([('mobile', '=', phone)])
+            if mail:
+                domains.append([('email', '=', mail)])
+
+            if not domains:
+                return None
+
+            domain = expression.OR(domains)
+            if extra_domain:
+                domain = expression.AND([domain, extra_domain])
+            return self.env['res.partner'].search(domain, limit=1)
+
+        def search_with_name(extra_domain):
+            if not name:
+                return None
+            return self.env['res.partner'].search([('name', 'ilike', name)] + extra_domain, limit=1)
+
+        for extra_domain, search_method in [
+            ([('company_id', '=', self.env.company.id)], search_with_vat),
+            ([('company_id', '=', False)], search_with_vat),
+            ([('company_id', '=', self.env.company.id)], search_with_phone_mail),
+            ([('company_id', '=', False)], search_with_phone_mail),
+            ([('company_id', '=', self.env.company.id)], search_with_name),
+            ([('company_id', '=', False)], search_with_name),
+        ]:
+            partner = search_method(extra_domain)
+            if partner:
+                return partner
+
+        return self.env['res.partner']
 
     def _retrieve_product(self, name=None, default_code=None, barcode=None):
         '''Search all products and find one that matches one of the parameters.
