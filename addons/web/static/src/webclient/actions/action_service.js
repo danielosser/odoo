@@ -706,9 +706,10 @@ function makeActionManager(env) {
                 currentController.getGlobalState() // what if this = {}?
             );
         }
-        if (controller.action.globalState) {
+        if (!controller.isLazy && controller.action.globalState) {
             controller.props.globalState = controller.action.globalState;
         }
+        delete controller.isLazy;
 
         const closingProm = _executeCloseAction();
 
@@ -814,6 +815,7 @@ function makeActionManager(env) {
                 view: lazyView,
                 views,
                 ..._getViewInfo(lazyView, action, views),
+                // isLazy: true,
             };
         }
 
