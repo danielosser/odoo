@@ -96,7 +96,7 @@ class AccountAccount(models.Model):
     ]
 
     non_trade = fields.Boolean(default=False,
-                               help="If set, this account will belong to Non-Trade Receivable/Payable in reports and filters.\n"
+                               help="If set, this account will belong to Non Trade Receivable/Payable in reports and filters.\n"
                                     "If not, this account will belong to Trade Receivable/Payable in reports and filters.")
 
     @api.constrains('reconcile', 'internal_group', 'tax_ids')

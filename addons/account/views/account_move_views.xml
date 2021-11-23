@@ -364,8 +364,8 @@
                     <separator/>
                     <filter string="Payable" domain="[('account_id.internal_type', '=', 'payable'), ('account_id.non_trade', '=', False)]" help="From Trade Payable accounts" name="trade_payable"/>
                     <filter string="Receivable" domain="[('account_id.internal_type', '=', 'receivable'), ('account_id.non_trade', '=', False)]" help="From Trade Receivable accounts" name="trade_receivable"/>
-                    <filter string="Non-Trade Payable" domain="[('account_id.internal_type', '=', 'payable'), ('account_id.non_trade', '=', True)]" help="From Non-Trade Receivable accounts" name="non_trade_payable"/>
-                    <filter string="Non-Trade Receivable" domain="[('account_id.internal_type', '=', 'receivable'), ('account_id.non_trade', '=', True)]" help="From Non-Trade Receivable accounts" name="non_trade_receivable"/>
+                    <filter string="Non Trade Payable" domain="[('account_id.internal_type', '=', 'payable'), ('account_id.non_trade', '=', True)]" help="From Non Trade Receivable accounts" name="non_trade_payable"/>
+                    <filter string="Non Trade Receivable" domain="[('account_id.internal_type', '=', 'receivable'), ('account_id.non_trade', '=', True)]" help="From Non Trade Receivable accounts" name="non_trade_receivable"/>
                     <separator/>
                     <filter string="Date" name="date" date="date"/>
                     <separator/>
