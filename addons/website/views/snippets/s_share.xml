@@ -27,7 +27,7 @@
 
 <template id="s_share_options" inherit_id="website.snippet_options">
     <xpath expr="." position="inside">
-        <div data-selector=".s_share">
+        <div data-selector=".s_share"> <!-- TODO create a class for this shared options-->
             <we-select string="Title Position" data-apply-to=".s_share_title">
                 <we-button data-select-class="d-block">Top</we-button>
                 <we-button data-select-class="">Left</we-button>

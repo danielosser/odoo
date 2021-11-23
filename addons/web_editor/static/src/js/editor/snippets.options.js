@@ -1962,6 +1962,7 @@ const ListUserValueWidget = UserValueWidget.extend({
             this.containerEl.appendChild(this.addItemButton);
         }
         currentValues.forEach(value => {
+            // on parcours Toutes les valeurs
             if (typeof value === 'object') {
                 const recordData = value;
                 const { id, display_name } = recordData;
@@ -2016,7 +2017,7 @@ const ListUserValueWidget = UserValueWidget.extend({
         if (id) {
             inputEl.name = id;
         }
-        if (recordData) {
+        if (recordData) { // recordData = {selected: true} => Maybe here i can toggle depending on the value
             for (const key of Object.keys(recordData)) {
                 inputEl.dataset[key] = recordData[key];
             }
@@ -2032,8 +2033,8 @@ const ListUserValueWidget = UserValueWidget.extend({
         if (this.hasDefault) {
             const checkboxEl = document.createElement('we-button');
             checkboxEl.classList.add('o_we_user_value_widget', 'o_we_checkbox_wrapper');
-            if (this.selected.includes(id)) {
-                checkboxEl.classList.add('active');
+            if (this.selected.includes(id) || (recordData && recordData.is_toggled)) {
+                checkboxEl.classList.add('active'); // C'est ceci qui coche le toggle
             }
             const div = document.createElement('div');
             const checkbox = document.createElement('we-checkbox');
@@ -2045,7 +2046,9 @@ const ListUserValueWidget = UserValueWidget.extend({
             trEl.appendChild(checkboxTdEl);
         }
         const buttonTdEl = document.createElement('td');
-        buttonTdEl.appendChild(buttonEl);
+        if (!recordData || !recordData.undeletable) {
+            buttonTdEl.appendChild(buttonEl);
+        }
         trEl.appendChild(buttonTdEl);
         this.listTable.appendChild(trEl);
     },
@@ -2078,6 +2081,7 @@ const ListUserValueWidget = UserValueWidget.extend({
                 id: isNaN(idInt) ? id : idInt,
                 name: el.value,
                 display_name: el.value,
+                el_name: el.name,
             }, el.dataset);
         });
         if (this.hasDefault) {
@@ -2090,6 +2094,7 @@ const ListUserValueWidget = UserValueWidget.extend({
             });
             values.forEach(v => {
                 v.selected = this.selected.includes(v.id);
+                v.is_toggled = this.selected.includes(v.el_name);
             });
         }
         this._value = JSON.stringify(values);
@@ -2131,7 +2136,17 @@ const ListUserValueWidget = UserValueWidget.extend({
      * @private
      */
     _onAddCustomItemClick() {
-        this._addItemToTable();
+        if (this.el.dataset.defaultValue === 'https://www.exemple.com') {
+            console.log('setting a brand new element')
+            const id = Math.random().toString(36).substring(2, 15);
+            const recordData = {
+                undeletable: false,
+                is_toggled: true,
+            };
+            this._addItemToTable(id, this.el.dataset.defaultValue, recordData);
+        } else {
+            this._addItemToTable();
+        }
         this._notifyCurrentState();
     },
     /**

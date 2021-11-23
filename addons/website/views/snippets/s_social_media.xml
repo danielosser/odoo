@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<template id="s_social_media" name="Social Media">
+    <div t-attf-class="s_share s_social_media text-left #{_classes}">
+        <h4 class="s_share_title">Social Media</h4> <!-- TODO change className -->
+        <a data-social-id="social_facebook" href="/website/social/facebook" t-attf-class="#{_link_classes}" target="_blank">
+            <i t-attf-class="fa fa-facebook #{not _link_classes and 'rounded shadow-sm'}"/>
+        </a>
+        <a data-social-id="social_twitter" href="/website/social/twitter" t-attf-class="#{_link_classes}" target="_blank">
+            <i t-attf-class="fa fa-twitter #{not _link_classes and 'rounded shadow-sm'}"/>
+        </a>
+        <a data-social-id="social_linkedin" href="/website/social/linkedin" t-attf-class="#{_link_classes}" target="_blank">
+            <i t-attf-class="fa fa-linkedin #{not _link_classes and 'rounded shadow-sm'}"/>
+        </a>
+        <a data-social-id="social_youtube" href="/website/social/youtube" t-attf-class="#{_link_classes}" target="_blank">
+            <i t-attf-class="fa fa-youtube #{not _link_classes and 'rounded shadow-sm'}"/>
+        </a>
+        <a data-social-id="social_instagram" href="/website/social/instagram" t-attf-class="#{_link_classes}" target="_blank">
+            <i t-attf-class="fa fa-instagram #{not _link_classes and 'rounded shadow-sm'}"/>
+        </a>
+        <a data-social-id="social_github" href="/website/social/github" class="#{_link_classes}" target="_blank">
+            <i t-attf-class="fa fa-github #{not _link_classes and 'rounded shadow-sm'}"/>
+        </a>
+<!--         <a href="mailto:?body={url}&amp;subject={title}" t-attf-class="s_share_email #{_link_classes}">
+            <i t-attf-class="fa fa-envelope #{not _link_classes and 'rounded shadow-sm'}"/> Do we consider mail as a social media?
+        </a> -->
+    </div>
+</template>
+
+<template id="s_social_media_options" inherit_id="website.snippet_options">
+    <xpath expr="." position="inside">
+        <div data-js="SocialMedia" data-selector=".s_social_media"> <!-- TODO create a class for this specific options-->            
+            <we-list    string="Social Networks"
+                        data-add-item-title="Add New Social Network"
+                        data-render-list-items=""
+                        data-has-default="multiple"
+                        data-defaults="[]"
+                        data-default-value="https://www.exemple.com" />
+        </div>
+    </xpath>
+</template>
+
+</odoo>

@@ -1118,6 +1118,7 @@ options.registry.WebsiteFieldEditor = FieldEditor.extend({
             case 'toggleRequired':
                 return this.$target[0].classList.contains(params.activeValue) ? params.activeValue : 'false';
             case 'renderListItems':
+                console.log('listItems=>', this._getListItems());
                 return JSON.stringify(this._getListItems());
             case 'setVisibilityDependency':
                 return this.$target[0].dataset.visibilityDependency || '';
@@ -1302,7 +1303,7 @@ options.registry.WebsiteFieldEditor = FieldEditor.extend({
             return isNaN(idInt) ? el.value : idInt;
         });
         list.dataset.defaults = JSON.stringify(defaults);
-
+        console.log("defaults set with", defaults);
         if (!this._isFieldCustom()) {
             await this._fetchFieldRecords(field);
             list.dataset.availableRecords = JSON.stringify(field.records);
@@ -1382,6 +1383,7 @@ options.registry.WebsiteFieldEditor = FieldEditor.extend({
         return options.map(opt => {
             const id = parseInt(opt.value);
             const name = select ? opt : opt.nextElementSibling;
+            console.log('Here selected = ', select ? opt.selected : opt.checked)
             return {
                 id: isNaN(id) ? opt.value : id,
                 display_name: name.textContent.trim(),
