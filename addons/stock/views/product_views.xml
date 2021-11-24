@@ -154,7 +154,7 @@
                     <field name="type"/>
                 </xpath>
                 <xpath expr="//div[@name='product_lst_price']" position="after">
-                    <div t-if="record.type.raw_value == 'product'">On hand: <field name="qty_available"/> <field name="uom_id"/></div>
+                    <div t-if="record.type.raw_value == 'product' and record.product_variant_count.raw_value &lt;= 1">On hand: <field name="qty_available"/> <field name="uom_id"/></div>
                 </xpath>
             </field>
         </record>
@@ -311,7 +311,7 @@
                     <div name="button_box" position="inside">
                         <button type="object"
                             name="action_open_quants"
-                            attrs="{'invisible':[('type', '!=', 'product')]}"
+                            attrs="{'invisible':['|', ('type', '!=', 'product'), ('product_variant_count', '&gt;', 1)]}"
                             class="oe_stat_button" icon="fa-cubes">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_value" widget="statinfo">
@@ -323,7 +323,7 @@
                         </button>
                         <button type="object"
                             name="action_product_tmpl_forecast_report"
-                            attrs="{'invisible':[('type', '!=', 'product')]}"
+                            attrs="{'invisible':['|', ('type', '!=', 'product'), ('product_variant_count', '&gt;', 1)]}"
                             context="{'default_product_tmpl_id': id}"
                             class="oe_stat_button" icon="fa-cubes">
                             <div class="o_field_widget o_stat_info">
