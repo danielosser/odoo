@@ -40,7 +40,7 @@
                 (0, 0, {'total': 'main', 'engine': 'domain', 'formula': &quot;[('account_id.user_type_id.internal_group', '=', 'income')]&quot;, 'subformula': 'count_rows'}),
                 (0, 0, {'total': 'forty_two', 'engine': 'domain', 'formula': &quot;[('account_id.user_type_id.internal_group', '=', 'income')]&quot;, 'subformula': 'sum'}),
             ]"/>
-            <field name="unfoldable" eval="True"/>
+            <field name="unfoldable" eval="False"/>
             <!--TODO OCO pour le control, on pourrait du coup mettre control_main, control_opt, ... EASY-->
             <field name="column_values">main, forty_two</field>
             <field name="sequence">2</field>
@@ -61,6 +61,50 @@
             <!--TODO OCO pour le control, on pourrait du coup mettre control_main, control_opt, ... EASY-->
             <field name="column_values">forty_two, forty_two</field>
             <field name="sequence">2</field>
+        </record>
+
+        <!--TODO OCO TEST -->
+        <record id="oco_test_line_sub1_main" model="account.report.line">
+            <field name="name">test sub line - MAIN</field>
+            <field name="report_id" ref="generic_tax_report"/>
+            <field name="unfoldable" eval="True"/>
+            <field name="hierarchy_level">1</field>
+            <field name="sequence">3</field>
+        </record>
+
+        <!--TODO OCO TEST -->
+        <record id="oco_test_line_sub1_sub1" model="account.report.line">
+            <field name="name">test sub line - SUB1</field>
+            <field name="report_id" ref="generic_tax_report"/>
+            <field name="expression_ids" eval="[(5, 0, 0),
+                (0, 0, {'total': 'main', 'engine': 'custom', 'formula': '_tax_report_engine_generic', 'subformula': 'sales.tax'}),
+                (0, 0, {'total': 'forty_two', 'engine': 'custom', 'formula': 'test_oco_always_42'}),
+            ]"/>
+            <field name="unfoldable" eval="True"/>
+            <field name="column_values">main, forty_two</field>
+            <field name="hierarchy_level">2</field>
+            <field name="sequence">4</field>
+        </record>
+
+        <record id="oco_test_line_sub1_sub1-sub" model="account.report.line">
+            <field name="name">test sub line - SUB1 -SUB</field>
+            <field name="report_id" ref="generic_tax_report"/>
+            <field name="unfoldable" eval="False"/>
+            <field name="hierarchy_level">3</field>
+            <field name="sequence">5</field>
+        </record>
+
+        <record id="oco_test_line_sub1_sub2" model="account.report.line">
+            <field name="name">test sub line - SUB2</field>
+            <field name="report_id" ref="generic_tax_report"/>
+            <field name="expression_ids" eval="[(5, 0, 0),
+                (0, 0, {'total': 'main', 'engine': 'custom', 'formula': '_tax_report_engine_generic', 'subformula': 'sales.tax'}),
+                (0, 0, {'total': 'forty_two', 'engine': 'custom', 'formula': 'test_oco_always_42'}),
+            ]"/>
+            <field name="unfoldable" eval="False"/>
+            <field name="column_values">main, forty_two</field>
+            <field name="hierarchy_level">2</field>
+            <field name="sequence">6</field>
         </record>
 
         <record id="generic_tax_report2" model="account.report"> <!--TODO OCO TEST-->
