@@ -216,10 +216,15 @@ var FieldEmbedURLViewer = fields.FieldChar.extend({
     },
 });
 
+var FieldPdfViewerSplitter = fields.FieldPdfViewer.extend({
+    on_file_change: function (ev) {
+        this._super.apply(this, arguments);
+        debugger; }) 
 
 field_registry
     .add('mrp_time_counter', TimeCounter)
     .add('embed_viewer', FieldEmbedURLViewer);
+    .add('pdf_splitter', FieldPdfViewerSplitter);
 
 fieldUtils.format.mrp_time_counter = fieldUtils.format.float_time;
 
