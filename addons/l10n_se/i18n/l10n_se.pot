@@ -124,6 +124,11 @@ msgid "Payment Options Sweden"
 msgstr ""
 
 #. module: l10n_se
+#: model:ir.ui.menu,name:l10n_se.account_reports_se_statements_menu
+msgid "Sweden"
+msgstr ""
+
+#. module: l10n_se
 #: model:ir.model.fields.selection,name:l10n_se.selection__account_journal__invoice_reference_model__se_ocr2
 msgid "Sweden OCR Level 1 & 2"
 msgstr ""

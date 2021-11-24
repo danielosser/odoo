@@ -130,6 +130,11 @@ msgid "Payment Options Sweden"
 msgstr ""
 
 #. module: l10n_se
+#: model:ir.ui.menu,name:l10n_se.account_reports_se_statements_menu
+msgid "Sweden"
+msgstr "Sverige"
+
+#. module: l10n_se
 #: model:ir.model.fields.selection,name:l10n_se.selection__account_journal__invoice_reference_model__se_ocr2
 msgid "Sweden OCR Level 1 & 2"
 msgstr "Sverige OCR typ 1 & 2"
@@ -161,22 +166,22 @@ msgstr "Den totala längden för OCR refrensnummer inklusive kontrollsiffra."
 #. module: l10n_se
 #: model:account.tax.group,name:l10n_se.tax_group_0
 msgid "VAT 0%"
-msgstr ""
+msgstr "Moms 0%"
 
 #. module: l10n_se
 #: model:account.tax.group,name:l10n_se.tax_group_12
 msgid "VAT 12%"
-msgstr ""
+msgstr "Moms 12%"
 
 #. module: l10n_se
 #: model:account.tax.group,name:l10n_se.tax_group_25
 msgid "VAT 25%"
-msgstr ""
+msgstr "Moms 25%"
 
 #. module: l10n_se
 #: model:account.tax.group,name:l10n_se.tax_group_6
 msgid "VAT 6%"
-msgstr ""
+msgstr "Moms 6%"
 
 #. module: l10n_se
 #: code:addons/l10n_se/models/account_move.py:0
@@ -202,3 +207,4 @@ msgid ""
 "You can choose different models for each type of reference. The default one "
 "is the Odoo reference."
 msgstr ""
+
