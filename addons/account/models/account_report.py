@@ -94,8 +94,9 @@ class AccountReportLine(models.Model):
     # TODO OCO ajouter invisible ?
     # TODO OCO ajouter la caret_option ici comme un champ, je dirais => sélection ??
 
-
-
+    _sql_constraints = [
+        ('code_uniq', 'unique (code)', "A report line with the same code already exists."),
+    ]
 
 class AccountReportExpression(models.Model):
     _name = 'account.report.expression' #TODO OCO ou rebaptiser line.cell pour éviter la confusion avec le champ formula ?
@@ -107,7 +108,7 @@ class AccountReportExpression(models.Model):
         string="Computation Engine",
         selection = [
             ('accounts_prefix', 'Prefix of accounts'),#TODO OCO
-            ('odoo_domain', 'Domain ala Odoo'), #TODO OCO
+            ('domain', 'Domain ala Odoo'), #TODO OCO
             ('computation', 'Computation based on different lines'), # TODO OCO besoin ? ==> Quid du référencement des colonnes en temps utile ? (pas dans cette tâche) ==> + on doit toujours pouvoir créer des lignes invisibles juste pour le calcul, alors, non ?
             ('tax_tags', 'tax tags that could be found on aml'),
             ('custom', 'Run custom python code'),
@@ -183,8 +184,9 @@ class AccountReportExpression(models.Model):
             return self.env['account.account.tag']
 
         domain = []
-        for expression in tag_expressions:
-            domain = expression.OR(domain, self.env['account.account.tag']._get_tax_tags_domain(expression.formula, expression.country_id.id))
+        for tag_expression in tag_expressions:
+            country = tag_expression.report_line_id.report_id.country_id
+            domain = expression.OR([domain, self.env['account.account.tag']._get_tax_tags_domain(tag_expression.formula, country.id)])
 
         return self.env['account.account.tag'].search(domain)
 
