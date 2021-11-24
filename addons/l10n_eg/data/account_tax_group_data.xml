@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Account Tax Group -->
+        <record id="eg_tax_group_other" model="account.tax.group">
+            <field name="name">Other Taxes</field>
+        </record>
+
+        <record id="eg_tax_group_stamp" model="account.tax.group">
+            <field name="name">Stamp Tax</field>
+        </record>
+
+        <record id="eg_tax_group_withholding" model="account.tax.group">
+            <field name="name">Withholding Tax</field>
+        </record>
+
+        <record id="eg_tax_group_schedule" model="account.tax.group">
+            <field name="name">Schedule Tax</field>
+        </record>
+    </data>
+</odoo>

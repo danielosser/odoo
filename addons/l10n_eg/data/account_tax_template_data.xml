@@ -1,0 +1,1082 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="eg_standard_sale_14" model="account.tax.template">
+        <field name="name">Standard Sales Tax 14%</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">14</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Standard Sales Tax 14%</field>
+        <field name="tax_group_id" ref="account.tax_group_taxes"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_vat_return_sale_base_fourteen')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201017'),
+                'plus_report_line_ids': [ref('tax_report_vat_return_sale_tax_fourteen')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_vat_return_sale_base_fourteen')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201017'),
+                'minus_report_line_ids': [ref('tax_report_vat_return_sale_tax_fourteen')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_standard_purchase_14" model="account.tax.template">
+        <field name="name">Standard Purchase Tax 14%</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">14</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Standard Purchase Tax 14%</field>
+        <field name="tax_group_id" ref="account.tax_group_taxes"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_vat_return_expense_base_fourteen')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_104041'),
+                'plus_report_line_ids': [ref('tax_report_vat_return_expense_tax_fourteen')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_vat_return_expense_base_fourteen')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_104041'),
+                'minus_report_line_ids': [ref('tax_report_vat_return_expense_tax_fourteen')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_zero_sale_0" model="account.tax.template">
+        <field name="name">Zero Rated 0%</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">0</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Zero Rated 0%</field>
+        <field name="tax_group_id" ref="eg_tax_group_other"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_vat_return_sale_base_zero')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': False,
+                'plus_report_line_ids': [ref('tax_report_vat_return_sale_tax_zero')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_vat_return_sale_base_zero')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': False,
+                'minus_report_line_ids': [ref('tax_report_vat_return_sale_tax_zero')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_zero_purchase_0" model="account.tax.template">
+        <field name="name">Zero Rated 0%</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">0</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Zero Rated 0%</field>
+        <field name="tax_group_id" ref="eg_tax_group_other"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_vat_return_expense_base_zero')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': False,
+                'plus_report_line_ids': [ref('tax_report_vat_return_expense_tax_zero')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_vat_return_expense_base_zero')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': False,
+                'minus_report_line_ids': [ref('tax_report_vat_return_expense_tax_zero')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_exempt_sale" model="account.tax.template">
+        <field name="name">Exempt Tax</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">0</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Exempt Tax</field>
+        <field name="tax_group_id" ref="eg_tax_group_other"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_vat_return_sale_base_exempt')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': False,
+                'plus_report_line_ids': [ref('tax_report_vat_return_sale_tax_exempt')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_vat_return_sale_base_exempt')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': False,
+                'minus_report_line_ids': [ref('tax_report_vat_return_sale_tax_exempt')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_exempt_purchase" model="account.tax.template">
+        <field name="name">Exempt Tax</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">0</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Exempt Tax</field>
+        <field name="tax_group_id" ref="eg_tax_group_other"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_vat_return_expense_base_exempt')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': False,
+                'plus_report_line_ids': [ref('tax_report_vat_return_expense_tax_exempt')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_vat_return_expense_base_exempt')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': False,
+                'minus_report_line_ids': [ref('tax_report_vat_return_expense_tax_exempt')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_stamp_tax_20_sale" model="account.tax.template">
+        <field name="name">Stamp Tax</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">20</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Stamp Tax</field>
+        <field name="tax_group_id" ref="eg_tax_group_stamp"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_other_taxes_stamp_tax_base_sales')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201025'),
+                'plus_report_line_ids': [ref('tax_report_other_taxes_stamp_tax_tax_sales')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_other_taxes_stamp_tax_base_sales')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201025'),
+                'minus_report_line_ids': [ref('tax_report_other_taxes_stamp_tax_tax_sales')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_stamp_tax_20_purchase" model="account.tax.template">
+        <field name="name">Stamp Tax</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">20</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Stamp Tax</field>
+        <field name="tax_group_id" ref="eg_tax_group_stamp"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_other_taxes_stamp_purchase_tax_base_purchase')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400077'),
+                'plus_report_line_ids': [ref('tax_report_other_taxes_stamp_purchase_tax_tax_purchase')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_other_taxes_stamp_purchase_tax_base_purchase')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400077'),
+                'minus_report_line_ids': [ref('tax_report_other_taxes_stamp_purchase_tax_tax_purchase')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_schedule_tax_8_purchase" model="account.tax.template">
+        <field name="name">Schedule Tax 8%</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">8</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Schedule Tax 8%</field>
+        <field name="tax_group_id" ref="eg_tax_group_schedule"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_base_eight')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_tax_eight')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_base_eight')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_tax_eight')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_schedule_tax_8_sale" model="account.tax.template">
+        <field name="name">Schedule Tax 8%</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">8</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Schedule Tax 8%</field>
+        <field name="tax_group_id" ref="eg_tax_group_schedule"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_base_eight')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201024'),
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_tax_eight')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_base_eight')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201024'),
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_tax_eight')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_withholding_1_sale" model="account.tax.template">
+        <field name="name">Withholding Tax -1%</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">-1</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Withholding Tax -1%</field>
+        <field name="tax_group_id" ref="eg_tax_group_withholding"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_sale_base_one')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_104042'),
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_sale_tax_one')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_sale_base_one')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_104042'),
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_sale_tax_one')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_schedule_tax_10_purchase" model="account.tax.template">
+        <field name="name">Schedule Tax 10%</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">10</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Schedule Tax 10%</field>
+        <field name="tax_group_id" ref="eg_tax_group_schedule"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_base_ten')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_tax_ten')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_base_ten')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_tax_ten')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_withholding_05_sale" model="account.tax.template">
+        <field name="name">Withholding Tax -0.5%</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">-0.5</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Withholding Tax -0.5%</field>
+        <field name="tax_group_id" ref="eg_tax_group_withholding"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_sale_base_half')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_104042'),
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_sale_tax_half')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_sale_base_half')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_104042'),
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_sale_tax_half')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_withholding_05_purchase" model="account.tax.template">
+        <field name="name">Withholding Tax -0.5%</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">-0.5</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Withholding Tax -0.5%</field>
+        <field name="tax_group_id" ref="eg_tax_group_withholding"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_purchase_base_half')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201020'),
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_purchase_tax_half')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_purchase_base_half')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201020'),
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_purchase_tax_half')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_withholding_1_purchase" model="account.tax.template">
+        <field name="name">Withholding Tax -1%</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">-1</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Withholding Tax -1%</field>
+        <field name="tax_group_id" ref="eg_tax_group_withholding"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_purchase_base_one')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201020'),
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_purchase_tax_one')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_purchase_base_one')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201020'),
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_purchase_tax_one')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_schedule_tax_10_sale" model="account.tax.template">
+        <field name="name">Schedule Tax 10%</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">10</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Schedule Tax 10%</field>
+        <field name="tax_group_id" ref="eg_tax_group_schedule"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_base_ten')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_tax_ten')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_base_ten')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_tax_ten')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_withholding_3_sale" model="account.tax.template">
+        <field name="name">Withholding Tax -3%</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">-3</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Withholding Tax -3%</field>
+        <field name="tax_group_id" ref="eg_tax_group_withholding"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_sale_base_three')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_104042'),
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_sale_tax_three')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_sale_base_three')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_104042'),
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_sale_tax_three')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_schedule_tax_1_sale" model="account.tax.template">
+        <field name="name">Schedule Tax 1%</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">1</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Schedule Tax 1%</field>
+        <field name="tax_group_id" ref="eg_tax_group_schedule"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_base_one')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201024'),
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_tax_one')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_base_one')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201024'),
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_tax_one')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_withholding_3_purchase" model="account.tax.template">
+        <field name="name">Withholding Tax -3%</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">-3</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Withholding Tax -3%</field>
+        <field name="tax_group_id" ref="eg_tax_group_withholding"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_purchase_base_three')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201020'),
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_purchase_tax_three')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_purchase_base_three')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201020'),
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_purchase_tax_three')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_schedule_tax_1_purchase" model="account.tax.template">
+        <field name="name">Schedule Tax 1%</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">1</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Schedule Tax 1%</field>
+        <field name="tax_group_id" ref="eg_tax_group_schedule"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_base_one')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_tax_one')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_base_one')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_tax_one')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_withholding_5_sale" model="account.tax.template">
+        <field name="name">Withholding Tax -5%</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">-5</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Withholding Tax -5%</field>
+        <field name="tax_group_id" ref="eg_tax_group_withholding"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_sale_base_five')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_104042'),
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_sale_tax_five')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_sale_base_five')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_104042'),
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_sale_tax_five')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_schedule_tax_15_purchase" model="account.tax.template">
+        <field name="name">Schedule Tax 15%</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">15</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Schedule Tax 15%</field>
+        <field name="tax_group_id" ref="eg_tax_group_schedule"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_base_fifteen')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_tax_fifteen')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_base_fifteen')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_tax_fifteen')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_withholding_5_purchase" model="account.tax.template">
+        <field name="name">Withholding Tax -5%</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">-5</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Withholding Tax -5%</field>
+        <field name="tax_group_id" ref="eg_tax_group_withholding"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_purchase_base_five')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201020'),
+                'plus_report_line_ids': [ref('tax_report_withholding_tax_purchase_tax_five')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_purchase_base_five')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_201020'),
+                'minus_report_line_ids': [ref('tax_report_withholding_tax_purchase_tax_five')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_schedule_tax_15_sale" model="account.tax.template">
+        <field name="name">Schedule Tax 15%</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">15</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Schedule Tax 15%</field>
+        <field name="tax_group_id" ref="eg_tax_group_schedule"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_base_fifteen')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_tax_fifteen')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_base_fifteen')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_tax_fifteen')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_schedule_tax_30_sale" model="account.tax.template">
+        <field name="name">Schedule Tax 30%</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">30</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Schedule Tax 30%</field>
+        <field name="tax_group_id" ref="eg_tax_group_schedule"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_base_thirty')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_tax_thirty')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_base_thirty')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_tax_thirty')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_schedule_tax_30_purchase" model="account.tax.template">
+        <field name="name">Schedule Tax 30%</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">30</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Schedule Tax 30%</field>
+        <field name="tax_group_id" ref="eg_tax_group_schedule"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_base_thirty')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_tax_thirty')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_base_thirty')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_tax_thirty')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_schedule_tax_05_purchase" model="account.tax.template">
+        <field name="name">Schedule Tax 0.5%</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">0.5</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Schedule Tax 0.5%</field>
+        <field name="tax_group_id" ref="eg_tax_group_schedule"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_base_half')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_tax_half')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_base_half')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_tax_half')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_schedule_tax_05_sale" model="account.tax.template">
+        <field name="name">Schedule Tax 0.5%</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">0.5</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Schedule Tax 0.5%</field>
+        <field name="tax_group_id" ref="eg_tax_group_schedule"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_base_half')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_tax_half')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_base_half')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_tax_half')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_schedule_tax_5_purchase" model="account.tax.template">
+        <field name="name">Schedule Tax 5%</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount">5</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Schedule Tax 5%</field>
+        <field name="tax_group_id" ref="eg_tax_group_schedule"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_base_five')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_tax_five')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_base_five')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_purchase_tax_five')],
+            }),
+        ]"/>
+    </record>
+
+    <record id="eg_schedule_tax_5_sale" model="account.tax.template">
+        <field name="name">Schedule Tax 5%</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount">5</field>
+        <field name="amount_type">percent</field>
+        <field name="description">Schedule Tax 5%</field>
+        <field name="tax_group_id" ref="eg_tax_group_schedule"/>
+        <field name="chart_template_id" ref="egypt_chart_template_standard"/>
+        <field name="invoice_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_base_five')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'plus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_tax_five')],
+            }),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[(5, 0, 0),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'base',
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_base_five')],
+            }),
+            (0,0, {
+                'factor_percent': 100,
+                'repartition_type': 'tax',
+                'account_id': ref('egy_account_400075'),
+                'minus_report_line_ids': [ref('tax_report_schedule_tax_schedule_tax_sale_tax_five')],
+            }),
+        ]"/>
+    </record>
+</odoo>
