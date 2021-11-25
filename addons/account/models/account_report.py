@@ -21,7 +21,6 @@ class AccountReport(models.Model):
     allow_comparison = fields.Boolean(string="Allow Comparison", default=True)
     #TODO OCO filter_journals
     #TODO OCO filter_analytic
-    #TODO OCO unfold_all
     #TODO OCO filter_hierarchy
     #TODO OCO filter_partner
     filter_fiscal_position = fields.Boolean(string="Use Foreign VAT Fiscal Positions", default=False) # TODO OCO renommer ce truc serait bien
@@ -45,6 +44,9 @@ class AccountReport(models.Model):
         default='always',
     )
     filter_tax_exigible = fields.Boolean(string="Only Tax Exigible Lines", default=False, required=True)
+    filter_unfold_all = fields.Boolean(string="Show 'Unfold All' Filter", default=False)
+
+    #TODO OCO réordonner les déclarations de champs (et décider d'un standard sur ce qu'on préfixe filter_)
 
     def write(self, vals):
         #TODO OCO reDOC: tax tag management
