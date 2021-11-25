@@ -71,6 +71,7 @@ class TestPerformance(SavepointCaseWithUserDemo):
     def test_reversed_read_base(self):
         records = self.env['test_performance.base'].search([])
         self.assertEqual(len(records), 5)
+
         with self.assertQueryCount(__system__=1, demo=1):
             # without cache
             for record in reversed(records):
@@ -81,15 +82,16 @@ class TestPerformance(SavepointCaseWithUserDemo):
             for record in reversed(records):
                 record.value_ctx
 
-        # logical test
+        # check order
         self.assertEqual(list(reversed(records)), list(records.sorted(reverse=True)))
 
-        records[0].write({'tag_ids': [Command.clear(), Command.create({'name': 'tag1'})]})
-        records[-1].write({'tag_ids': [Command.clear(), Command.create({'name': 'taglast'})]})
+        # check interaction with relational field
+        records[0].tag_ids = tag_alpha = self.env['test_performance.tag'].create({'name': 'Alpha'})
+        records[-1].tag_ids = tag_omega = self.env['test_performance.tag'].create({'name': 'Omega'})
 
         list_reversed = list(reversed(records.tag_ids))
-        self.assertEqual(list_reversed[0], records[-1].tag_ids)
-        self.assertEqual(list_reversed[1], records[0].tag_ids)
+        self.assertEqual(list_reversed[0], tag_omega)
+        self.assertEqual(list_reversed[-1], tag_alpha)
 
     @warmup
     def test_read_base_depends_context(self):
