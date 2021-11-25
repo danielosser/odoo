@@ -5,6 +5,9 @@ import json
 from odoo.http import Controller, request, route
 from odoo.websocket import ws_request
 from odoo.addons.bus.models.bus import dispatch
+from odoo.addons.base.models.assetsbundle import AssetsBundle
+import base64
+
 
 class BusController(Controller):
     @route('/longpolling/im_status', type="json", auth="user")

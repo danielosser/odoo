@@ -7,7 +7,7 @@ var ServicesMixin = require('web.ServicesMixin');
 const session = require('web.session');
 
 var BusService =  WebsocketBus.extend(ServicesMixin, {
-    dependencies : ['local_storage'],
+    dependencies : ['local_storage', "websocket_communication"],
 
     // properties
     _audio: null,

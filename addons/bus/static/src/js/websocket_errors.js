@@ -1,7 +1,7 @@
 /** @odoo-module **/
 
-import { SessionExpiredDialog, WarningDialog } from "@web/core/errors/error_dialogs";
-import { registry } from "@web/core/registry";
+import {SessionExpiredDialog, WarningDialog} from "@web/core/errors/error_dialogs";
+import {registry} from "@web/core/registry";
 
 export class WebsocketSessionExpiredError extends Error {}
 export function websocketSessionExpiredHandler(env, error, originalError) {

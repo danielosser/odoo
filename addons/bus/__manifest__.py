@@ -12,11 +12,13 @@
     'assets': {
         'web.assets_backend': [
             'bus/static/src/**/*',
+            ('remove', 'bus/static/src/js/workers/*'),
         ],
         'web.assets_frontend': [
+            'bus/static/src/js/websocket_errors.js',
+            'bus/static/src/js/services/websocket_communication.js',
             'bus/static/src/js/services/bus_service.js',
             'bus/static/src/js/websocket_bus.js',
-            'bus/static/src/js/services/websocket_errors.js',
         ],
         'web.qunit_suite_tests': [
             'bus/static/tests/*.js',
