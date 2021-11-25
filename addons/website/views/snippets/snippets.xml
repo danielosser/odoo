@@ -517,9 +517,6 @@
         <we-row string="Toggle Hover Column">
             <we-checkbox data-toggle-hoverable="true" data-name="toggle_hoverable_opt" data-no-preview="true"/>
         </we-row>
-        <we-row string="Edit Hover Column">
-            <we-checkbox data-select-data-attribute="0" data-attribute-name="invisible" data-apply-to="> .s_hoverable" data-dependencies="toggle_hoverable_opt" data-no-preview="true"/>
-        </we-row>
     </div>
 
     <div data-js="sizing_y"

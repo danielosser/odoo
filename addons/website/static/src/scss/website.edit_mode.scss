@@ -229,7 +229,30 @@ body.editor_enable {
 
 //s_hoverable
 body.editor_enable {
+    .o_invisible_toggle {
+        position: absolute !important;
+        z-index: 2;
+        top: 0px;
+        right: 0px;
+        height: 30px;
+        width: 30px;
+        line-height: 30px;
+        font-size: 3Opx;
+        border-radius: 15px;
+        margin: 10px;
+        opacity: 0.5;
+        background-color: white;
+        text-align: center;
+
+        &:hover {
+            opacity: 1.0;
+        }
+    }
+
     .o_hoverable_edit > .s_hoverable {
+        display: none;
+    }
+    *:hover .s_hoverable {
         display: none;
     }
     .s_hoverable:not([data-invisible="1"]) {

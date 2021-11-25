@@ -1471,6 +1471,8 @@ var SnippetsMenu = Widget.extend({
         this.trigger_up('ready_to_clean_for_save');
         await this._destroyEditors();
 
+        this.getEditableArea().find('.o_invisible_toggle').remove();
+
         this.getEditableArea().find('[contentEditable]')
             .removeAttr('contentEditable')
             .removeProp('contentEditable');
@@ -1740,6 +1742,30 @@ var SnippetsMenu = Widget.extend({
                 }).append($('<i/>', {class: `fa ${editor.isTargetVisible() ? 'fa-eye' : 'fa-eye-slash'} ml-2`}));
                 $invisibleDOMPanelEl.append($invisEntry);
                 this.invisibleDOMMap.set($invisEntry[0], el);
+
+                if (el.classList.contains('o_snippet_invisible_togglable')) {
+                    let buttonEl = el.parentElement.querySelector('.o_invisible_toggle');
+                    if (!buttonEl) {
+                        const element = document.createElement('i');
+                        element.classList.add('fa', 'o_invisible_toggle', 'o_we_no_overlay');
+
+                        buttonEl = el.insertAdjacentElement('beforebegin', element);
+                        buttonEl.addEventListener('click', (ev) => {
+                            this._onInvisibleEntryClick(ev);
+                            this._updateInvisibleDOM();
+                        });
+                    }
+
+                    if (editor.isTargetVisible()) {
+                        buttonEl.classList.add('fa-eye');
+                        buttonEl.classList.remove('fa-eye-slash');
+                    } else {
+                        buttonEl.classList.remove('fa-eye');
+                        buttonEl.classList.add('fa-eye-slash');
+                    }
+
+                    this.invisibleDOMMap.set(buttonEl, el);
+                }
             });
             return Promise.all(proms);
         }, false);
@@ -2834,9 +2860,8 @@ var SnippetsMenu = Widget.extend({
             const editor = await this._createSnippetEditor($snippet);
             return editor.toggleTargetVisibility();
         }, true);
-        $(ev.currentTarget).find('.fa')
-            .toggleClass('fa-eye', isVisible)
-            .toggleClass('fa-eye-slash', !isVisible);
+        const $icons = $(ev.currentTarget).find('.fa').add($snippet.parent().find('.fa.o_invisible_toggle'));
+        $icons.toggleClass('fa-eye', isVisible).toggleClass('fa-eye-slash', !isVisible);
         return this._activateSnippet(isVisible ? $snippet : false);
     },
     /**

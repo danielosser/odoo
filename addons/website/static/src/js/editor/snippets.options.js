@@ -2166,7 +2166,6 @@ options.registry.EditHoverable = options.Class.extend({
                 kwargs: {context: this.options.context},
             }));
 
-            this.getHoverable().dataset.invisible = '0';
             this.trigger_up('snippet_option_visibility_update', {show: true});
             this.trigger_up('activate_snippet', {
                 $snippet: $(this.getHoverable()),
@@ -2176,17 +2175,6 @@ options.registry.EditHoverable = options.Class.extend({
             this.trigger_up('snippet_option_visibility_update', {show: false});
             this.getHoverable().remove();
         }
-    },
-    async selectDataAttribute(previewMode, widgetValue, params) {
-        if (params.attributeName !== 'invisible') {
-            await this._super(...arguments);
-        }
-
-        await this._super(previewMode, widgetValue === '0' ? '0' : '1', params);
-        this.trigger_up('snippet_option_visibility_update', {show: widgetValue === '0'});
-        this.trigger_up('activate_snippet', {
-            $snippet: widgetValue !== '0' ? this.$target.parent() : this.$target
-        });
     },
 
     //--------------------------------------------------------------------------
@@ -2199,9 +2187,6 @@ options.registry.EditHoverable = options.Class.extend({
      _computeWidgetState(methodName, params) {
         if (methodName === 'toggleHoverable') {
             return !!this.getHoverable();
-        }
-        if (methodName === 'selectDataAttribute' && params.attributeName === 'invisible') {
-            return this.$target[0].dataset.invisible || '0';
         }
         return this._super(...arguments);
     },
