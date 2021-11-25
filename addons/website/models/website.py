@@ -286,7 +286,7 @@ class Website(models.Model):
     # ----------------------------------------------------------
     def _website_api_rpc(self, route, params):
         params['version'] = release.version
-        IrConfigParameter = self.env['ir.config_parameter'].sudo()
+        IrConfigParameter = request.env['ir.config_parameter'].sudo()
         website_api_endpoint = IrConfigParameter.get_param('website.website_api_endpoint', DEFAULT_ENDPOINT)
         endpoint = website_api_endpoint + route
         return iap_tools.iap_jsonrpc(endpoint, params=params)
@@ -315,7 +315,7 @@ class Website(models.Model):
     def configurator_init(self):
         r = dict()
         company = self.get_current_website().company_id
-        configurator_features = self.env['website.configurator.feature'].search([])
+        configurator_features = request.env['website.configurator.feature'].search([])
         r['features'] = [{
             'id': feature.id,
             'name': feature.name,
@@ -329,7 +329,7 @@ class Website(models.Model):
         if company.logo and company.logo != company._get_logo():
             r['logo'] = company.logo.decode('utf-8')
         try:
-            result = self._website_api_rpc('/api/website/1/configurator/industries', {'lang': self.env.user.lang})
+            result = self._website_api_rpc('/api/website/1/configurator/industries', {'lang': request.env.user.lang})
             r['industries'] = result['industries']
         except AccessError as e:
             logger.warning(e.args[0])
