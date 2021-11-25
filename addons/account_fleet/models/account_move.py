@@ -28,12 +28,34 @@ class AccountMove(models.Model):
                 move_id=line.move_id.id,
                 move_name=line.move_id.name,
             )
-            val_list.append(val)
-            log_list.append(log)
+            val = self._handle_non_deductible_taxes(line, val)
+            if val:
+                val_list.append(val)
+                log_list.append(log)
         log_service_ids = self.env['fleet.vehicle.log.services'].create(val_list)
         for log_service_id, log in zip(log_service_ids, log_list):
             log_service_id.message_post(body=log)
         return posted
+
+    def _handle_non_deductible_taxes(self, move_line, val):
+        non_deductible_tax_ids = move_line.tax_ids.mapped('invoice_repartition_line_ids').filtered(
+            lambda l: l.repartition_type == 'tax' and not l.use_in_tax_closing).tax_id
+
+        if non_deductible_tax_ids:
+            for line in move_line.move_id.line_ids:
+                if line.tax_line_id in non_deductible_tax_ids and line.account_id.create_asset != 'no':
+                    tax_details_query, tax_details_params = move_line._get_query_tax_details_from_domain([('id', '=', line.id)])
+                    self._cr.execute(tax_details_query, tax_details_params)
+                    for row in self._cr.dictfetchall():
+                        if move_line.id == row['base_line_id']:
+                            val.update({
+                                'amount': row['base_amount_currency'] + row['tax_amount_currency'],
+                            })
+        elif move_line.tax_line_id:
+            val = None
+
+        return val
+
 
     @api.model
     def _get_tax_grouping_key_from_tax_line(self, tax_line):
