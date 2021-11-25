@@ -38,10 +38,11 @@ class MassMailing(models.Model):
     @api.model
     def default_get(self, fields_list):
         vals = super(MassMailing, self).default_get(fields_list)
+        context = self.env.context
 
         # field sent by the calendar view when clicking on a date block
         # we use it to setup the scheduled date of the created mailing.mailing
-        default_calendar_date = self.env.context.get('default_calendar_date')
+        default_calendar_date = context.get('default_calendar_date')
         if default_calendar_date and ('schedule_type' in fields_list and 'schedule_date' in fields_list) \
            and fields.Datetime.from_string(default_calendar_date) > fields.Datetime.now():
             vals.update({
@@ -54,6 +55,10 @@ class MassMailing(models.Model):
                 mailing_list = self.env['mailing.list'].search([], limit=2)
                 if len(mailing_list) == 1:
                     vals['contact_list_ids'] = [(6, 0, [mailing_list.id])]
+
+        if context.get('active_model') == 'res.partner':
+            vals['mailing_model_id'] = self.env['ir.model']._get(context.get('active_model')).id
+            vals['mailing_domain'] = [('id', 'in', context.get('active_ids'))]
         return vals
 
     @api.model
