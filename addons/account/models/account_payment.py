@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
@@ -44,10 +43,14 @@ class AccountPayment(models.Model):
     is_matched = fields.Boolean(string="Is Matched With a Bank Statement", store=True,
         compute='_compute_reconciliation_status',
         help="Technical field indicating if the payment has been matched with a statement line.")
+    available_partner_bank_ids = fields.Many2many(
+        comodel_name='res.partner.bank',
+        compute='_compute_available_partner_bank_ids',
+    )
     partner_bank_id = fields.Many2one('res.partner.bank', string="Recipient Bank Account",
         readonly=False, store=True,
         compute='_compute_partner_bank_id',
-        domain="[('partner_id', '=', partner_id)]",
+        domain="[('id', 'in', available_partner_bank_ids)]",
         check_company=True)
     is_internal_transfer = fields.Boolean(string="Is Internal Transfer",
         readonly=False, store=True,
@@ -332,18 +335,24 @@ class AccountPayment(models.Model):
             payment.require_partner_bank_account = payment.state == 'draft' and payment.payment_method_code in self._get_method_codes_needing_bank_account()
 
     @api.depends('partner_id', 'company_id', 'payment_type')
-    def _compute_partner_bank_id(self):
-        ''' The default partner_bank_id will be the first available on the partner. '''
+    def _compute_available_partner_bank_ids(self):
         for pay in self:
             if pay.payment_type == 'inbound':
                 bank_partner = pay.company_id.partner_id
             else:
                 bank_partner = pay.partner_id
+            pay.available_partner_bank_ids = bank_partner.bank_ids\
+                    .filtered(lambda x: x.company_id.id in (False, pay.company_id.id))._origin
 
-            available_partner_bank_accounts = bank_partner.bank_ids.filtered(lambda x: x.company_id.id in (False, pay.company_id.id))
-            if available_partner_bank_accounts:
-                if pay.partner_bank_id not in available_partner_bank_accounts:
-                    pay.partner_bank_id = available_partner_bank_accounts[0]._origin
+    @api.depends('available_partner_bank_ids', 'journal_id')
+    def _compute_partner_bank_id(self):
+        ''' The default partner_bank_id will be the first available on the partner. '''
+        for pay in self:
+            if pay.available_partner_bank_ids:
+                if pay.payment_type == 'inbound' and pay.journal_id.bank_account_id:
+                    pay.partner_bank_id = pay.journal_id.bank_account_id
+                elif pay.partner_bank_id not in pay.available_partner_bank_ids:
+                    pay.partner_bank_id = pay.available_partner_bank_ids[0]._origin
             else:
                 pay.partner_bank_id = False
 

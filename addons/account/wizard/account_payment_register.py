@@ -135,10 +135,17 @@ class AccountPaymentRegister(models.TransientModel):
         move = line.move_id
         partner_bank_account = self.env['res.partner.bank']
 
-        if move.is_invoice(include_receipts=True):
+        if move.is_inbound(include_receipts=True):
+            move_type = 'sale'
             partner_bank_account = move.partner_bank_id._origin
+        elif move.is_purchase_document(include_receipts=True):
+            move_type = 'purchase'
+            partner_bank_account = move.partner_bank_id._origin
+        else:
+            move_type = 'misc'
 
         return {
+            'move_type': move_type,
             'partner_id': line.partner_id.id,
             'account_id': line.account_id.id,
             'currency_id': (line.currency_id or line.company_currency_id).id,
@@ -258,34 +265,63 @@ class AccountPaymentRegister(models.TransientModel):
     @api.depends('company_id', 'source_currency_id')
     def _compute_journal_id(self):
         for wizard in self:
-            domain = [
+            default_domain = [
                 ('type', 'in', ('bank', 'cash')),
                 ('company_id', '=', wizard.company_id.id),
             ]
-            journal = None
+            currency_domain = [('currency_id', '=', wizard.source_currency_id.id)]
+            partner_bank_domain = [('bank_account_id', '=', wizard.partner_bank_id.id)]
+
+            extra_domains = []
+            if wizard.source_currency_id and wizard.partner_bank_id:
+                extra_domains.append(currency_domain + partner_bank_domain)
+            if wizard.partner_bank_id:
+                extra_domains.append(partner_bank_domain)
             if wizard.source_currency_id:
-                journal = self.env['account.journal'].search(domain + [('currency_id', '=', wizard.source_currency_id.id)], limit=1)
-            if not journal:
-                journal = self.env['account.journal'].search(domain, limit=1)
+                extra_domains.append(currency_domain)
+            extra_domains.append([])
+
+            journal = None
+            for extra_domain in extra_domains:
+                journal = self.env['account.journal'].search(default_domain + extra_domain, limit=1)
+                if journal:
+                    break
             wizard.journal_id = journal
 
     @api.depends('company_id', 'can_edit_wizard')
     def _compute_available_partner_bank_ids(self):
         for wizard in self:
             if wizard.can_edit_wizard:
-                batches = wizard._get_batches()
-                bank_partners = batches[0]['lines'].move_id.bank_partner_id
+                batch = wizard._get_batches()[0]
+
+                if batch['key_values']['move_type'] in ('sale', 'purchase'):
+                    # For invoices, use `bank_partner_id` that is already handling the difference of logic between
+                    # paying a customer invoice (you are receiving the money on your own bank account) and paying a
+                    # bill (the vendor is receiving the money).
+                    bank_partners = batch['lines'].move_id.bank_partner_id
+                else:
+                    # For journal entries being not an invoice (like reimbursing an employee using an expense), the
+                    # bank account should be retrieved from the partner set on the journal items.
+                    bank_partners = batch['lines'].partner_id
+
                 wizard.available_partner_bank_ids = bank_partners.bank_ids\
                     .filtered(lambda x: x.company_id.id in (False, wizard.company_id.id))._origin
             else:
                 wizard.available_partner_bank_ids = False
 
-    @api.depends('available_partner_bank_ids')
+    @api.depends('journal_id', 'available_partner_bank_ids')
     def _compute_partner_bank_id(self):
         for wizard in self:
             if wizard.can_edit_wizard:
-                batches = wizard._get_batches()
-                wizard.partner_bank_id = self.env['res.partner.bank'].browse(batches[0]['key_values']['partner_bank_id'])
+                batch = wizard._get_batches()[0]
+                if batch['key_values']['move_type'] == 'sale' and wizard.journal_id.bank_account_id:
+                    wizard.partner_bank_id = wizard.journal_id.bank_account_id
+                else:
+                    batch_bank_account = self.env['res.partner.bank'].browse(batch['key_values']['partner_bank_id'])
+                    if batch_bank_account:
+                        wizard.partner_bank_id = batch_bank_account
+                    else:
+                        wizard.partner_bank_id = wizard.available_partner_bank_ids[:1]._origin
             else:
                 wizard.partner_bank_id = False
 
@@ -361,7 +397,7 @@ class AccountPaymentRegister(models.TransientModel):
     # -------------------------------------------------------------------------
     # LOW-LEVEL METHODS
     # -------------------------------------------------------------------------
-    
+
     @api.model
     def default_get(self, fields_list):
         # OVERRIDE
