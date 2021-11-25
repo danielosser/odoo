@@ -10,6 +10,7 @@ from odoo.tools.translate import html_translate
 class ProductRibbon(models.Model):
     _name = "product.ribbon"
     _description = 'Product ribbon'
+    _rec_name = 'html'
 
     def name_get(self):
         return [(ribbon.id, '%s (#%d)' % (tools.html2plaintext(ribbon.html), ribbon.id)) for ribbon in self]
