@@ -105,14 +105,14 @@
                             </t>
                         </tr>
                     </table>
-                    <h2>
-                        <span t-if="'l10n_de_document_title' in company"><t t-esc="company.l10n_de_document_title"/></span>
-                        <span t-elif="o and 'l10n_de_document_title' in o"><t t-esc="o.l10n_de_document_title"/></span>
-                        <span t-elif="o" t-field="o.name"/>
+                    <h2 t-debug ='pdb' >
+                        <span t-if="not o"><t t-esc="company.l10n_de_document_title"/></span>
+                        <span t-elif="'l10n_de_document_title' in o"><t t-esc="o.l10n_de_document_title"/></span>
+                        <span t-else="" t-field="o.name"/>
                     </h2>
                     <t t-raw="0"/>
                 </div>
-
+JE
                 <div t-attf-class="din_page footer o_company_#{company.id}_layout">
                     <div class="text-right page_number">
                         <div class="text-muted">

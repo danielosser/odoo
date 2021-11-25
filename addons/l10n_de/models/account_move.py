@@ -23,6 +23,7 @@ class AccountMove(models.Model):
                 data.append((_("Reference"), record.ref))
 
     def _compute_l10n_de_document_title(self):
+        import pdb ; pdb.set_trace()
         for record in self:
             record.l10n_de_document_title = ''
             if record.move_type == 'out_invoice':
