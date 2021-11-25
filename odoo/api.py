@@ -903,7 +903,8 @@ class Cache(object):
     def get_values(self, records, field, reverse=False):
         """ Return the cached values of ``field`` for ``records``. """
         field_cache = self._get_field_cache(records, field)
-        for record_id in (reversed(records._ids) if reverse else records._ids):
+        record_ids = reversed(records._ids) if reverse else records._ids
+        for record_id in record_ids:
             try:
                 yield field_cache[record_id]
             except KeyError:

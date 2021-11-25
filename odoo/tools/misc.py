@@ -1183,12 +1183,11 @@ class Callbacks:
         self.data.clear()
 
 
-class ReversedGenerator():
-    """ An reversed generator to reverse a iterable generator
-    """
-    __slots__ = 'iterable',
+class ReversedIterable:
+    """ An iterable implementing the reversal of another iterable. """
+    __slots__ = ['iterable']
 
-    def __init__(self, iterable) -> None:
+    def __init__(self, iterable):
         self.iterable = iterable
 
     def __iter__(self):
@@ -1196,6 +1195,7 @@ class ReversedGenerator():
 
     def __reversed__(self):
         return iter(self.iterable)
+
 
 def groupby(iterable, key=None):
     """ Return a collection of pairs ``(key, elements)`` from ``iterable``. The

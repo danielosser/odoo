@@ -54,7 +54,7 @@ from . import tools
 from .exceptions import AccessError, MissingError, ValidationError, UserError
 from .osv.query import Query
 from .tools import frozendict, lazy_classproperty, ormcache, \
-                   LastOrderedSet, OrderedSet, ReversedGenerator, \
+                   LastOrderedSet, OrderedSet, ReversedIterable, \
                    groupby, discardattr, partition
 from .tools.config import config
 from .tools.func import frame_codeinfo
@@ -257,17 +257,19 @@ def origin_ids(ids):
     """
     return ((id_ or id_.origin) for id_ in ids if (id_ or getattr(id_, "origin", None)))
 
-class PrefetchOriginGenerator():
-    __slots__ = 'prefetch_ids',
 
-    def __init__(self, prefetch_ids):
-        self.prefetch_ids = prefetch_ids
+class OriginIds:
+    """ A reversible iterable returning the origin ids of a collection of ``ids``. """
+    __slots__ = ['ids']
+
+    def __init__(self, ids):
+        self.ids = ids
 
     def __iter__(self):
-        return origin_ids(self.prefetch_ids)
+        return origin_ids(self.ids)
 
     def __reversed__(self):
-        return origin_ids(reversed(self.prefetch_ids))
+        return origin_ids(reversed(self.ids))
 
 
 def expand_ids(id0, ids):
@@ -5724,7 +5726,7 @@ Fields:
     def _origin(self):
         """ Return the actual records corresponding to ``self``. """
         ids = tuple(origin_ids(self._ids))
-        prefetch_ids = PrefetchOriginGenerator(self._prefetch_ids)
+        prefetch_ids = OriginIds(self._prefetch_ids)
         return self._browse(self.env, ids, prefetch_ids)
 
     #
@@ -5758,7 +5760,7 @@ Fields:
                     yield self._browse(self.env, (id_,), ids)
         else:
             for id_ in reversed(self._ids):
-                yield self._browse(self.env, (id_,), ReversedGenerator(self._prefetch_ids))
+                yield self._browse(self.env, (id_,), ReversedIterable(self._prefetch_ids))
 
     def __contains__(self, item):
         """ Test whether ``item`` (record or field name) is an element of ``self``.
