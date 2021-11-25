@@ -8,7 +8,7 @@ import { device } from 'web.config';
 import viewRegistry from 'web.view_registry';
 
 const ProjectFormController = FormController.extend({
-    init() {
+    on_attach_callback() {
         this._super(...arguments);
         if (!device.isMobile) {
             bus.on("DOM_updated", this, () => {
@@ -20,6 +20,10 @@ const ProjectFormController = FormController.extend({
                 }
             });
         }
+    },
+    on_detach_callback() {
+        this._super(...arguments);
+        bus.off("DOM_updated", this);
     },
     _getActionMenuItems(state) {
         if (!this.archiveEnabled || !state.data['recurrence_id']) {
