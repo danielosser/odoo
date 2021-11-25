@@ -56,24 +56,23 @@ class AccountMove(models.Model):
 
         return val
 
+
     @api.model
     def _get_tax_grouping_key_from_tax_line(self, tax_line):
         # Overridden in order to group taxes that are related to the same vehicle_id
         res = super()._get_tax_grouping_key_from_tax_line(tax_line)
-        if tax_line.vehicle_id:
-            res.update({
-                'vehicle_id': tax_line.vehicle_id.id,
-            })
+        res.update({
+            'vehicle_id': tax_line.vehicle_id.id,
+        })
         return res
 
     @api.model
     def _get_tax_grouping_key_from_base_line(self, base_line, tax_vals):
         # Overridden in order to group taxes that are related to the same vehicle_id
         res = super()._get_tax_grouping_key_from_base_line(base_line, tax_vals)
-        if base_line.vehicle_id:
-            res.update({
-                'vehicle_id': base_line.vehicle_id.id,
-            })
+        res.update({
+            'vehicle_id': base_line.vehicle_id.id,
+        })
         return res
 
 
@@ -86,8 +85,3 @@ class AccountMoveLine(models.Model):
 
     def _compute_need_vehicle(self):
         self.need_vehicle = False
-
-    @api.onchange('amount_currency', 'currency_id', 'debit', 'credit', 'tax_ids', 'account_id', 'price_unit', 'quantity', 'vehicle_id')
-    def _onchange_mark_recompute_taxes(self):
-        # Overridden in order to be triggered by a 'vehicle_id' change as well
-        super()._onchange_mark_recompute_taxes()
