@@ -1,5 +1,6 @@
 /** @odoo-module **/
 
+import core from 'web.core';
 import {_t} from 'web.core';
 import checkoutForm from 'payment.checkout_form';
 
@@ -7,6 +8,11 @@ checkoutForm.include({
     events: _.extend({}, checkoutForm.prototype.events || {}, {
         'change .o_wpayment_fee_impact': '_onFeeParameterChange',
     }),
+
+    start: function () {
+        core.bus.on('update_shipping_cost', this, this.updateShippingCost);
+        return this._super.apply(this, arguments);
+    },
 
     //--------------------------------------------------------------------------
     // Private
@@ -84,6 +90,17 @@ checkoutForm.include({
     // Handlers
     //--------------------------------------------------------------------------
 
+    /**
+     * Update the total amount to be paid.
+     *
+     * Called upon change of shipping method
+     *
+     * @private
+     * @param {float} amount
+     */
+     updateShippingCost: function (amount) {
+        this.txContext.amount = amount;
+     },
     /**
      * Update the fees associated to each acquirer.
      *
