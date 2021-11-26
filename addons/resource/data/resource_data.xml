@@ -61,6 +61,15 @@
         />
     </record>
 
+    <!-- Public time off -->
+    <record id="resource_public_time_off_1" model="resource.calendar.leaves">
+        <field name="name">Public Time Off</field>
+        <field name="company_id" ref="base.main_company"/>
+        <field name="calendar_id" ref="resource_calendar_std"/>
+        <field name="date_from" eval="(datetime.today() - timedelta(days=datetime.today().weekday() - 1)).strftime('%Y-%m-%d')"></field>
+        <field name="date_to" eval="(datetime.today() - timedelta(days=datetime.today().weekday() - 1)).strftime('%Y-%m-%d')"></field>
+    </record>
+
 </data>
 
 </odoo>
