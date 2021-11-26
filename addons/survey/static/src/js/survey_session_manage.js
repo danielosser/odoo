@@ -160,13 +160,8 @@ publicWidget.registry.SurveySessionManage = publicWidget.Widget.extend({
                 this.$('.o_survey_session_navigation_next').addClass('d-none');
             }
             this.leaderBoard.showLeaderboard(true, this.isScoredQuestion);
-        } else {
-            if (!this.isLastQuestion) {
-                this._nextQuestion();
-            } else if (!this.sessionShowLeaderboard) {
-                // If we have no leaderboard to show, directly end the session
-                this.$('.o_survey_session_close').click();
-            }
+        } else if (!this.isLastQuestion || !this.sessionShowLeaderboard) {
+            this._nextQuestion();
         }
 
         this.currentScreen = screenToDisplay;
@@ -361,6 +356,13 @@ publicWidget.registry.SurveySessionManage = publicWidget.Widget.extend({
                 });
             } else {
                 self.$('.o_survey_session_close').click();
+                var descriptionDone = self.$('.o_survey_session_description_done').text();
+                if (!descriptionDone) {
+                    descriptionDone = _t('Thank you!');
+                }
+                self.$('.o_survey_session_manage_container').html(
+                    $('<h1>').text(descriptionDone)
+                );
             }
         });
     },

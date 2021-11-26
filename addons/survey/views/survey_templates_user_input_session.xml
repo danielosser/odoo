@@ -150,6 +150,7 @@
                     <div class="justify-content-center d-flex flex-column flex-grow-1 mt-5 mb-5 pb-5 o_survey_session_leaderboard_container"/>
                 </div>
             </div>
+            <div class="o_survey_session_description_done d-none" t-field="survey.description_done" />
         </div>
     </template>
 
