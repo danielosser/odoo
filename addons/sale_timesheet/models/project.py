@@ -334,7 +334,7 @@ class Project(models.Model):
             'value': remaining,
             'color': 'red' if remaining < 0 else 'black',
         }
-        print('sold items.............',sold_items)
+        print('\n\n\n\nsold items.............\n\n\n\n',sold_items)
         return sold_items
 
     def _get_profitability_items(self):
