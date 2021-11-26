@@ -25,6 +25,8 @@ const {
     applyModifications,
     removeOnImageChangeAttrs,
     isImageSupportedForProcessing,
+    createDataURL,
+    isGif,
 } = require('web_editor.image_processing');
 
 var qweb = core.qweb;
@@ -4970,10 +4972,11 @@ const ImageHandlerOption = SnippetOptionWidget.extend({
      /**
      * @private
      * @param {HTMLImageElement} img
+     * @param {Boolean} strict
      * @returns {Boolean}
      */
-    _isImageSupportedForProcessing(img) {
-        return isImageSupportedForProcessing(this._getImageMimetype(img));
+    _isImageSupportedForProcessing(img, strict = false) {
+        return isImageSupportedForProcessing(this._getImageMimetype(img), strict);
     },
     /**
      * @override
@@ -4981,7 +4984,7 @@ const ImageHandlerOption = SnippetOptionWidget.extend({
     _computeWidgetVisibility(widgetName, params) {
         if (this._isImageProcessingWidget(widgetName, params)) {
             const img = this._getImg();
-            return this._isImageSupportedForProcessing(img);
+            return this._isImageSupportedForProcessing(img, true);
         }
         return this._super(...arguments);
     },
@@ -5057,7 +5060,9 @@ registry.ImageTools = ImageHandlerOption.extend({
     async crop() {
         this.trigger_up('hide_overlay');
         this.trigger_up('disable_loading_effect');
-        new weWidgets.ImageCropWidget(this, this.$target[0]).appendTo(this.options.wysiwyg.$editable);
+        const img = this._getImg();
+        new weWidgets.ImageCropWidget(this, img, {mimetype: this._getImageMimetype(img)})
+            .appendTo(this.options.wysiwyg.$editable);
 
         await new Promise(resolve => {
             this.$target.one('image_cropper_destroyed', async () => {
@@ -5097,7 +5102,8 @@ registry.ImageTools = ImageHandlerOption.extend({
      * @see this.selectClass for parameters
      */
     async resetCrop() {
-        const cropper = new weWidgets.ImageCropWidget(this, this.$target[0]);
+        const img = this._getImg();
+        const cropper = new weWidgets.ImageCropWidget(this, img, {mimetype: this._getImageMimetype(img)});
         await cropper.appendTo(this.options.wysiwyg.$editable);
         await cropper.reset();
         await this._reapplyCurrentShape();
@@ -5265,13 +5271,7 @@ registry.ImageTools = ImageHandlerOption.extend({
         const blob = new Blob([svg.outerHTML], {
             type: 'image/svg+xml',
         });
-
-        const reader = new FileReader();
-        const readPromise = new Promise(resolve => {
-            reader.addEventListener('load', () => resolve(reader.result));
-        });
-        reader.readAsDataURL(blob);
-        const dataURL = await readPromise;
+        const dataURL = await createDataURL(blob);
         const imgFilename = (img.dataset.originalSrc.split('/').pop()).split('.')[0];
         img.dataset.fileName = `${imgFilename}.svg`;
         return loadImage(dataURL, img);
@@ -5405,7 +5405,7 @@ registry.ImageTools = ImageHandlerOption.extend({
      * @override
      */
     _getImageMimetype(img) {
-        if (img.dataset.shape) {
+        if (img.dataset.shape && img.dataset.originalMimetype) {
             return img.dataset.originalMimetype;
         }
         return this._super(...arguments);
@@ -5471,7 +5471,10 @@ registry.ImageTools = ImageHandlerOption.extend({
      * @override
      */
     _isImageProcessingWidget(widgetName, params) {
-        return this._super(...arguments) || widgetName === 'shape_img_opt';
+        if (widgetName === 'shape_img_opt') {
+            return !isGif(this._getImageMimetype(this._getImg()));
+        }
+        return this._super(...arguments);
     },
 
     //--------------------------------------------------------------------------

@@ -14,6 +14,7 @@ const modifierFields = [
     'resizeWidth',
     'aspectRatio',
 ];
+const isGif = (mimetype) => mimetype === 'image/gif';
 
 // webgl color filters
 const _applyAll = (result, filter, filters) => {
@@ -202,6 +203,7 @@ async function applyModifications(img, dataOptions = {}) {
         glFilter: '',
         filter: '#0000',
         quality: '75',
+        cropEnabled: false,
     }, img.dataset, dataOptions);
     let {
         width,
@@ -213,9 +215,16 @@ async function applyModifications(img, dataOptions = {}) {
         originalSrc,
         glFilter,
         filterOptions,
+        cropEnabled,
     } = data;
     [width, height, resizeWidth] = [width, height, resizeWidth].map(s => parseFloat(s));
     quality = parseInt(quality);
+
+    // Skip modifications (required to add shapes on animated GIFs).
+    if (isGif(mimetype) && !cropEnabled) {
+        const imageData = await _loadImageData(originalSrc, true);
+        return imageData.dataURL;
+    }
 
     // Crop
     const container = document.createElement('div');
@@ -254,7 +263,11 @@ async function applyModifications(img, dataOptions = {}) {
     ctx.fillRect(0, 0, result.width, result.height);
 
     // Quality
-    return result.toDataURL(mimetype, quality / 100);
+    const finalData = result.toDataURL(mimetype, quality / 100);
+    if (cropEnabled && isGif(mimetype)) {
+        img.dataset[data.originalMimetype ? 'originalMimetype' : 'mimetype'] = 'image/png';
+    }
+    return finalData;
 }
 
 /**
@@ -277,6 +290,29 @@ function loadImage(src, img = new Image()) {
 // and filter, we create a local cache of the images using object URLs.
 const imageCache = new Map();
 /**
+ * Loads the image into cache if not already and returns the object URL / dataURL.
+ *
+ * @param {string} src
+ */
+async function _loadImageData(src, loadDataURL = false) {
+    if (!imageCache.has(src) || (loadDataURL && !imageCache.get(src).dataURL)) {
+        const blob = await fetch(src).then(res => res.blob());
+        _updateImageData(src, {
+            objectURL: URL.createObjectURL(blob),
+            dataURL: loadDataURL ? await createDataURL(blob) : null,
+        });
+    }
+    return imageCache.get(src);
+}
+/**
+ * @param {string} src
+ * @param {Object} newData
+ */
+function _updateImageData(src, newData) {
+    const oldData = imageCache.get(src) || {};
+    imageCache.set(src, Object.assign(oldData, newData));
+}
+/**
  * Activates the cropper on a given image.
  *
  * @param {jQuery} $image the image on which to activate the cropper
@@ -284,12 +320,8 @@ const imageCache = new Map();
  * @param {DOMStringMap} dataset dataset containing the cropperDataFields
  */
 async function activateCropper(image, aspectRatio, dataset) {
-    const src = image.getAttribute('src');
-    if (!imageCache.has(src)) {
-        const res = await fetch(src);
-        imageCache.set(src, URL.createObjectURL(await res.blob()));
-    }
-    image.src = imageCache.get(src);
+    const imageData = await _loadImageData(image.getAttribute('src'));
+    image.src = imageData.objectURL;
     $(image).cropper({
         viewMode: 2,
         dragMode: 'move',
@@ -333,10 +365,30 @@ async function loadImageInfo(img, rpc, attachmentSrc = '') {
 
 /**
  * @param {String} mimetype
+ * @param {Boolean} [strict=false] if true, even partially supported images (GIFs)
+ * won't be accepted.
  * @returns {Boolean}
  */
-function isImageSupportedForProcessing(mimetype) {
+function isImageSupportedForProcessing(mimetype, strict = false) {
+    if (isGif(mimetype)) {
+        return !strict;
+    }
     return ['image/jpeg', 'image/png'].includes(mimetype);
+}
+
+/**
+ * @param {Blob} blob
+ * @returns {Promise}
+ */
+function createDataURL(blob) {
+    const reader = new FileReader();
+    const readPromise = new Promise((resolve, reject) => {
+        reader.addEventListener('load', () => resolve(reader.result));
+        reader.addEventListener('abort', reject);
+        reader.addEventListener('error', reject);
+    });
+    reader.readAsDataURL(blob);
+    return readPromise;
 }
 
 return {
@@ -347,5 +399,7 @@ return {
     loadImage,
     removeOnImageChangeAttrs: [...cropperDataFields, ...modifierFields, 'aspectRatio'],
     isImageSupportedForProcessing,
+    createDataURL,
+    isGif,
 };
 });
