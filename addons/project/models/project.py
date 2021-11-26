@@ -873,6 +873,12 @@ class Task(models.Model):
     _order = "priority desc, sequence, id desc"
     _check_company_auto = True
 
+    def rating_get_rated_partner_id(self):
+        rated_partner = super().rating_get_rated_partner_id()
+        if not rated_partner and len(self.user_ids) == 1 and self.user_ids[0].partner_id:
+            return self.user_ids[0].partner_id
+        return rated_partner
+
     @api.model
     def _get_default_partner_id(self, project=None, parent=None):
         if parent and parent.partner_id:
