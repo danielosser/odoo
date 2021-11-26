@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="mass_mailing_main" inherit_id="digest_mail_main">
+            <xpath eontext="true" expr="//t[@id='other_unsub_link']" position="before">
+                <t t-elif="mailing_off_token">
+                    –
+                    <a t-attf-href="/mailing/turnoff_report?token=#{mailing_off_token}"
+                       target="_blank" style="text-decoration: none;">
+                        <span style="color: #8f8f8f;">Turn off Mailing Reports</span>
+                    </a>
+                </t>
+            </xpath>
+        </template>
+    </data>
+</odoo>

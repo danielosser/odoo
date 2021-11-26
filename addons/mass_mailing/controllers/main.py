@@ -195,3 +195,11 @@ class MassMailController(http.Controller):
                 record.sudo().message_post(body=_("Feedback from %(email)s: %(feedback)s", email=email, feedback=feedback))
             return bool(records)
         return 'error'
+
+    @http.route('/mailing/turnoff_report', type='http', website=True, auth='user')
+    def turn_off_mailing_reports(self, token=None):
+        correct_token = consteq(token, request.env['mass_mailing.mailing']._get_unsubscribe_token())
+        if request.env['res.users'].has_group('mass_mailing.group_mass_mailing_user') and correct_token:
+            request.env['ir.config_parameter'].sudo().set_param('mass_mailing.no_mass_mailing_reports', True)
+            return request.render('mass_mailing.report_unsubscribed')
+        raise werkzeug.exceptions.NotFound()

@@ -14,6 +14,8 @@ class ResConfigSettings(models.TransientModel):
     show_blacklist_buttons = fields.Boolean(string="Blacklist Option when Unsubscribing",
                                                  config_parameter='mass_mailing.show_blacklist_buttons',
                                                  help="""Allow the recipient to manage himself his state in the blacklist via the unsubscription page.""")
+    no_mass_mailing_reports = fields.Boolean(string='Disable Mass Mailing Reports', config_parameter='mass_mailing.no_mass_mailing_reports',
+                                                 help='Disable mass mailing report to Responsible one day after sending a mass mailing.')
 
     @api.onchange('mass_mailing_outgoing_mail_server')
     def _onchange_mass_mailing_outgoing_mail_server(self):
