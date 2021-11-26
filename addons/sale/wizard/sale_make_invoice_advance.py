@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+from collections import defaultdict
 import time
 
-from odoo import api, fields, models, _
+from odoo import api, fields, models, Command, _
 from odoo.exceptions import UserError
 
 
@@ -70,7 +71,24 @@ class SaleAdvancePaymentInv(models.TransientModel):
             return {'value': {'amount': amount}}
         return {}
 
-    def _prepare_invoice_values(self, order, name, amount, so_line):
+    def _prepare_invoice_values(self, order, so_lines):
+        invoice_lines = []
+        for line in so_lines:
+            name = line.name
+            for tax in line.tax_id:
+                name += ' ' + tax.name
+            invoice_lines.append(Command.create({
+                'name': name,
+                'price_unit': line.price_unit,
+                'quantity': 1.0,
+                'product_id': self.product_id.id,
+                'product_uom_id': line.product_uom.id,
+                'tax_ids': [Command.set(line.tax_id.ids)],
+                'sale_line_ids': [Command.set([line.id])],
+                'analytic_tag_ids': [Command.set(line.analytic_tag_ids.ids)],
+                'analytic_account_id': order.analytic_account_id.id or False,
+            }))
+
         invoice_vals = {
             'ref': order.client_order_ref,
             'move_type': 'out_invoice',
@@ -80,7 +98,7 @@ class SaleAdvancePaymentInv(models.TransientModel):
             'partner_id': order.partner_invoice_id.id,
             'fiscal_position_id': (order.fiscal_position_id or order.fiscal_position_id.get_fiscal_position(order.partner_id.id)).id,
             'partner_shipping_id': order.partner_shipping_id.id,
-            'currency_id': order.pricelist_id.currency_id.id,
+            'currency_id': self.currency_id.id,
             'payment_reference': order.reference,
             'invoice_payment_term_id': order.payment_term_id.id,
             'partner_bank_id': order.company_id.partner_id.bank_ids[:1].id,
@@ -88,40 +106,23 @@ class SaleAdvancePaymentInv(models.TransientModel):
             'campaign_id': order.campaign_id.id,
             'medium_id': order.medium_id.id,
             'source_id': order.source_id.id,
-            'invoice_line_ids': [(0, 0, {
-                'name': name,
-                'price_unit': amount,
-                'quantity': 1.0,
-                'product_id': self.product_id.id,
-                'product_uom_id': so_line.product_uom.id,
-                'tax_ids': [(6, 0, so_line.tax_id.ids)],
-                'sale_line_ids': [(6, 0, [so_line.id])],
-                'analytic_tag_ids': [(6, 0, so_line.analytic_tag_ids.ids)],
-                'analytic_account_id': order.analytic_account_id.id or False,
-            })],
+            'invoice_line_ids': invoice_lines,
         }
 
         return invoice_vals
 
-    def _get_advance_details(self, order):
-        context = {'lang': order.partner_id.lang}
+    def _get_advance_amount(self, order):
         if self.advance_payment_method == 'percentage':
-            amount = order.amount_untaxed * self.amount / 100
-            name = _("Down payment of %s%%") % (self.amount)
+            amount = order.amount_total * self.amount / 100
         else:
             amount = self.fixed_amount
-            name = _('Down Payment')
-        del context
-
-        return amount, name
-
-    def _create_invoice(self, order, so_line, amount):
-        if (self.advance_payment_method == 'percentage' and self.amount <= 0.00) or (self.advance_payment_method == 'fixed' and self.fixed_amount <= 0.00):
+        if amount <= 0.00:
             raise UserError(_('The value of the down payment amount must be positive.'))
 
-        amount, name = self._get_advance_details(order)
+        return amount
 
-        invoice_vals = self._prepare_invoice_values(order, name, amount, so_line)
+    def _create_invoice(self, order, so_lines):
+        invoice_vals = self._prepare_invoice_values(order, so_lines)
 
         if order.fiscal_position_id:
             invoice_vals['fiscal_position_id'] = order.fiscal_position_id.id
@@ -142,7 +143,7 @@ class SaleAdvancePaymentInv(models.TransientModel):
             'product_uom': self.product_id.uom_id.id,
             'product_id': self.product_id.id,
             'analytic_tag_ids': analytic_tag_ids,
-            'tax_id': [(6, 0, tax_ids)],
+            'tax_id': [Command.set(tax_ids)],
             'is_downpayment': True,
             'sequence': order.order_line and order.order_line[-1].sequence + 1 or 10,
         }
@@ -161,23 +162,46 @@ class SaleAdvancePaymentInv(models.TransientModel):
                 self.product_id = self.env['product.product'].create(vals)
                 self.env['ir.config_parameter'].sudo().set_param('sale.default_deposit_product_id', self.product_id.id)
 
-            sale_line_obj = self.env['sale.order.line']
             for order in sale_orders:
-                amount, name = self._get_advance_details(order)
 
                 if self.product_id.invoice_policy != 'order':
                     raise UserError(_('The product used to invoice a down payment should have an invoice policy set to "Ordered quantities". Please update your deposit product to be able to create a deposit invoice.'))
                 if self.product_id.type != 'service':
                     raise UserError(_("The product used to invoice a down payment should be of type 'Service'. Please use another product or update this product."))
-                taxes = self.product_id.taxes_id.filtered(lambda r: not order.company_id or r.company_id == order.company_id)
-                tax_ids = order.fiscal_position_id.map_tax(taxes).ids
-                analytic_tag_ids = []
-                for line in order.order_line:
-                    analytic_tag_ids = [(4, analytic_tag.id, None) for analytic_tag in line.analytic_tag_ids]
 
-                so_line_values = self._prepare_so_line(order, analytic_tag_ids, tax_ids, amount)
-                so_line = sale_line_obj.create(so_line_values)
-                self._create_invoice(order, so_line, amount)
+                group_by_taxes = defaultdict(lambda: self.env['sale.order.line'])
+                for line in order.order_line:
+                    tax_ids = tuple(sorted(order.fiscal_position_id.map_tax(line.tax_id).ids))
+                    group_by_taxes[tax_ids] += line
+
+                group_by_taxes = list(group_by_taxes.values())
+
+                so_lines = []
+                advance_amount = self._get_advance_amount(order)
+                total_amount_left = advance_amount
+                for i, line_ids in enumerate(group_by_taxes):
+                    tax_ids = line_ids[0].tax_id
+                    analytic_tag_ids = [Command.link(analytic_tag.id) for
+                                            analytic_tag in line_ids.analytic_tag_ids]
+                    if i == len(group_by_taxes) - 1:
+                        so_line_amount_tax_excl = total_amount_left
+                    else:
+                        sum_price_total = sum(line_ids.mapped('price_total'))
+                        sum_price_subtotal = sum(line_ids.mapped('price_subtotal'))
+                        so_line_amount_tax_incl = advance_amount * (sum_price_total / order.amount_total)
+                        total_amount_left -= so_line_amount_tax_incl
+                        so_line_amount_tax_excl = so_line_amount_tax_incl * (sum_price_subtotal / sum_price_total)
+
+                    so_line_values = self._prepare_so_line(
+                        order,
+                        analytic_tag_ids,
+                        tax_ids.ids,
+                        so_line_amount_tax_excl
+                    )
+                    line = self.env['sale.order.line'].create(so_line_values)
+                    so_lines.append(line)
+                self._create_invoice(order, so_lines)
+
         if self._context.get('open_invoices', False):
             return sale_orders.action_view_invoice()
         return {'type': 'ir.actions.act_window_close'}
@@ -191,4 +215,3 @@ class SaleAdvancePaymentInv(models.TransientModel):
             'taxes_id': [(6, 0, self.deposit_taxes_id.ids)],
             'company_id': False,
         }
-

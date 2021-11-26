@@ -235,7 +235,7 @@ class SaleOrderLine(models.Model):
         ('to invoice', 'To Invoice'),
         ('no', 'Nothing to Invoice')
         ], string='Invoice Status', compute='_compute_invoice_status', store=True, default='no')
-    price_unit = fields.Float('Unit Price', required=True, digits='Product Price', default=0.0)
+    price_unit = fields.Float('Unit Price', required=True, digits='Product Price', default=0.0, compute='_compute_price_unit', store=True, readonly=False)
 
     price_subtotal = fields.Monetary(compute='_compute_amount', string='Subtotal', store=True)
     price_tax = fields.Float(compute='_compute_amount', string='Total Tax', store=True)
@@ -467,6 +467,12 @@ class SaleOrderLine(models.Model):
                     elif invoice_line.move_id.move_type == 'out_refund':
                         amount_invoiced -= invoice_line.currency_id._convert(invoice_line.price_subtotal, line.currency_id, line.company_id, invoice_date)
             line.untaxed_amount_invoiced = amount_invoiced
+
+    @api.depends('invoice_lines', 'invoice_lines.price_total', 'invoice_lines.price_subtotal')
+    def _compute_price_unit(self):
+        for line in self:
+            if line.is_downpayment and len(line.invoice_lines) == 1:
+                line.price_unit = line.invoice_lines.price_subtotal
 
     @api.depends('state', 'price_reduce', 'product_id', 'untaxed_amount_invoiced', 'qty_delivered', 'product_uom_qty')
     def _compute_untaxed_amount_to_invoice(self):
