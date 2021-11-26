@@ -975,12 +975,6 @@ class Message(models.Model):
         for vals in vals_list:
             message_sudo = self.browse(vals['id']).sudo().with_prefetch(self.ids)
 
-            # Author
-            if message_sudo.author_id:
-                author = (message_sudo.author_id.id, message_sudo.author_id.display_name)
-            else:
-                author = (0, message_sudo.email_from)
-
             # Attachments
             main_attachment = self.env['ir.attachment']
             if message_sudo.attachment_ids and message_sudo.res_id and issubclass(self.pool[message_sudo.model], self.pool['mail.thread']):
@@ -1021,7 +1015,7 @@ class Message(models.Model):
                 record_name = False
 
             vals.update({
-                'author_id': author,
+                'author_id': message_sudo._message_format_author(),
                 'notifications': message_sudo.notification_ids._filtered_for_web_client()._notification_format(),
                 'attachment_ids': attachment_ids,
                 'tracking_value_ids': tracking_value_ids,
@@ -1029,6 +1023,18 @@ class Message(models.Model):
             })
 
         return vals_list
+
+    def _message_format_author(self):
+        """Returns author information for self message. The return format is the
+        same as `name_get()` which is a tuple `(id, display_name)`.
+        If the message does not have an author (eg. coming from an email of an
+        unidentified person) the tuple `(0, email)` is returned instead.
+        """
+        self.ensure_one()
+        if self.author_id:
+            return (self.author_id.id, self.author_id.display_name)
+        else:
+            return (0, self.email_from)
 
     def message_fetch_failed(self):
         """Returns all messages, sent by the current user, that have errors, in

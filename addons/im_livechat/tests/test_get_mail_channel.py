@@ -92,3 +92,21 @@ class TestGetMailChannel(TransactionCase):
             })
 
         return mail_channels
+
+    def test_operator_livechat_username(self):
+        """Ensures the operator livechat_username is returned by `channel_fetch_message`, which is
+        the method called by the public route displaying chat history."""
+        public_user = self.env.ref('base.public_user')
+        operator = self.operators[0]
+        operator.write({
+            'email': 'michel@example.com',
+            'livechat_username': 'Michel at your service',
+        })
+        channel_info = self.livechat_channel.with_user(public_user)._open_livechat_mail_channel(anonymous_name='whatever')
+        channel = self.env['mail.channel'].browse(channel_info['id'])
+        channel.with_user(operator).message_post(body='Hello', message_type='comment', subtype_xmlid='mail.mt_comment')
+        message_formats = channel.with_user(public_user).channel_fetch_message()
+        self.assertEqual(len(message_formats), 1)
+        self.assertEqual(message_formats[0]['author_id'][0], operator.partner_id.id)
+        self.assertEqual(message_formats[0]['author_id'][1], operator.livechat_username)
+        self.assertEqual(message_formats[0]['author_id'][2], operator.livechat_username)
