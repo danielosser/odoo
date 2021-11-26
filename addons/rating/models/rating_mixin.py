@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
+from collections import defaultdict
 from datetime import timedelta
 
 from odoo import api, fields, models, tools
@@ -21,6 +22,8 @@ class RatingParentMixin(models.AbstractModel):
         compute="_compute_rating_percentage_satisfaction", compute_sudo=True,
         store=False, help="Percentage of happy ratings")
     rating_count = fields.Integer(string='# Ratings', compute="_compute_rating_percentage_satisfaction", compute_sudo=True)
+    rating_avg = fields.Float('Rating Average', compute='_compute_rating_percentage_satisfaction', compute_sudo=True, search='_search_rating_avg')
+    rating_last_value = fields.Float('Rating Last Value', groups='base.group_user', related='rating_ids.rating')
 
     @api.depends('rating_ids.rating', 'rating_ids.consumed')
     def _compute_rating_percentage_satisfaction(self):
@@ -33,6 +36,7 @@ class RatingParentMixin(models.AbstractModel):
         # get repartition of grades per parent id
         default_grades = {'great': 0, 'okay': 0, 'bad': 0}
         grades_per_parent = dict((parent_id, dict(default_grades)) for parent_id in self.ids)  # map: {parent_id: {'great': 0, 'bad': 0, 'ok': 0}}
+        rating_scores_per_parent = defaultdict(int)  # contains the total of the rating values per record
         for item in data:
             parent_id = item['parent_res_id']
             rating = item['rating']
@@ -42,12 +46,39 @@ class RatingParentMixin(models.AbstractModel):
                 grades_per_parent[parent_id]['okay'] += item['__count']
             else:
                 grades_per_parent[parent_id]['bad'] += item['__count']
+            rating_scores_per_parent[parent_id] += rating * item['__count']
 
         # compute percentage per parent
         for record in self:
             repartition = grades_per_parent.get(record.id, default_grades)
-            record.rating_count = sum(repartition.values())
-            record.rating_percentage_satisfaction = repartition['great'] * 100 / sum(repartition.values()) if sum(repartition.values()) else -1
+            rating_count = sum(repartition.values())
+            record.rating_count = rating_count
+            record.rating_percentage_satisfaction = repartition['great'] * 100 / rating_count if rating_count else -1
+            record.rating_avg = rating_scores_per_parent[record.id] / rating_count if rating_count else 0
+
+    def _search_rating_avg(self, operator, value):
+        if operator not in ['=', '!=', '<=', '<', '>', '>=']:
+            raise NotImplementedError('This operator %s is not supported in this search method.' % operator)
+        if not isinstance(value, (int, float)):
+            raise NotImplementedError('The value must be an integer or a float value.')
+        query = f"""
+            SELECT doc.id
+              FROM {self._table} as doc
+        INNER JOIN rating_rating R ON R.parent_res_id = doc.id AND R.parent_res_model = %s
+          GROUP BY doc.id
+            HAVING avg(R.rating) {operator} %s
+        """
+        return [(
+            'id',
+            'inselect' if operator != '!=' else 'not inselect',
+            (query, (self._name, value,))
+        )]
+
+    def _rating_domain(self):
+        """ Returns a normalized domain on rating.rating to select the records to
+            include in count, avg, ... computation of current model.
+        """
+        return ['&', '&', ('parent_res_model', '=', self._name), ('parent_res_id', 'in', self.ids), ('consumed', '=', True)]
 
 
 class RatingMixin(models.AbstractModel):

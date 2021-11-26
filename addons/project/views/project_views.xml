@@ -505,6 +505,11 @@
                     <separator/>
                     <filter string="Open" name="open" domain="[('stage_id.fold', '=', False)]"/>
                     <separator/>
+                    <filter name="rating_satisfied" string="Satisfied" domain="[('rating_avg', '>', 3.66)]" groups="project.group_project_rating"/>
+                    <filter name="rating_okay" string="Okay" domain="[('rating_avg', '&lt;', 3.66), ('rating_avg', '>=', 2.33)]" groups="project.group_project_rating"/>
+                    <filter name="dissatisfied" string="Dissatisfied" domain="[('rating_avg', '&lt;', 2.33), ('rating_last_value', '!=', 0)]" groups="project.group_project_rating"/>
+                    <filter name="no_rating" string="No Rating" domain="[('rating_last_value', '=', 0)]" groups="project.group_project_rating"/>
+                    <separator/>
                     <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
                     <group expand="0" string="Group By">
                         <filter string="Project Manager" name="Manager" context="{'group_by': 'user_id'}"/>
