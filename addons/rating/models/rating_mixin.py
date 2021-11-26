@@ -25,6 +25,7 @@ class RatingParentMixin(models.AbstractModel):
     rating_avg = fields.Float('Rating Average', compute='_compute_rating_percentage_satisfaction', compute_sudo=True, search='_search_rating_avg')
     rating_last_value = fields.Float('Rating Last Value', groups='base.group_user', related='rating_ids.rating')
 
+    # FIXME: The `rating_ids.parent_res_id` should be in its dependencies, shouldn't it ? :thinking:
     @api.depends('rating_ids.rating', 'rating_ids.consumed')
     def _compute_rating_percentage_satisfaction(self):
         # build domain and fetch data
