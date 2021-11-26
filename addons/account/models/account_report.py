@@ -90,7 +90,7 @@ class AccountReportLine(models.Model):
     sequence = fields.Integer(string="Sequence", required=True)
     column_values = fields.Char(string="Columns")#TODO OCO pas requis ? => Si pas set, prend les totaux de toutes les expressions, alors ? (et puis quand on a aucune expression, il faut voir)
     hierarchy_level = fields.Integer(string="Level", default=1, required=True)
-    code = fields.Char(string="Code") # TODO OCO est-ce encore utile ?? On pourrait s'en sortir avec l'xmlid seul => non parce qu'incompréhensible dans la form view uniquement :/
+    code = fields.Char(string="Code")
     unfoldable = fields.Boolean(string="Unfoldable", default=False)
 
     # TODO OCO ajouter le niveau de hiérarchie
@@ -110,11 +110,11 @@ class AccountReportExpression(models.Model):
     engine = fields.Selection(
         string="Computation Engine",
         selection = [
+            ('domain', 'Odoo Domain'),
+            ('tax_tags', 'Tax Tags'),
+            ('custom', 'Custom Code'),
+            ('aggregation', 'Aggregate Other Formulas'),
             ('accounts_prefix', 'Prefix of accounts'),#TODO OCO
-            ('domain', 'Domain ala Odoo'), #TODO OCO
-            ('computation', 'Computation based on different lines'), # TODO OCO besoin ? ==> Quid du référencement des colonnes en temps utile ? (pas dans cette tâche) ==> + on doit toujours pouvoir créer des lignes invisibles juste pour le calcul, alors, non ?
-            ('tax_tags', 'tax tags that could be found on aml'),
-            ('custom', 'Run custom python code'),
         ],
         required=True
     )

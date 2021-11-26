@@ -2,6 +2,7 @@
 <odoo>
     <data>
 
+        <!-- GENERIC TAX REPORT -->
         <record id="generic_tax_report" model="account.report">
             <field name="name">Generic Tax report</field>
             <field name="filter_multi_company">tax_units</field>
@@ -11,6 +12,39 @@
             <!--TODO OCO fiscal_position à voir-->
         </record>
 
+        <record id="generic_tax_report_account_tax" model="account.report">
+            <field name="name">Group by: Account &gt; Tax </field>
+            <field name="filter_multi_company">tax_units</field>
+            <field name="filter_tax_exigible" eval="True"/>
+            <field name="columns">NET, TAX</field> <!--TODO OCO-->
+            <field name="dynamic_lines_generator">_generic_tax_report_account_tax_grouping</field>
+            <field name="root_report_id" ref="generic_tax_report"/>
+            <field name="allow_showing_draft" eval="False"/>
+        </record>
+
+        <record id="generic_tax_report_tax_account" model="account.report">
+            <field name="name">Group by: Tax &gt; Account </field>
+            <field name="filter_multi_company">tax_units</field>
+            <field name="filter_tax_exigible" eval="True"/>
+            <field name="columns">NET, TAX</field> <!--TODO OCO-->
+            <field name="dynamic_lines_generator">_generic_tax_report_tax_account_grouping</field>
+            <field name="root_report_id" ref="generic_tax_report"/>
+        </record>
+
+        <!--TODO OCO pour simplifier ce genre de déclaration, je ferais bien un modèle account.report.config qui permette de définir des valeurs par défaut avec un seul m2o (je pense notamment au rapport de taxes, c'est mieux)
+          => Au write/create de config_id, on complète les valeurs en fonction de la config
+          => Au write d'un nouveau champ sur config_id, on corrige les rapports ? A voir.
+
+          ====> Tous les champs de config du rapport pourraient être des compute éditables vers la config, du coup. Peut-être too much
+
+          ===> OU BIEN
+          le champ config_id est required m2o. On la crée avec une commande ORM pour les cas simples, et on le crée à part pour les rapports de taxes,
+          de sorte qu'ils appellent tous la même. Mais du coup, pas de variante d'un sous rapport qui puisse changer un seul point de config sans changer
+          toute la config. On peut vivre avec, non ? Ca veut aussi dire qu'on est limités niveau customisation par l'utilisateur. À voir. Encore qu'on pourrait
+          mettre des champs related et les montrer dans la vue pour ça.
+        -->
+
+        <!--TODO OCO TEST REPORT -->
         <record id="test_report" model="account.report">
             <field name="name">Test Report (with generic tax report dynamic lines)</field>
             <field name="filter_multi_company">tax_units</field>
@@ -22,9 +56,9 @@
             <!--TODO OCO fiscal_position à voir-->
         </record>
 
-        <!--TODO OCO TEST 1-->
         <record id="oco_test_line_1" model="account.report.line">
             <field name="name">test line 1</field>
+            <field name="code">LINE_1</field>
             <field name="report_id" ref="test_report"/>
             <!--TODO OCO pour les vrais cas comme ceci, on a un souci: la fonction est en enterprise: donc soit on la déclare qui retourne 0 en community, soit on l'ajoute là-bas...
             Ou bien on la met aussi en community ? Ca fait quand même bcp, là ...
@@ -39,7 +73,6 @@
             <field name="sequence">1</field>
         </record>
 
-        <!--TODO OCO TEST-->
         <record id="oco_test_line_financial" model="account.report.line">
             <field name="name">test line financial</field>
             <field name="report_id" ref="test_report"/>
@@ -59,6 +92,7 @@
 
         <record id="oco_test_line_financial_group" model="account.report.line">
             <field name="name">test line financial groupby</field>
+            <field name="code">FINANCIAL_GROUPBY</field>
             <field name="report_id" ref="test_report"/>
             <!--TODO OCO pour les vrais cas comme ceci, on a un souci: la fonction est en enterprise: donc soit on la déclare qui retourne 0 en community, soit on l'ajoute là-bas...
             Ou bien on la met aussi en community ? Ca fait quand même bcp, là ...
@@ -74,7 +108,6 @@
             <field name="sequence">2</field>
         </record>
 
-        <!--TODO OCO TEST -->
         <record id="oco_test_line_sub1_main" model="account.report.line">
             <field name="name">test sub line - MAIN</field>
             <field name="report_id" ref="test_report"/>
@@ -83,7 +116,6 @@
             <field name="sequence">3</field>
         </record>
 
-        <!--TODO OCO TEST -->
         <record id="oco_test_line_sub1_sub1" model="account.report.line">
             <field name="name">test sub line - SUB1</field>
             <field name="report_id" ref="test_report"/>
@@ -118,47 +150,44 @@
             <field name="sequence">6</field>
         </record>
 
-        <record id="generic_tax_report2" model="account.report"> <!--TODO OCO TEST-->
-            <field name="name">Generic Tax report 2 (test)</field>
-            <field name="filter_multi_company">tax_units</field>
-            <field name="filter_tax_exigible" eval="True"/>
-            <field name="columns">NET2, TAX2</field>
-            <field name="dynamic_lines_generator">_generic_tax_report_default_grouping</field>
-            <field name="root_report_id" ref="test_report"/>
-            <field name="allow_showing_draft" eval="False"/>
+        <record id="oco_test_aggregate1" model="account.report.line">
+            <field name="name">test aggregate</field>
+            <field name="code">AGGREGATE</field>
+            <field name="report_id" ref="test_report"/>
+            <field name="expression_ids" eval="[(5, 0, 0),
+                (0, 0, {'total': 'main', 'engine': 'aggregation', 'formula': 'FINANCIAL_GROUPBY.forty_two + LINE_1.main'}),
+            ]"/>
+            <field name="unfoldable" eval="False"/>
+            <field name="column_values">main, main</field>
+            <field name="hierarchy_level">1</field>
+            <field name="sequence">7</field>
         </record>
 
-        <record id="generic_tax_report_account_tax" model="account.report">
-            <field name="name">Group by: Account &gt; Tax </field>
-            <field name="filter_multi_company">tax_units</field>
-            <field name="filter_tax_exigible" eval="True"/>
-            <field name="columns">NET, TAX</field> <!--TODO OCO-->
-            <field name="dynamic_lines_generator">_generic_tax_report_account_tax_grouping</field>
-            <field name="root_report_id" ref="generic_tax_report"/>
-            <field name="allow_showing_draft" eval="False"/>
+        <record id="oco_test_aggregate2" model="account.report.line">
+            <field name="name">test aggregate with 2 levels recursion</field>
+            <field name="report_id" ref="test_report"/>
+            <field name="expression_ids" eval="[(5, 0, 0),
+                (0, 0, {'total': 'main', 'engine': 'aggregation', 'formula': 'AGGREGATE.main + LINE_1.forty_two'}),
+            ]"/>
+            <field name="unfoldable" eval="False"/>
+            <field name="column_values">main, main</field> <!--TODO OCO permettre de laisser une colonne vide, ce serait bien-->
+            <field name="hierarchy_level">1</field>
+            <field name="sequence">8</field>
         </record>
 
-        <record id="generic_tax_report_tax_account" model="account.report">
-            <field name="name">Group by: Tax &gt; Account </field>
-            <field name="filter_multi_company">tax_units</field>
-            <field name="filter_tax_exigible" eval="True"/>
-            <field name="columns">NET, TAX</field> <!--TODO OCO-->
-            <field name="dynamic_lines_generator">_generic_tax_report_tax_account_grouping</field>
-            <field name="root_report_id" ref="generic_tax_report"/>
+        <record id="oco_test_aggregate3" model="account.report.line">
+            <field name="name">test aggregate with inner reference</field>
+            <field name="code">TEST_INNER</field>
+            <field name="report_id" ref="test_report"/>
+            <field name="expression_ids" eval="[(5, 0, 0),
+                (0, 0, {'total': 'main', 'engine': 'aggregation', 'formula': 'TEST_INNER.inner + LINE_1.forty_two'}),
+                (0, 0, {'total': 'inner', 'engine': 'domain', 'formula': &quot;[('account_id.code', 'like', '4%')]&quot;, 'subformula': 'sum'}),
+            ]"/>
+            <field name="column_values">main, inner</field>
+            <field name="hierarchy_level">1</field>
+            <field name="sequence">9</field>
         </record>
 
-        <!--TODO OCO pour simplifier ce genre de déclaration, je ferais bien un modèle account.report.config qui permette de définir des valeurs par défaut avec un seul m2o (je pense notamment au rapport de taxes, c'est mieux)
-          => Au write/create de config_id, on complète les valeurs en fonction de la config
-          => Au write d'un nouveau champ sur config_id, on corrige les rapports ? A voir.
-
-          ====> Tous les champs de config du rapport pourraient être des compute éditables vers la config, du coup. Peut-être too much
-
-          ===> OU BIEN
-          le champ config_id est required m2o. On la crée avec une commande ORM pour les cas simples, et on le crée à part pour les rapports de taxes,
-          de sorte qu'ils appellent tous la même. Mais du coup, pas de variante d'un sous rapport qui puisse changer un seul point de config sans changer
-          toute la config. On peut vivre avec, non ? Ca veut aussi dire qu'on est limités niveau customisation par l'utilisateur. À voir. Encore qu'on pourrait
-          mettre des champs related et les montrer dans la vue pour ça.
-        -->
 
     </data>
 </odoo>
