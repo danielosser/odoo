@@ -1014,6 +1014,7 @@ header {
                 }
             }
 
+<<<<<<< HEAD
             .o_connected_user:not(.editor_has_snippets) header & {
                 // TODO this has to be reviewed
                 $-header-template: o-website-value('header-template');
@@ -1029,6 +1030,11 @@ header {
                         }
                     }
                 }
+=======
+            .o_connected_user:not(.editor_has_snippets):not(.o_fullscreen) header & {
+                top: -$o-navbar-height;
+                padding-top: $o-navbar-height;
+>>>>>>> c1270a15da8... temp
             }
         }
         &.collapsing #top_menu {
@@ -1120,7 +1126,7 @@ header {
                 }
             }
         }
-        body.o_connected_user {
+        body.o_connected_user:not(.o_fullscreen) {
             &:not(.editor_has_snippets) #wrapwrap > header {
                 top: $o-navbar-height;
             }
