@@ -53,7 +53,7 @@ from . import api
 from . import tools
 from .exceptions import AccessError, MissingError, ValidationError, UserError
 from .osv.query import Query
-from .tools import frozendict, lazy_classproperty, ormcache, \
+from .tools import frozendict, lazy_classproperty, ormcache, ormcache_context, \
                    Collector, LastOrderedSet, OrderedSet, IterableGenerator, \
                    groupby, discardattr, partition
 from .tools.config import config
@@ -1717,7 +1717,7 @@ class BaseModel(metaclass=MetaModel):
             view = view.with_context(base_model_name=result['base_model'])
 
         # Apply post processing, groups and modifiers etc...
-        xarch, xfields = view.postprocess_and_fields(etree.fromstring(result['arch']), model=self._name)
+        xarch, xfields = self._fields_view_get_postprocess(view, result['arch'], view_id, view_type)
         result['arch'] = xarch
         result['fields'] = xfields
 
@@ -1737,6 +1737,12 @@ class BaseModel(metaclass=MetaModel):
                 'action': resaction,
             }
         return result
+
+    @api.model
+    @ormcache_context('self._name', 'view_id', 'view_type', keys=('lang',))
+    def _fields_view_get_postprocess(self, view, arch, view_id, view_type):
+        return view.postprocess_and_fields(etree.fromstring(arch), model=self._name)
+
 
     def get_formview_id(self, access_uid=None):
         """ Return an view id to open the document ``self`` with. This method is

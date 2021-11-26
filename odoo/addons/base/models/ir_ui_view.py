@@ -535,8 +535,8 @@ actual arch.
                         values['arch_updated'] = False
             values.update(self._compute_defaults(values))
 
-        self.clear_caches()
         result = super(View, self.with_context(ir_ui_view_partial_validation=True)).create(vals_list)
+        self.clear_caches()
         return result.with_env(self.env)
 
     def write(self, vals):
@@ -551,7 +551,6 @@ actual arch.
         if custom_view:
             custom_view.unlink()
 
-        self.clear_caches()
         if 'arch_db' in vals and not self.env.context.get('no_save_prev'):
             vals['arch_prev'] = self.arch_db
 
@@ -568,6 +567,7 @@ actual arch.
             # instead of the traceback dialog.
             self._validate_fields(['arch_db'])
 
+        self.clear_caches()
         return res
 
     def unlink(self):
@@ -657,16 +657,12 @@ actual arch.
         self.env.cr.execute(query, [tuple(self.ids)] + where_params + where_params)
         rows = self.env.cr.fetchall()
 
-        # filter out forbidden views
-        if any(row[3] for row in rows):
-            user_groups = set(self.env.user.groups_id.ids)
-            rows = [row for row in rows if not (row[3] and user_groups.isdisjoint(row[3]))]
-
         views = self.browse(row[0] for row in rows)
 
         # optimization: fill in cache of inherit_id and mode
         self.env.cache.update(views, type(self).inherit_id, [row[1] for row in rows])
         self.env.cache.update(views, type(self).mode, [row[2] for row in rows])
+        self.env.cache.update(views, type(self).groups_id, [row[3] for row in rows])
 
         # During an upgrade, we can only use the views that have been
         # fully upgraded already.
@@ -955,6 +951,14 @@ actual arch.
 
     def _get_combined_arch(self):
         """ Return the arch of ``self`` (as an etree) combined with its inherited views. """
+        root_id, tree_view_ids, group_ids = self._get_combined_arch_tree_views()
+        if group_ids:
+            group_ids = set(self.env.user.groups_id.ids).intersection(group_ids)
+        arch = self._get_groups_combined_arch(root_id, tree_view_ids, tuple(group_ids))
+        return arch
+
+    @tools.ormcache('self.id')
+    def _get_combined_arch_tree_views(self):
         root = self
         view_ids = []
         while True:
@@ -976,12 +980,18 @@ actual arch.
         # Map each node to its children nodes. Note that all children nodes are
         # part of a single prefetch set, which is all views to combine.
         tree_views = views._get_inheriting_views()
+        return root.id, tree_views.ids, tree_views.groups_id.ids
+
+    @tools.ormcache('self.id', 'group_ids')
+    def _get_groups_combined_arch(self, root_id, tree_view_ids, group_ids):
+        group_ids = set(group_ids)
+        tree_views = self.browse(tree_view_ids).filtered(lambda view: group_ids.isdisjoint(view.groups_id.ids))
         hierarchy = collections.defaultdict(list)
         for view in tree_views:
             hierarchy[view.inherit_id].append(view)
 
         # optimization: make root part of the prefetch set, too
-        arch = root.with_prefetch(tree_views._prefetch_ids)._combine(hierarchy)
+        arch = self.browse(root_id).with_prefetch(tree_views._prefetch_ids)._combine(hierarchy)
         return arch
 
     def _apply_groups(self, node, name_manager, node_info):
