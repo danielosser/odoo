@@ -57,25 +57,6 @@ class AccountMove(models.Model):
         return val
 
 
-    @api.model
-    def _get_tax_grouping_key_from_tax_line(self, tax_line):
-        # Overridden in order to group taxes that are related to the same vehicle_id
-        res = super()._get_tax_grouping_key_from_tax_line(tax_line)
-        res.update({
-            'vehicle_id': tax_line.vehicle_id.id,
-        })
-        return res
-
-    @api.model
-    def _get_tax_grouping_key_from_base_line(self, base_line, tax_vals):
-        # Overridden in order to group taxes that are related to the same vehicle_id
-        res = super()._get_tax_grouping_key_from_base_line(base_line, tax_vals)
-        res.update({
-            'vehicle_id': base_line.vehicle_id.id,
-        })
-        return res
-
-
 class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
 
