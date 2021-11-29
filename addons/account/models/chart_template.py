@@ -908,7 +908,7 @@ class AccountChartTemplate(models.Model):
 
 
 class AccountTaxTemplate(models.Model):
-    _name = ''
+    _name = 'account.tax.template'
     _description = 'Templates for Taxes'
     _order = 'id'
 
@@ -1203,16 +1203,8 @@ class AccountTaxRepartitionLineTemplate(models.Model):
     account_id = fields.Many2one(string="Account", comodel_name='account.account.template', help="Account on which to post the tax amount")
     invoice_tax_id = fields.Many2one(comodel_name='account.tax.template', help="The tax set to apply this distribution on invoices. Mutually exclusive with refund_tax_id")
     refund_tax_id = fields.Many2one(comodel_name='account.tax.template', help="The tax set to apply this distribution on refund invoices. Mutually exclusive with invoice_tax_id")
-    tag_ids = fields.Many2many(string="Financial Tags", relation='account_tax_repartition_financial_tags', comodel_name='account.account.tag', copy=True, help="Additional tags that will be assigned by this repartition line for use in financial reports") #TODO OCO virer
     use_in_tax_closing = fields.Boolean(string="Tax Closing Entry")
     tags_formula = fields.Char(string="Tags Formula") #TODO OCO DOC
-
-    # These last two fields are helpers used to ease the declaration of account.account.tag objects in XML.
-    # They are directly linked to account.tax.report.line objects, which create corresponding + and - tags
-    # at creation. This way, we avoid declaring + and - separately every time.
-    #TODO OCO virer
-    plus_report_line_ids = fields.Many2many(string="Plus Tax Report Lines", relation='account_tax_repartition_plus_report_line', comodel_name='account.tax.report.line', copy=True, help="Tax report lines whose '+' tag will be assigned to move lines by this repartition line")
-    minus_report_line_ids = fields.Many2many(string="Minus Report Lines", relation='account_tax_repartition_minus_report_line', comodel_name='account.tax.report.line', copy=True, help="Tax report lines whose '-' tag will be assigned to move lines by this repartition line")
 
     @api.model
     def create(self, vals):
@@ -1234,17 +1226,23 @@ class AccountTaxRepartitionLineTemplate(models.Model):
     @api.constrains('tags_formula')
     def validate_tags_formula(self):
         for record in self:
+            if not record.tags_formula:
+                continue
+
             try:
                 record._retrieve_tags_from_formula()
             except UserError:
-                #TODO OCO
-                import pdb; pdb.set_trace()
+                #TODO OCO tester => on garde comme ça, ou on conserve le message de la UserError ? (je ne veux pas de traceback; mais garder son texte aurait le mérite d'être plus clair)
                 raise ValidationError(_("Some tags could not be retrieved from formula %s, please check it does not contain any typo, "
                                         "and make sure all tag names in it are prefixed with '+', '-' or '~'.", record.tags_formula))
 
     def _retrieve_tags_from_formula(self):
-       #| TODO OCO DOC
+       # TODO OCO DOC
         self.ensure_one()
+
+        if not self.tags_formula:
+            return self.env['account.account.tag']
+
         country = (self.invoice_tax_id or self.refund_tax_id).chart_template_id.country_id
         formula_to_eval = self.tags_formula.replace(' ', '')
         tag_names = [name for name in re.split(r'(?=[+-])|[~]', formula_to_eval) if name]

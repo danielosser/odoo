@@ -85,7 +85,6 @@
                 (0, 0, {'total': 'forty_two', 'engine': 'domain', 'formula': &quot;[('account_id.user_type_id.internal_group', '=', 'income')]&quot;, 'subformula': 'sum'}),
             ]"/>
             <field name="unfoldable" eval="False"/>
-            <!--TODO OCO pour le control, on pourrait du coup mettre control_main, control_opt, ... EASY-->
             <field name="column_values">main, forty_two</field>
             <field name="sequence">2</field>
         </record>
@@ -94,16 +93,11 @@
             <field name="name">test line financial groupby</field>
             <field name="code">FINANCIAL_GROUPBY</field>
             <field name="report_id" ref="test_report"/>
-            <!--TODO OCO pour les vrais cas comme ceci, on a un souci: la fonction est en enterprise: donc soit on la déclare qui retourne 0 en community, soit on l'ajoute là-bas...
-            Ou bien on la met aussi en community ? Ca fait quand même bcp, là ...
-            ==> Ou bien on s'en tape parce qu'ici c'est juste le string ?
-             -->
             <field name="expression_ids" eval="[(5, 0, 0),
                 (0, 0, {'total': 'forty_two', 'engine': 'domain', 'formula': &quot;[('account_id.user_type_id.internal_group', '=', 'income')]&quot;, 'subformula': 'sum'}),
             ]"/>
             <field name="unfoldable" eval="True"/>
             <field name="groupby">account_id</field>
-            <!--TODO OCO pour le control, on pourrait du coup mettre control_main, control_opt, ... EASY-->
             <field name="column_values">forty_two, forty_two</field>
             <field name="sequence">2</field>
         </record>
@@ -187,7 +181,6 @@
             <field name="hierarchy_level">1</field>
             <field name="sequence">9</field>
         </record>
-
 
     </data>
 </odoo>
