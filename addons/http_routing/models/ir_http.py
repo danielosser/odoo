@@ -424,13 +424,13 @@ class IrHttp(models.AbstractModel):
         # requires one to set the lang on the request. Temporary grant
         # the public user. Don't try it at home!
         real_env = request.env
-        request.update_env(user=request.env.ref('base.public_user'))
         try:
+            request.env['ir.http']._auth_method_public()  # it calls update_env
             nearest_url_lang = cls.get_nearest_lang(request.env['res.lang']._lang_get_code(url_lang_str))
             cookie_lang = cls.get_nearest_lang(request.httprequest.cookies.get('frontend_lang'))
             default_lang = cls._get_default_lang()
             request.lang = request.env['res.lang']._lang_get(
-                nearest_url_lang or cookie_lang or default_lang.code
+                nearest_url_lang or cookie_lang or default_lang._get_cached('code')
             )
         finally:
             request.env = real_env
@@ -449,32 +449,32 @@ class IrHttp(models.AbstractModel):
         # See /4, missing lang in url
         elif not url_lang_str:
             redirect = request.redirect_query(f'/{request.lang.url_code}{path}', request.httprequest.args)
-            redirect.set_cookie('frontend_lang', request.lang.code)
+            redirect.set_cookie('frontend_lang', request.lang._get_cached('code'))
             werkzeug.exceptions.abort(redirect)
 
         # See /5, default lang in url
         elif url_lang_str == default_lang.url_code:
             redirect = request.redirect_query(path_no_lang, request.httprequest.args)
-            redirect.set_cookie('frontend_lang', default_lang.code)
+            redirect.set_cookie('frontend_lang', default_lang._get_cached('code'))
             werkzeug.exceptions.abort(redirect)
 
         # See /6, lang in URL is not the preferred lang
         elif url_lang_str != request.lang.url_code:
             redirect = request.redirect_query(f'/{request.lang.url_code}{path_no_lang}', request.httprequest.args, code=301)
-            redirect.set_cookie('frontend_lang', request.lang.code)
+            redirect.set_cookie('frontend_lang', request.lang._get_cached('code'))
             werkzeug.exceptions.abort(redirect)
 
         # See /7, other lang in url
         else:  # url_lang == request.lang.url_code
 
-            # Special case for homepage with a leading / in the URL
+            # Special case to remove homepage trailing slash. /fr_BE/ -> /fr_BE
             if path == f'/{url_lang_str}/':
                 redirect = request.redirect_query(path[:-1], request.httprequest.args, code=301)
-                redirect.set_cookie('frontend_lang', default_lang.code)
+                redirect.set_cookie('frontend_lang', default_lang._get_cached('code'))
                 werkzeug.exceptions.abort(redirect)
 
             # Rewrite the URL to remove the lang
-            _logger.debug('Reroute %s to %s with lang %s', path, path_no_lang, request.lang.code)
+            _logger.debug('Reroute %s to %s with lang %s', path, path_no_lang, request.lang._get_cached('code'))
             environ = request.httprequest.environ.copy()
             environ['PATH_INFO'] = path_no_lang
             environ['RAW_URI'] = environ['RAW_URI'].partition(url_lang_str)[2]
@@ -531,9 +531,9 @@ class IrHttp(models.AbstractModel):
             # frontend multilang enpoint 'foo' at the URL '/foo/1'.
             # The preffered URL to access the product (and to generate
             # URLs pointing it) should instead be the sluggified URL
-            # '/foo/1-egg'. This code is responsible of redirecting the
-            # browser from '/foo/1' to '/foo/1-egg', or '/fr/foo/1' to
-            # '/fr/foo/1-oeuf'. While it is nice (for humans) to have a
+            # '/foo/egg-1'. This code is responsible of redirecting the
+            # browser from '/foo/1' to '/foo/egg-1', or '/fr/foo/1' to
+            # '/fr/foo/oeuf-1'. While it is nice (for humans) to have a
             # pretty URL, the real reason of this redirection is SEO.
             if request.httprequest.method in ('GET', 'HEAD'):
                 try:
@@ -552,9 +552,9 @@ class IrHttp(models.AbstractModel):
     @classmethod
     def _frontend_pre_dispatch(cls):
         if request.is_frontend_multilang:
-            request.update_context(lang=request.lang.code)
-            if request.httprequest.cookies.get('frontend_lang') != request.lang.code:
-                request.future_response.set_cookie('frontend_lang', request.lang.code)
+            request.update_context(lang=request.lang._get_cached('code'))
+            if request.httprequest.cookies.get('frontend_lang') != request.lang._get_cached('code'):
+                request.future_response.set_cookie('frontend_lang', request.lang._get_cached('code'))
 
     @classmethod
     def _get_exception_code_values(cls, exception):

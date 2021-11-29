@@ -1,6 +1,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 import json
+import logging
 
 from odoo import exceptions, _
 from odoo.http import Controller, request, route
@@ -28,7 +29,9 @@ class BusController(Controller):
         if [c for c in channels if not isinstance(c, str)]:
             raise Exception("bus.Bus only string channels are allowed.")
         if request.registry.in_test_mode():
-            raise exceptions.UserError(_("bus.Bus not available in test mode"))
+            exc = exceptions.UserError(_("bus.Bus not available in test mode"))
+            exc.loglevel = logging.INFO
+            raise exc
         return self._poll(request.db, channels, last, options)
 
     @route('/longpolling/im_status', type="json", auth="user")

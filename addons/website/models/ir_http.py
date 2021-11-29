@@ -127,9 +127,7 @@ class Http(models.AbstractModel):
         if not request.session.uid:
             website = request.env(user=SUPERUSER_ID)['website'].get_current_website()  # sudo
             if website:
-                uid = website._get_cached('user_id')
-                if uid:
-                    request.update_env(user=uid)
+                request.update_env(user=website._get_cached('user_id'))
 
         if not request.env.uid:
             super()._auth_method_public()
@@ -156,7 +154,7 @@ class Http(models.AbstractModel):
     @classmethod
     def _match(cls, path):
         if not hasattr(request, 'website_routing'):
-            website = request.env['website'].sudo().get_current_website()
+            website = request.env['website'].get_current_website()
             request.website_routing = website.id
 
         return super()._match(path)

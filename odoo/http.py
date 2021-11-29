@@ -27,12 +27,12 @@ Application.__call__
     |    -> App.nodb_routing_map.match
     |    -> Request._pre_dispatch
     |    ----------------------------------------------------------------->\
-    |                                                                       \                               ------------------------
-    +-> Request._serve_db                                                    \                             /                        \
-         -> model.retrying                                                    \ / Request.http_dispatch \ /                          \
-             -> Request._serve_ir_http                                         +                         +                            + route_wrapper
-                 -> env['ir.http']._match                                     / \ Request.json_dispatch / \                          /   -> endpoint
-                 -> env['ir.http']._authenticate                             /                              env['ir.http']._dispatch
+    |                                                                       \                                ------------------------
+    +-> Request._serve_db                                                    \                              /                        \
+         -> model.retrying                                                    \ / Request._http_dispatch \ /                          \
+             -> Request._serve_ir_http                                         +                          +                            + route_wrapper
+                 -> env['ir.http']._match                                     / \ Request._json_dispatch / \                          /   -> endpoint
+                 -> env['ir.http']._authenticate                             /                               env['ir.http']._dispatch
                  -> env['ir.http']._pre_dispatch -> Request._pre_dispatch   /
                  --------------------------------------------------------->/
 
@@ -60,7 +60,7 @@ Request._serve_nodb
 Request._serve_db
   Handle all requests that are not static when it is possible to connect
   to a database. It opens a session and initializes the ORM before
-  forwarding the request to ``retrying`` and ``_dispatch_ir_http``.
+  forwarding the request to ``retrying`` and ``_serve_ir_http``.
 
 service.model.retrying
   Protect against SQL serialisation errors (when two different
@@ -82,12 +82,12 @@ Request._serve_ir_http
       been deserialized by either ``request._http_dispatch`` or
       ``request._json_dispatch``.
 
-Request.http_dispatch
+Request._http_dispatch
   Handle requests to ``@route(type='http')`` endpoints, gather the
   arguments from the path, the query string, the body forms and the body
   files. Perform cors and csrf checks then call the endpoint.
 
-Request.json_dispatch
+Request._json_dispatch
   Handle requests to ``@route(type='json')`` endpoints, lobotomized
   implementation of jsonrpc2, it only uses the ``params`` of the JSON
   serialized body and uses it as kwargs for calling the endpoint.
@@ -999,10 +999,6 @@ class Request:
         if not mimetype:
             mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
 
-        if not mtime:
-            with contextlib.suppress(Exception):
-                mtime = datetime.fromtimestamp(os.path.getmtime(path))
-
         file.seek(0, 2)
         size = file.tell()
         file.seek(0)
@@ -1016,6 +1012,9 @@ class Request:
             res.headers.add('Content-Disposition', 'attachment', filename=filename)
 
         if cache_timeout:
+            if not mtime:
+                with contextlib.suppress(FileNotFoundError):
+                    mtime = datetime.fromtimestamp(os.path.getmtime(path))
             if mtime:
                 res.last_modified = mtime
             crc = zlib.adler32(filename.encode('utf-8') if isinstance(filename, str) else filename) & 0xffffffff
@@ -1540,11 +1539,11 @@ class Application(object):
                 return response(environ, start_response)
 
             # Logs the error here so the traceback starts with ``__call__``.
-            if isinstance(exc, HTTPException):
+            if hasattr(exc, 'loglevel'):
+                _logger.log(exc.loglevel, exc, exc_info=getattr(exc, 'exc_info', None))
+            elif isinstance(exc, HTTPException):
                 pass
             elif isinstance(exc, SessionExpiredException):
-                _logger.info(exc)
-            elif exc.args and exc.args[0] == "bus.Bus not available in test mode":
                 _logger.info(exc)
             elif isinstance(exc, (UserError, AccessError, NotFound)):
                 _logger.warning(exc)
