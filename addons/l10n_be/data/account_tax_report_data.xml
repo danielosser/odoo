@@ -27,102 +27,128 @@
 
     <record id="tax_report_line_00" model="account.report.line">
         <field name="name">00 - Opérations soumises à un régime particulier</field>
-
         <field name="code">c00</field> <!--TODO OCO donc la formule devra faire c00.main-->
         <field name="report_id" ref="tax_report_vat"/>
         <field name="expression_ids" eval="[(5, 0 , 0),
             (0, 0, {'total': 'main', 'engine': 'tax_tags', 'formula': '00'})
         ]"/>
-        <!--TODO OCO commande 0 chiante: à l'update, on supprime les tags :/,-->
         <!--TODO OCO le référencement du tag sur les taxes va faire chier ... :/ >> avec une foreign key, ça va être difficile ... >> ou bien on compte sur juste tag_name + country sur la taxe ? Plus de foreign key, du coup ? ==> OU BIEN on crée des xmlids pour chaque expression ... Maaaaais ... -->
-        <field name="column_values">main</field> <!--TODO OCO un peu dommage de devoir faire ça ... => compute éditable ? -->
+        <field name="column_values">main</field> <!--TODO OCO un peu dommage de devoir faire ça ... => compute éditable ? Ou bien directement un modèle account.report.column qui définit quel total va où pour le rapport-->
         <field name="hierarchy_level">6</field>
         <field name="sequence">3</field>
     </record>
 
-    <!--
-    TODO OCO convertir
-    <record id="tax_report_line_01" model="account.tax.report.line">
+    <record id="tax_report_line_01" model="account.report.line">
         <field name="name">01 - Opérations avec TVA à 6%</field>
         <field name="code">c01</field>
-        <field name="tag_name">01</field>
         <field name="report_id" ref="tax_report_vat"/>
-        <field name="parent_id" ref="tax_report_title_operations_sortie"/>
-        <field name="sequence">2</field>
+        <field name="expression_ids" eval="[(5, 0 , 0),
+            (0, 0, {'total': 'main', 'engine': 'tax_tags', 'formula': '01'})
+        ]"/>
+        <field name="column_values">main</field>
+        <field name="hierarchy_level">6</field><!--TODO OCO est-ce qu'on laisserait la ligne parente pour juste calculer ce champ ? Ce serait sans doute plus robuste (et plus clair/facile à configurer)-->
+        <field name="sequence">4</field> <!--TODO OCO ce serait bien ce que truc s'auto-incrémente, franchement ... Ou bien on ne le set pas et il compte sur l'id quand il ne l'a pas ? (juste histoire de l'enlever des fichiers de data)-->
     </record>
 
-    <record id="tax_report_line_02" model="account.tax.report.line">
+    <record id="tax_report_line_02" model="account.report.line">
         <field name="name">02 - Opérations avec TVA à 12%</field>
         <field name="code">c02</field>
-        <field name="tag_name">02</field>
         <field name="report_id" ref="tax_report_vat"/>
-        <field name="parent_id" ref="tax_report_title_operations_sortie"/>
-        <field name="sequence">3</field>
-    </record>
-
-    <record id="tax_report_line_03" model="account.tax.report.line">
-        <field name="name">03 - Opérations avec TVA à 21%</field>
-        <field name="code">c03</field>
-        <field name="tag_name">03</field>
-        <field name="report_id" ref="tax_report_vat"/>
-        <field name="parent_id" ref="tax_report_title_operations_sortie"/>
-        <field name="sequence">4</field>
-    </record>
-
-    <record id="tax_report_line_44" model="account.tax.report.line">
-        <field name="name">44 - Services intra-communautaires</field>
-        <field name="code">c44</field>
-        <field name="tag_name">44</field>
-        <field name="report_id" ref="tax_report_vat"/>
-        <field name="parent_id" ref="tax_report_title_operations_sortie"/>
+        <field name="expression_ids" eval="[(5, 0 , 0),
+            (0, 0, {'total': 'main', 'engine': 'tax_tags', 'formula': '02'})
+        ]"/>
+        <field name="column_values">main</field>
+        <field name="hierarchy_level">6</field>
         <field name="sequence">5</field>
     </record>
 
-    <record id="tax_report_line_45" model="account.tax.report.line">
-        <field name="name">45 - Opérations avec TVA due par le cocontractant</field>
-        <field name="code">c45</field>
-        <field name="tag_name">45</field>
+    <record id="tax_report_line_03" model="account.report.line">
+        <field name="name">03 - Opérations avec TVA à 21%</field>
+        <field name="code">c03</field>
         <field name="report_id" ref="tax_report_vat"/>
-        <field name="parent_id" ref="tax_report_title_operations_sortie"/>
+        <field name="expression_ids" eval="[(5, 0 , 0),
+            (0, 0, {'total': 'main', 'engine': 'tax_tags', 'formula': '03'})
+        ]"/>
+        <field name="column_values">main</field>
+        <field name="hierarchy_level">6</field>
         <field name="sequence">6</field>
     </record>
 
-    <record id="tax_report_title_operations_sortie_46" model="account.tax.report.line">
-        <field name="name">46 - Livraisons intra-communautaires exemptées</field>
-        <field name="code">c46</field>
+    <record id="tax_report_line_44" model="account.report.line">
+        <field name="name">44 - Services intra-communautaires</field>
+        <field name="code">c44</field>
         <field name="report_id" ref="tax_report_vat"/>
-        <field name="parent_id" ref="tax_report_title_operations_sortie"/>
+        <field name="expression_ids" eval="[(5, 0 , 0),
+            (0, 0, {'total': 'main', 'engine': 'tax_tags', 'formula': '44'})
+        ]"/>
+        <field name="column_values">main</field>
+        <field name="hierarchy_level">6</field>
         <field name="sequence">7</field>
-        <field name="formula"></field>
     </record>
 
-    <record id="tax_report_line_46L" model="account.tax.report.line">
-        <field name="name">46L - Livraisons biens intra-communautaires exemptées</field>
-        <field name="code">c46L</field>
-        <field name="tag_name">46L</field>
+    <record id="tax_report_line_45" model="account.report.line">
+        <field name="name">45 - Opérations avec TVA due par le cocontractant</field>
+        <field name="code">c45</field>
         <field name="report_id" ref="tax_report_vat"/>
-        <field name="parent_id" ref="tax_report_title_operations_sortie_46"/>
-        <field name="sequence">1</field>
-    </record>
-
-    <record id="tax_report_line_46T" model="account.tax.report.line">
-        <field name="name">46T - Livraisons biens intra-communautaire exemptées</field>
-        <field name="code">c46T</field>
-        <field name="tag_name">46T</field>
-        <field name="report_id" ref="tax_report_vat"/>
-        <field name="parent_id" ref="tax_report_title_operations_sortie_46"/>
-        <field name="sequence">2</field>
-    </record>
-
-    <record id="tax_report_line_47" model="account.tax.report.line">
-        <field name="name">47 - Autres opérations exemptées</field>
-        <field name="code">c47</field>
-        <field name="tag_name">47</field>
-        <field name="report_id" ref="tax_report_vat"/>
-        <field name="parent_id" ref="tax_report_title_operations_sortie"/>
+        <field name="expression_ids" eval="[(5, 0 , 0),
+            (0, 0, {'total': 'main', 'engine': 'tax_tags', 'formula': '45'})
+        ]"/>
+        <field name="column_values">main</field>
+        <field name="hierarchy_level">6</field>
         <field name="sequence">8</field>
     </record>
 
+    <record id="tax_report_title_operations_sortie_46" model="account.report.line">
+        <field name="name">46 - Livraisons intra-communautaires exemptées</field>
+        <field name="code">c46</field>
+        <field name="report_id" ref="tax_report_vat"/>
+        <field name="expression_ids" eval="[(5, 0 , 0),
+            (0, 0, {'total': 'main', 'engine': 'aggregation', 'formula': 'c46L.main + c46T.main'})
+        ]"/><!--TODO OCO dans le script qui convertira les tax reports, bien faire attention au fait qu'une formula vide (et donc pas 'None') implique la somme des enfants => convertir en aggregation-->
+        <!--TODO OCO à discuter: l'obligation de faire .main, même quand un seul total est éligible-->
+        <field name="column_values">main</field>
+        <field name="hierarchy_level">6</field>
+        <field name="sequence">9</field>
+    </record>
+
+    <record id="tax_report_line_46L" model="account.report.line">
+        <field name="name">46L - Livraisons biens intra-communautaires exemptées</field>
+        <field name="code">c46L</field>
+        <field name="report_id" ref="tax_report_vat"/>
+        <field name="expression_ids" eval="[(5, 0 , 0),
+            (0, 0, {'total': 'main', 'engine': 'tax_tags', 'formula': '46L'})
+        ]"/>
+        <field name="column_values">main</field>
+        <field name="hierarchy_level">8</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="tax_report_line_46T" model="account.report.line">
+        <field name="name">46T - Livraisons biens intra-communautaire exemptées</field>
+        <field name="code">c46T</field>
+        <field name="report_id" ref="tax_report_vat"/>
+        <field name="expression_ids" eval="[(5, 0 , 0),
+            (0, 0, {'total': 'main', 'engine': 'tax_tags', 'formula': '46T'})
+        ]"/>
+        <field name="column_values">main</field>
+        <field name="hierarchy_level">8</field>
+        <field name="sequence">11</field>
+    </record>
+
+    <record id="tax_report_line_47" model="account.report.line">
+        <field name="name">47 - Autres opérations exemptées</field>
+        <field name="code">c47</field>
+        <field name="report_id" ref="tax_report_vat"/>
+        <field name="expression_ids" eval="[(5, 0 , 0),
+            (0, 0, {'total': 'main', 'engine': 'tax_tags', 'formula': '47'})
+        ]"/>
+        <field name="column_values">main</field>
+        <field name="hierarchy_level">6</field>
+        <field name="sequence">12</field>
+    </record>
+
+    <!--
+    TODO OCO convertir
     <record id="tax_report_title_operations_sortie_48" model="account.tax.report.line">
         <field name="name">48 - Notes de crédit aux opérations grilles [44] et [46]</field>
         <field name="code">c48</field>
