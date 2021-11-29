@@ -1014,8 +1014,8 @@ registerModel({
                 method: 'activity_format',
                 args: [newActivityIds]
             }, { shadow: true }));
-            const activities = this.messaging.models['mail.activity'].insert(activitiesData.map(
-                activityData => this.messaging.models['mail.activity'].convertData(activityData)
+            const activities = this.messaging.models['Activity'].insert(activitiesData.map(
+                activityData => this.messaging.models['Activity'].convertData(activityData)
             ));
             this.update({ activities: replace(activities) });
         },
@@ -1853,7 +1853,7 @@ registerModel({
          * Determines the `mail.activity` that belong to `this`, assuming `this`
          * has activities (@see hasActivities).
          */
-        activities: one2many('mail.activity', {
+        activities: one2many('Activity', {
             inverse: 'thread',
         }),
         allAttachments: many2many('mail.attachment', {
@@ -1942,7 +1942,7 @@ registerModel({
          * States the `mail.activity` that belongs to `this` and that are
          * planned in the future (due later than today).
          */
-        futureActivities: one2many('mail.activity', {
+        futureActivities: one2many('Activity', {
             compute: '_computeFutureActivities',
         }),
         group_based_subscription: attr({
@@ -2228,7 +2228,7 @@ registerModel({
          * States the `mail.activity` that belongs to `this` and that are
          * overdue (due earlier than today).
          */
-        overdueActivities: one2many('mail.activity', {
+        overdueActivities: one2many('Activity', {
             compute: '_computeOverdueActivities',
         }),
         /**
@@ -2338,7 +2338,7 @@ registerModel({
          * States the `mail.activity` that belongs to `this` and that are due
          * specifically today.
          */
-        todayActivities: one2many('mail.activity', {
+        todayActivities: one2many('Activity', {
             compute: '_computeTodayActivities',
         }),
         /**

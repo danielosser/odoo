@@ -47,7 +47,7 @@ registerModel({
         },
     },
     fields: {
-        activities: many2many('mail.activity', {
+        activities: many2many('Activity', {
             inverse: 'mailTemplates',
         }),
         id: attr({
