@@ -94,13 +94,14 @@ class HrWorkEntry(models.Model):
         # use '()' to exlude the lower and upper bounds of the range.
         # Filter on date_start and date_stop (both indexed) in the EXISTS clause to
         # limit the resulting set size and fasten the query.
-        self.flush(['date_start', 'date_stop', 'employee_id', 'active'])
+        self.flush(['date_start', 'date_stop', 'employee_id', 'active', 'company_id'])
         query = """
             SELECT b1.id
             FROM hr_work_entry b1
             WHERE
             b1.date_start <= %s
             AND b1.date_stop >= %s
+            AND b1.company_id = %s
             AND active = TRUE
             AND EXISTS (
                 SELECT 1
@@ -114,7 +115,8 @@ class HrWorkEntry(models.Model):
                     AND b1.employee_id = b2.employee_id
             );
         """
-        self.env.cr.execute(query, (stop, start, stop, start))
+        company_id = self.env.company.id
+        self.env.cr.execute(query, (stop, start, company_id, stop, start))
         conflicts = [res.get('id') for res in self.env.cr.dictfetchall()]
         self.browse(conflicts).write({
             'state': 'conflict',
