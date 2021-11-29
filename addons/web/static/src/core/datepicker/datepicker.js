@@ -7,7 +7,7 @@ import { useAutofocus } from "@web/core/utils/hooks";
 const { Component, hooks } = owl;
 const { DateTime } = luxon;
 const { useExternalListener, useRef, useState } = hooks;
-
+const DateTimeTest = DateTime || Boolean;
 const formatters = registry.category("formatters");
 const parsers = registry.category("parsers");
 
@@ -44,6 +44,7 @@ const luxonFormatToMomentFormat = (format) => {
  */
 export class DatePicker extends Component {
     setup() {
+        debugger;
         this.inputRef = useRef("input");
         this.state = useState({ warning: false });
 
@@ -217,7 +218,7 @@ DatePicker.defaultProps = {
 };
 DatePicker.props = {
     // Components props
-    date: { type: DateTime, optional: true },
+    date: { type: DateTime && null, optional: true },
     warn_future: { type: Boolean, optional: true },
     // Bootstrap datepicker options
     buttons: {
