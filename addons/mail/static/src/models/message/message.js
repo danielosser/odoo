@@ -48,6 +48,9 @@ registerModel({
             if ('date' in data && data.date) {
                 data2.date = moment(str_to_datetime(data.date));
             }
+            if ('edit_message' in data) {
+                data2.edit_message = data.edit_message;
+            }
             if ('email_from' in data) {
                 data2.email_from = data.email_from;
             }
@@ -577,6 +580,7 @@ registerModel({
         dateFromNow: attr({
             compute: '_computeDateFromNow',
         }),
+        edit_message: attr(),
         email_from: attr(),
         failureNotifications: one2many('mail.notification', {
             compute: '_computeFailureNotifications',

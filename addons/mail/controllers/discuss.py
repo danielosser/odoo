@@ -214,6 +214,7 @@ class DiscussController(http.Controller):
         return {
             'id': message_sudo.id,
             'body': message_sudo.body,
+            'edit_message': message_sudo.edit_message,
             'attachments': [('insert-and-replace', message_sudo.attachment_ids._attachment_format(commands=True))],
         }
 

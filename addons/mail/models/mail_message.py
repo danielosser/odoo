@@ -3,6 +3,7 @@
 
 import logging
 import re
+import html2text
 from collections import defaultdict
 
 from binascii import Error as binascii_error
@@ -119,6 +120,7 @@ class Message(models.Model):
         index=True, ondelete='set null')
     is_internal = fields.Boolean('Employee Only', help='Hide to public / portal users, independently from subtype configuration.')
     # origin
+    edit_message = fields.Boolean(default=False)
     email_from = fields.Char('From', help="Email address of the sender. This field is set when no matching partner is found and replaces the author_id field in the chatter.")
     author_id = fields.Many2one(
         'res.partner', 'Author', index=True, ondelete='set null',
@@ -807,6 +809,9 @@ class Message(models.Model):
         self.ensure_one()
         thread = self.env[self.model].browse(self.res_id)
         thread._check_can_update_message_content(self)
+        msg_body = html2text.html2text(self.body).strip()
+        if msg_body != body:
+            self.edit_message = True
         self.body = body
         if not attachment_ids:
             self.attachment_ids.unlink()
@@ -973,6 +978,7 @@ class Message(models.Model):
                 'is_discussion': message_sudo.subtype_id.id == com_id,
                 'subtype_description': message_sudo.subtype_id.description,
                 'is_notification': vals['message_type'] == 'user_notification',
+                'edit_message': message_sudo.edit_message,
             })
             if vals['model'] and self.env[vals['model']]._original_module:
                 vals['module_icon'] = modules.module.get_module_icon(self.env[vals['model']]._original_module)
