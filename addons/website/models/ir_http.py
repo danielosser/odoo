@@ -315,13 +315,10 @@ class Http(models.AbstractModel):
         if parent:  # attachment
             return parent
 
+        # minimal setup to serve frontend pages
         if not request.env.user:
-            # grant the public user
             cls._auth_method_public()
-
-        if not hasattr(request, 'website'):
-            # setup website on the request
-            cls._frontend_pre_dispatch()
+        cls._frontend_pre_dispatch()
 
         website_page = cls._serve_page()
         if website_page:

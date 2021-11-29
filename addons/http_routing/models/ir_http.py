@@ -408,9 +408,6 @@ class IrHttp(models.AbstractModel):
         if hasattr(request, 'is_frontend'):
             return super()._match(path)
 
-        _, url_lang_str, *rest = path.split('/', 2)
-        path_no_lang = '/' + (rest[0] if rest else '')
-
         # See /1, match a non website endpoint
         with contextlib.suppress(NotFound):
             rule, args = super()._match(path)
@@ -419,6 +416,9 @@ class IrHttp(models.AbstractModel):
             request.is_frontend_multilang = request.is_frontend and routing.get('multilang', routing['type'] == 'http')
             if not request.is_frontend_multilang:
                 return rule, args
+
+        _, url_lang_str, *rest = path.split('/', 2)
+        path_no_lang = '/' + (rest[0] if rest else '')
 
         # There is no user on the environment yet but the following code
         # requires one to set the lang on the request. Temporary grant
@@ -606,13 +606,10 @@ class IrHttp(models.AbstractModel):
             # neither handle backend requests nor plain responses
             return response
 
+        # minimal setup to serve frontend pages
         if not request.env.uid:
-            # grant public user
             cls._auth_method_public()
-
-        if not hasattr(request, 'website'):
-            # setup website on the request
-            request.env['ir.http']._frontend_pre_dispatch()
+        request.env['ir.http']._frontend_pre_dispatch()
 
         code, values = cls._get_exception_code_values(exception)
 
