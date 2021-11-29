@@ -18,14 +18,10 @@ export class MessagingMenu extends Component {
          * item is not considered as a click away from messaging menu in mobile.
          */
         this.id = _.uniqueId('o_messagingMenu_');
-
         // bind since passed as props
         this._onMobileNewMessageInputSelect = this._onMobileNewMessageInputSelect.bind(this);
         this._onMobileNewMessageInputSource = this._onMobileNewMessageInputSource.bind(this);
         this._onClickCaptureGlobal = this._onClickCaptureGlobal.bind(this);
-        // for now, the legacy env is needed for internal functions such as
-        // `useModels` to work
-        this.env = owl.Component.env;
         onMounted(() => this._mounted());
         onWillUnmount(() => this._willUnmount());
     }
@@ -46,7 +42,7 @@ export class MessagingMenu extends Component {
      * @returns {mail.messaging_menu}
      */
     get messagingMenu() {
-        return this.messaging && this.messaging.messagingMenu;
+        return this.messaging && this.messaging.models['mail.messaging_menu'].get(this.props.localId);
     }
 
     /**
@@ -189,7 +185,7 @@ export class MessagingMenu extends Component {
 }
 
 Object.assign(MessagingMenu, {
-    props: {},
+    props: { localId: String },
     template: 'mail.MessagingMenu',
 });
 
