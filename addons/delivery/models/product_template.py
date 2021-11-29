@@ -11,3 +11,5 @@ class ProductTemplate(models.Model):
         string="HS Code",
         help="Standardized code for international shipping and goods declaration. At the moment, only used for the FedEx shipping provider.",
     )
+
+    country_of_origin = fields.Many2one("res.country")
