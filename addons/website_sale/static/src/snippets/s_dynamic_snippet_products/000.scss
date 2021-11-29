@@ -45,3 +45,8 @@
         padding: 1rem;
     }
 }
+.o_carousel_product_card {
+    &.o_bg_opacity_2 {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+}

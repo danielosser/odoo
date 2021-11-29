@@ -151,7 +151,7 @@
         <template id="dynamic_filter_template_product_product_borderless_1" name="Borderless Product n°1">
             <t t-foreach="records" t-as="data">
                 <t t-set="record" t-value="data['_record']"/>
-                <div class="o_carousel_product_card w-100 card border-0 p-3">
+                <div class="o_carousel_product_card o_bg_opacity_2 w-100 card border-0 p-3">
                     <div t-if="is_sample" class="h5 o_ribbon_right bg-primary text-uppercase">Sample</div>
                     <input type="hidden" name="product-id" t-att-data-product-id="record.id"/>
                     <a class="o_carousel_product_img_link o_dynamic_product_hovered" t-att-href="record.website_url">
@@ -179,7 +179,7 @@
         <template id="dynamic_filter_template_product_product_borderless_2" name="Borderless Product n°2">
             <t t-foreach="records" t-as="data">
                 <t t-set="record" t-value="data['_record']"/>
-                <div class="o_carousel_product_card card w-100 border-0">
+                <div class="o_carousel_product_card o_bg_opacity_2 card w-100 border-0">
                     <div t-if="is_sample" class="h5 o_ribbon_right bg-primary text-uppercase">Sample</div>
                     <input type="hidden" name="product-id" t-att-data-product-id="record.id"/>
                     <a class="o_carousel_product_img_link o_dynamic_product_hovered" t-att-href="record.website_url">
