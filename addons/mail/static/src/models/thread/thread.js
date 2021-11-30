@@ -1211,7 +1211,7 @@ registerModel({
         },
         /**
          * @private
-         * @returns {mail.attachment[]}
+         * @returns {Attachment[]}
          */
         _computeAllAttachments() {
             const allAttachments = [...new Set(this.originThreadAttachments.concat(this.attachments))]
@@ -1856,7 +1856,7 @@ registerModel({
         activities: one2many('mail.activity', {
             inverse: 'thread',
         }),
-        allAttachments: many2many('mail.attachment', {
+        allAttachments: many2many('Attachment', {
             compute: '_computeAllAttachments',
         }),
         areAttachmentsLoaded: attr({
@@ -1869,7 +1869,7 @@ registerModel({
         areFollowersLoaded: attr({
             default: false,
         }),
-        attachments: many2many('mail.attachment', {
+        attachments: many2many('Attachment', {
             inverse: 'threads',
         }),
         /**
@@ -2220,7 +2220,7 @@ registerModel({
         orderedTypingMemberLocalIds: attr({
             default: [],
         }),
-        originThreadAttachments: one2many('mail.attachment', {
+        originThreadAttachments: one2many('Attachment', {
             inverse: 'originThread',
             isCausal: true,
         }),

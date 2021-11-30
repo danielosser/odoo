@@ -107,7 +107,7 @@ export class Activity extends Component {
      * @private
      * @param {CustomEvent} ev
      * @param {Object} ev.detail
-     * @param {mail.attachment} ev.detail.attachment
+     * @param {Attachment} ev.detail.attachment
      */
     _onAttachmentCreated(ev) {
         this.activity.markAsDone({ attachments: [ev.detail.attachment] });
