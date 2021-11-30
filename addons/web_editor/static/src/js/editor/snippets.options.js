@@ -4815,10 +4815,11 @@ registry.ImageLink = SnippetOptionWidget.extend({
         const $dataMakeLink = this.$el.find('[data-make-link]');
 
         if (!this.linkTools) {
+            const linkToolsData = Object.assign({}, this.options.wysiwyg.options.defaultDataForLinkTools, { customizeStyle: false });
             this.linkTools = new weWidgets.LinkTools(this,
                 { wysiwyg: this.options.wysiwyg },
                 odooEditor.editable,
-                { customizeStyle: false },
+                linkToolsData,
                 $(),
                 node,
             );

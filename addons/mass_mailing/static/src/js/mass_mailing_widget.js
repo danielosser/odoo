@@ -333,6 +333,7 @@ var MassMailingFieldHtml = FieldHtml.extend({
     _getWysiwygOptions: function () {
         const options = this._super.apply(this, arguments);
         options.resizable = false;
+        options.defaultDataForLinkTools = { isNewWindow: true };
         if (!this._wysiwygSnippetsActive) {
             delete options.snippets;
         }
