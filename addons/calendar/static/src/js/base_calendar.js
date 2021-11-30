@@ -34,6 +34,7 @@ const Many2ManyAttendee = FieldMany2ManyTagsAvatar.extend({
     // supportedFieldTypes: ['many2many'],
     specialData: "_fetchSpecialAttendeeStatus",
     className: 'o_field_many2manytags avatar',
+    tag_template: 'FieldMany2ManyAttendee',
 
     init: function () {
         this._super.apply(this, arguments);
@@ -78,6 +79,7 @@ const Many2ManyAttendee = FieldMany2ManyTagsAvatar.extend({
                 return a_org ? -1 : 1;
              });
         }
+        result.previewAttendeesMax = 5
         return result;
     },
 });
