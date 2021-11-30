@@ -3,7 +3,6 @@
 
 import logging
 import re
-import html2text
 from collections import defaultdict
 
 from binascii import Error as binascii_error
@@ -11,6 +10,7 @@ from binascii import Error as binascii_error
 from odoo import _, api, Command, fields, models, modules, tools
 from odoo.exceptions import AccessError
 from odoo.osv import expression
+from odoo.tools import html2plaintext
 from odoo.tools.misc import clean_context
 
 _logger = logging.getLogger(__name__)
@@ -120,7 +120,7 @@ class Message(models.Model):
         index=True, ondelete='set null')
     is_internal = fields.Boolean('Employee Only', help='Hide to public / portal users, independently from subtype configuration.')
     # origin
-    edit_message = fields.Boolean(default=False)
+    edit_message = fields.Boolean('Message is edited')
     email_from = fields.Char('From', help="Email address of the sender. This field is set when no matching partner is found and replaces the author_id field in the chatter.")
     author_id = fields.Many2one(
         'res.partner', 'Author', index=True, ondelete='set null',
@@ -809,7 +809,7 @@ class Message(models.Model):
         self.ensure_one()
         thread = self.env[self.model].browse(self.res_id)
         thread._check_can_update_message_content(self)
-        msg_body = html2text.html2text(self.body).strip()
+        msg_body = html2plaintext(self.body)
         if msg_body != body:
             self.edit_message = True
         self.body = body

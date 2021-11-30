@@ -121,7 +121,7 @@
                         </t>
                         <div class="o_Message_content mx-2" t-ref="content">
                             <t t-if="!messageView.composerViewInEditing">
-                                <div class="o_Message_prettyBody" t-ref="prettyBody"/><!-- messageView.message.prettyBody is inserted here from _update() -->
+                                <div class="o_Message_prettyBody float-left mr4" t-ref="prettyBody"/><!-- messageView.message.prettyBody is inserted here from _update() -->
                                 <t t-if="messageView.message.edit_message">
                                     <div class="text-muted">(edited)</div>
                                 </t>
