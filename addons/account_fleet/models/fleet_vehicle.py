@@ -17,7 +17,7 @@ class FleetVehicle(models.Model):
             return
 
         for vehicle in self:
-            vehicle.account_move_ids = self.env['account.move.line'].search([('vehicle_id', '=', vehicle.id), ('move_id.state', '!=', 'cancel'), ('move_id.move_type', '=', 'in_invoice')]).move_id
+            vehicle.account_move_ids = self.env['account.move.line'].search([('vehicle_id', '=', vehicle.id), ('move_id.state', '!=', 'cancel'), ('move_id.move_type', 'in', ('in_invoice', 'in_refund'))]).move_id
             vehicle.bill_count = len(vehicle.account_move_ids)
 
     def action_view_bills(self):
