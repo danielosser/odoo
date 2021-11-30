@@ -10,13 +10,13 @@ class PosConfig(models.Model):
     use_coupon_programs = fields.Boolean('Coupons & Promotions',
         help="Use coupon and promotion programs in this PoS configuration.")
     coupon_program_ids = fields.Many2many(
-        'loyalty.program', string="Coupon Programs", domain=[('program_type', '=', 'coupons')])
+        'loyalty.program', string="Coupon Programs", domain=[('program_type', '=', 'coupons')],
+        relation='pos_config_coupon_program_rel')
     promo_program_ids = fields.Many2many(
-        'loyalty.program', string="Promotion Programs", domain=[('program_type', '=', 'promotion')]
-    )
+        'loyalty.program', string="Promotion Programs", domain=[('program_type', '=', 'promotion')],
+        relation='pos_config_promo_program_rel')
 
-    use_loyalty_programs = fields.Boolean('Loyalty Program')
-    loyalty_program_ids = fields.Many2many('loyalty.program', "PoS Loyalty Programs", domain=[('program_type', '=', 'loyalty')])
+    loyalty_program_id = fields.Many2one('loyalty.program', "PoS Loyalty Programs", domain=[('program_type', '=', 'loyalty')])
 
     use_gift_card = fields.Boolean('Gift Cards')
     gift_card_program_id = fields.Many2one('loyalty.program', "PoS Gift Card Program", domain=[('program_type', '=', 'gift_card')])
@@ -35,8 +35,7 @@ class PosConfig(models.Model):
     all_program_ids = fields.Many2many('loyalty.program', '_compute_all_programs')
 
     @api.depends('use_coupon_programs', 'coupon_program_ids', 'promo_program_ids',
-        'use_loyalty_program', 'loyalty_program_ids',
-        'use_gift_card', 'gift_card_program_id')
+        'loyalty_program_id', 'use_gift_card', 'gift_card_program_id')
     def _compute_all_programs(self):
         for config in self:
             programs = self.env['loyalty.program']
@@ -44,8 +43,8 @@ class PosConfig(models.Model):
                 programs |= config.coupon_program_ids
                 programs |= config.promo_program_ids
             # This may be a separate field on the config but it actually will be handled just like any other program
-            if config.use_loyalty_programs:
-                programs |= config.loyalty_program_ids
+            if config.loyalty_program_id:
+                programs |= config.loyalty_program_id
             # We also include the gift card program to be able to claim the reward (discount)
             # This one will behave a little differently as it will display more options
             if config.use_gift_card:
@@ -77,14 +76,13 @@ class PosConfig(models.Model):
                 raise UserError(_('Invalid gift card program. More than one reward.'))
             elif len(gc_program.rule_ids) > 1:
                 raise UserError(_('Invalid gift card program. More than one rule.'))
-            # TODO: check that reward type and rule mode make sense
             rule = gc_program.rule_ids
             if rule.reward_point_amount != 1 or rule.reward_point_mode != 'money':
                 raise UserError(_('Invalid gift card program rule. Use 1 point per currency spent.'))
             reward = gc_program.reward_ids
             if reward.reward_type != 'discount' or reward.discount_mode != 'per_point' or reward.discount != 1:
                 raise UserError(_('Invalid gift card program reward. Use 1 currency per point discount.'))
-        return super().open_session_cb(check_coa)
+        return super().open_session_cb()
 
     def use_coupon_code(self, code, creation_date, partner_id):
         # TODO: some conditions are missing due to the drop of `_check_coupon_code`

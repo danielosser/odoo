@@ -74,9 +74,10 @@ export class GiftCardPopup extends AbstractAwaitablePopup {
         const program = pos.config.program_by_id[pos.config.gift_card_program_id];
         return pos.db.product_by_id[program.rules[0].valid_product_ids[0]];
     }
-
+    
     addGiftCardProduct() {
-        const order = this.env.pos.get_order();
+        const pos = this.env.pos;
+        const order = pos.get_order();
         const product = this._getGiftCardProduct();
         order.add_product(product, {
             price: this.state.amountToSet,

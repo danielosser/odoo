@@ -10,9 +10,11 @@
     'description': '',
     'depends': ['loyalty', 'point_of_sale'],
     'data': [
-        'data/security/ir.model.access.csv',
+        'security/ir.model.access.csv',
         'data/default_barcode_patterns.xml',
         # 'data/mail_template_data.xml', TODO: adapt
+        'views/loyalty_card_views.xml',
+        'views/pos_config_views.xml',
     ],
     'demo': [
         # 'data/pos_loyalty_demo.xml', TODO: adapt
@@ -22,7 +24,7 @@
         'point_of_sale.assets': [
             'pos_loyalty/static/src/css/Loyalty.scss',
             'pos_loyalty/static/src/js/ActivePrograms.js',
-            'pos_loyalty/static/src/js/loyalty.js',
+            'pos_loyalty/static/src/js/Loyalty.js',
             'pos_loyalty/static/src/js/Orderline.js',
             'pos_loyalty/static/src/js/PaymentScreen.js',
             'pos_loyalty/static/src/js/ProductScreen.js',

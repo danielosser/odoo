@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from collections import defaultdict
-import random
 from uuid import uuid4
 
 from odoo import _, api, fields, models
@@ -85,7 +83,7 @@ class LoyaltyCard(models.Model):
             if not create_comm_per_program[coupon.program_id] or not coupon.partner_id:
                 continue
             for comm in create_comm_per_program[coupon.program_id]:
-                comm.mail_template_id.send_mail(res_id=coupon.id)
+                comm.mail_template_id.send_mail(res_id=coupon.id, email_layout_xmlid='mail.mail_notification_light')
 
     def _send_points_reach_communication(self, points_changes):
         """
@@ -112,7 +110,7 @@ class LoyaltyCard(models.Model):
                     break
             if not this_milestone:
                 continue
-            this_milestone.mail_template_id.send_mail(res_id=coupon.id)
+            this_milestone.mail_template_id.send_mail(res_id=coupon.id, email_layout_xmlid='mail.mail_notification_light')
 
 
     @api.model_create_multi

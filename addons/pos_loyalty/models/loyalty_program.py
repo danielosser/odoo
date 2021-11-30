@@ -4,8 +4,6 @@
 from odoo import _, api, fields, models
 from odoo.tools import unique
 
-import ast
-
 class LoyaltyProgram(models.Model):
     _inherit = 'loyalty.program'
 

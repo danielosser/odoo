@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import _, api, fields, models
-from babel.dates import format_datetime
+from odoo import fields, models
 
 class LoyaltyProgram(models.Model):
     _inherit = 'loyalty.program'

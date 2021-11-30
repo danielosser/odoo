@@ -4,10 +4,10 @@ import models from 'point_of_sale.models';
 import session from 'web.session';
 import concurrency from 'web.concurrency';
 import { Gui } from 'point_of_sale.Gui';
-import { float_is_zero, round_precision } from 'web.utils';
-import { core } from 'web.core';
-const _t = core._t;
+import { round_precision } from 'web.utils';
+import core from 'web.core';
 
+const _t = core._t;
 const dp = new concurrency.DropPrevious();
 
 // Load programs and products used by our programs
@@ -44,7 +44,7 @@ models.load_models([
         loaded: function (self, rules) {
             self.rules = rules;
             rules.forEach((rule) => {
-                program = self.program_by_id[rule.program_id];
+                const program = self.program_by_id[rule.program_id];
                 if (!program.rules) {
                     program.rules = [];
                 }
@@ -54,7 +54,7 @@ models.load_models([
     },
     {
         model: 'loyalty.reward',
-        fields: ['program_id', 'reward_type', 'required_points', 'clear_wallet', 'currency_id',
+        fields: ['description', 'program_id', 'reward_type', 'required_points', 'clear_wallet', 'currency_id',
             'discount', 'discount_mode', 'discount_applicability', 'discount_product_ids',
             'discount_max_amount', 'discount_line_product_id',
             'multi_product', 'reward_product_ids', 'reward_product_qty', 'reward_product_uom_id'],
@@ -65,7 +65,7 @@ models.load_models([
             self.rewards = rewards;
             self.reward_by_id = Object.fromEntries(rewards.map((reward) => [reward.id, reward]));
             rewards.forEach((reward) => {
-                program = self.program_by_id[reward.program_id];
+                const program = self.program_by_id[reward.program_id];
                 if (!program.rewards) {
                     program.rewards = [];
                 }
@@ -79,9 +79,9 @@ models.load_models([
         order: product_model.order,
         domain: function (self) {
             // Collect all ids we care about
-            product_ids = self.rules.map((rule) => rule.valid_product_ids);
+            const product_ids = self.rules.reduce((rule, ids) => ids.concat(rule.valid_product_ids), []);
             self.rewards.forEach((reward) => {
-                reward_product_ids.concat(
+                product_ids.concat(
                     reward.discount_product_ids, [reward.discount_line_product_id], reward.reward_product_ids);
             });
             return [['id', 'in', product_ids]];
@@ -117,6 +117,7 @@ models.Orderline = models.Orderline.extend({
         // If it is a manual reward we do not blacklist the reward if it is removed.
         result.manual_reward = this.manual_reward;
         result.reward_id = this.reward_id;
+        result.reward_product_id = this.reward_product_id;
         result.coupon_id = this.coupon_id;
         result.reward_identifier_code = this.reward_identifier_code;
         result.points_cost = this.points_cost;
@@ -128,6 +129,7 @@ models.Orderline = models.Orderline.extend({
             this.is_reward_line = json.is_reward_line;
             this.manual_reward = json.manual_reward;
             this.reward_id = json.reward_id;
+            this.reward_product_id = json.reward_product_id;
             this.coupon_id = json.coupon_id;
             this.reward_identifier_code = json.reward_identifier_code;
             this.points_cost = json.points_cost;
@@ -136,6 +138,20 @@ models.Orderline = models.Orderline.extend({
         }
         _orderline_super.init_from_JSON.apply(this, [json]);
     },
+    set_quantity: function (quantity, keep_price) {
+        if (quantity === 'remove' && this.is_reward_line) {
+            // Remove any line that is part of that same reward aswell.
+            this.order.get_orderlines.foreach((line) => {
+                if (line != this &&
+                        line.reward_id === this.reward_id &&
+                        line.coupon_id === this.coupon_id &&
+                        line.reward_identifier_code === this.reward_identifier_code) {
+                    this.order.remove_orderline(line);
+                }
+            });
+        }
+        return _orderline_super.set_quantity.apply(this, ...arguments);
+    }
 });
 
 const _posmodel_super = models.PosModel.prototype;
@@ -159,7 +175,6 @@ models.Order = models.Order.extend({
             if (!this.pos.config.all_program_ids.length) {
                 return;
             }
-            // NOTE: this is not sync
             this._trigger_reward_update();
         }, res);
         res.on('reset-coupons', res.resetCoupons, res);
@@ -185,7 +200,6 @@ models.Order = models.Order.extend({
     },
     set_client: function (client) {
         const oldClient = this.get_client();
-        // NOTE: maybe we should have a popup saying some rewards will be lost?
         _order_super.set_client.apply(this, arguments);
         if (oldClient !== this.get_client()) {
             this._trigger_reward_update();
@@ -197,6 +211,15 @@ models.Order = models.Order.extend({
     export_for_printing: function () {
         const result = _order_super.export_for_printing.apply(this, arguments);
         //TODO: add new coupons for the receipt
+        //TODO: add gift cards for the receipt
+        if (this.pos.config.loyalty_program_id) {
+            const loyaltyProgram = this.pos.program_by_id[this.pos.config.loyalty_program_id];
+            result.loyalty = {
+                name: loyaltyProgram.name,
+                client: this.get_client().name,
+                newPoints: this.get_loyalty_points(),
+            };
+        }
         return result;
     },
 
@@ -328,7 +351,7 @@ models.Order = models.Order.extend({
                 });
             } else if (pointsAdded.length > oldChanges.length) {
                 pointsAdded.splice(oldChanges.length).forEach((pa) => {
-                    coupon = this._coupon_for_program(program);
+                    const coupon = this._coupon_for_program(program);
                     this.couponPointChanges.push({
                         points: pa,
                         program_id: program.id,
@@ -346,7 +369,7 @@ models.Order = models.Order.extend({
         let points = 0;
         const dbCoupon = this.pos.couponCache.find((coupon) => coupon.id === coupon_id);
         if (dbCoupon) {
-            points += dbCoupon;
+            points += dbCoupon.points;
         }
         for (const pe of this.couponPointChanges) {
             if (pe.coupon_id === coupon_id) {
@@ -422,6 +445,10 @@ models.Order = models.Order.extend({
         if ((program.trigger !== 'auto' && !(program.id in this.codeActivatedPrograms)) || program.id in this.disabledPrograms) {
             return false;
         }
+        // Program is not applicable if applies to both and no client is set
+        if (program.applies_on === 'both' && !this.get_client()) {
+            return false;
+        }
         return true;
     },
     _points_for_program: function (program) {
@@ -439,24 +466,29 @@ models.Order = models.Order.extend({
             if (rule.minimum_amount_tax_mode === 'incl' && min > (totalTaxed) || min > totalUntaxed) { // NOTE: big doutes par rapport au fait de compter tous les produits
                 return;
             }
-            let orderedProductQty = 0;
-            let orderedProductPaid = 0
+            let totalProductQty = 0;
+            // Only count points for paid lines.
+            const qtyPerProduct = {};
+            let orderedProductPaid = 0;
             orderLines.forEach((line) => {
-                if ((rule.any_product || line.get_product().id in rule.valid_product_ids) && !line.is_reward_line) {
-                    orderedProductQty += line.get_quantity();
+                if ((!line.reward_product_id && (rule.any_product || line.get_product().id in rule.valid_product_ids)) ||
+                    (line.reward_product_id && (rule.any_prodyct || line.reward_product_id in rule.valid_product_ids))) {
+                    const lineQty = line.reward_product_id ? -line.get_quantity : line.get_quantity();
+                    totalProductQty += lineQty;
+                    qtyPerProduct[line.reward_product_id || line.get_product().id] += lineQty;
                     const priceTaxed = line.get_price_with_tax();
                     if (priceTaxed > 0) {
-                        orderedProductPaid += line.get_price_with_tax();
+                        orderedProductPaid += line.reward_product_id ? -priceTaxed : priceTaxed;
                     }
                 }
             });
-            if (orderedProductQty < rule.minimum_qty) {
+            if (totalProductQty < rule.minimum_qty) {
                 return;
             }
             if (program.applies_on === 'future' && rule.reward_point_trigger_multi && rule.reward_point_mode !== 'order') {
                 // In this case we add on to the global point count
                 if (rule.reward_point_mode === 'unit') {
-                    splitPoints.concat(Array.apply(null, Array(orderedProductQty)).map(() => rule.reward_point_amount));
+                    splitPoints.concat(Array.apply(null, Array(totalProductQty)).map(() => rule.reward_point_amount));
                 } else if (rule.reward_point_mode === 'money') {
                     orderLines.forEach((line) => {
                         if (line.is_reward_line || !(line.get_product().id in rule.valid_product_ids) || line.get_quantity() <= 0) {
@@ -464,7 +496,7 @@ models.Order = models.Order.extend({
                         }
                         const pointsPerUnit = round_precision(rule.reward_point_amount * line.get_price_with_tax() / line.get_quantity(), 0.01);
                         if (pointsPerUnit > 0) {
-                            splitPoints.concat(Array.apply(null, Array(line.get_quantity)).map(() => pointsPerUnit));
+                            splitPoints.concat(Array.apply(null, Array(qtyPerProduct[line.get_product().id])).map(() => pointsPerUnit));
                         }
                     });
                 }
@@ -476,7 +508,7 @@ models.Order = models.Order.extend({
                     // NOTE: unlike in sale_loyalty this performs a round half-up instead of round down
                     points += round_precision(rule.reward_point_amount * orderedProductPaid, 0.01);
                 } else if (rule.reward_point_mode === 'unit') {
-                    points += rule.reward_point_amount * orderedProductQty;
+                    points += rule.reward_point_amount * totalProductQty;
                 }
             }
         });
@@ -493,16 +525,21 @@ models.Order = models.Order.extend({
         const orderLines = this.get_orderlines()
         orderLines.forEach((line) => {
             if (!line.coupon_id || !line.reward_id ||
-                [line.reward_id, line.coupon_id, line.reward_identifier_code] in processed_rewards) {
+                [line.reward_id, line.coupon_id, line.reward_identifier_code] in processedRewards) {
                     return;
             }
             processedRewards[[line.reward_id, line.coupon_id, line.reward_identifier_code]] = true;
+            // Compensate for the points taken by the current reward line.
             let additionalPoints = line.points_cost;
+            // Compensate for the quantity already 'reserved' for rewards.
+            let additionalQty = line.get_quantity()
             const concernedLines = orderLines.filter((oLine) => {
-                if (oLine.reward_id === line.reward_id &&
+                if (line != oLine &&
+                        oLine.reward_id === line.reward_id &&
                         oLine.coupon_id === line.coupon_id &&
                         oLine.reward_identifier_code === line.reward_identifier_code) {
                     additionalPoints += oLine.points_cost;
+                    additionalQty += oLine.get_quantity();
                     return true;
                 }
                 return false;
@@ -513,8 +550,17 @@ models.Order = models.Order.extend({
             if (points < reward.required_points || !this._program_applicable(program)) {
                 linesToRemove.concat([line], concernedLines);
             } else {
-                const values_list = this._get_reward_line_values(
-                    {reward: reward, coupon_id: line.coupon_id, additionalPoints: additionalPoints, product=line.get_product()});
+                const values_list = this._get_reward_line_values({
+                    reward: reward,
+                    coupon_id: line.coupon_id,
+                    additionalPoints: additionalPoints,
+                    additionalQty: additionalQty,
+                    product: line.get_product().id,
+                });
+                if (!Array.isArray) {
+                    linesToRemove.concat([line], concernedLines);
+                    return;
+                }
                 for (const vals of values_list) {
                     delete vals.reward_identifier_code;
                 }
@@ -552,7 +598,7 @@ models.Order = models.Order.extend({
             //TODO: return an error? do we need feedback?
             return false;
         }
-        const manualReward = {manual_reward: args['manual_reward'] || false};
+        const manualReward = Object.assign({manual_reward: false, merge: false}, args);
         const rewardLines = this._get_reward_line_values({
             reward: reward,
             coupon_id: coupon_id,
@@ -585,13 +631,13 @@ models.Order = models.Order.extend({
         } else if (reward.discount_applicability === 'specific') {
             concernedLines = concernedLines.filter((line) => line.get_product().id in reward.discount_product_ids);
         }
-        if (!concernedLines) {
+        if (!concernedLines || !concernedLines.length) {
             return [];
         }
         let maxDiscount = reward.discount_max_amount || Infinity;
         let concernedLinesTotal;
         if (reward.discount_applicability !== 'cheapest') {
-            concernedLinesTotal = concernedLines.reduce((line, acc) => acc += (line.get_lst_price() * line.get_quantity()), 0);
+            concernedLinesTotal = concernedLines.reduce((line, acc) => acc += line.get_price_with_tax(), 0);
         } else {
             concernedLinesTotal = concernedLines[0].get_lst_price();
         }
@@ -599,13 +645,13 @@ models.Order = models.Order.extend({
         if (reward.discount_mode === 'per_point') {
             maxDiscount = Math.min(maxDiscount, reward.discount * (this._get_real_coupon_points(coupon_id) + additionalPoints));
         } else if (reward.discount_mode === 'per_order') {
-            maxDiscount = min(maxDiscount, reward.discount);
+            maxDiscount = Math.min(maxDiscount, reward.discount);
         } else if (reward.discount_mode === 'percent') {
-            maxDiscount = min(maxDiscount, concerned_lines_total * (reward.discount / 100));
+            maxDiscount = Math.min(maxDiscount, concernedLinesTotal * (reward.discount / 100));
         }
         if (reward.discount_mode === 'per_point' || reward.discount_mode === 'per_order') {
             // Fixed amount discounts
-            const toDiscount = min(maxDiscount, concernedLinesTotal);
+            const toDiscount = Math.min(maxDiscount, concernedLinesTotal);
             let consumedPoints = reward.clear_wallet ? (this._get_real_coupon_points(coupon_id) + additionalPoints) : reward.required_points;
             if (!reward.clear_wallet && reward.discount_mode === 'per_point') {
                 consumedPoints = Math.ceil(toDiscount / reward.discount);
@@ -626,18 +672,18 @@ models.Order = models.Order.extend({
             }];
         }
         const discountRewards = {}
-        const rewardCode = _newRandomRewardCode(),
-        const discountFactor = concernedLinesTotal ? min(1, maxDiscount / (concernedLinesTotal * (reward.discount / 100))) : 1;
+        const rewardCode = _newRandomRewardCode();
+        const discountFactor = concernedLinesTotal ? Math.min(1, maxDiscount / (concernedLinesTotal * (reward.discount / 100))) : 1;
         for (const line of concernedLines) {
             const lineDiscount = (line.get_quantity() * line.get_lst_price() * (reward.discount / 100)) * discountFactor;
             if (lineDiscount) {
                 const key = line.get_taxes().map((tax) => tax.id);
                 if (discountRewards[key]) {
-                    discountRewards[key]['unit_price'] -= lineDiscount;
+                    discountRewards[key]['unit_price'] -= line.get_price_with_tax() * (reward.discount / 100) * discountFactor;
                 } else {
                     discountRewards[key] = {
                         product: this.pos.db.get_product_by_id(reward.discount_line_product_id),
-                        unit_price: -toDiscount,
+                        unit_price: -line.get_price_with_tax() * (reward.discount / 100) * discountFactor,
                         quantity: 1,
                         reward_id: reward.id,
                         coupon_id: coupon_id,
@@ -657,15 +703,28 @@ models.Order = models.Order.extend({
     _get_reward_line_values_product: function (args) {
         const additionalPoints = args['additionalPoints'] || 0;
         const reward = args['reward'];
-        const product = args['product'] || this.pos.db.get_product_by_id(reward.reward_product_ids[0]);
-        //TODO: handle errors ? (!product)
+        const product = args['product'] || reward.reward_product_ids[0];
+        const productQuantities = this.get_orderlines.reduce((line, res) => {
+            if (line.get_product().id !== product || line.reward_product_id !== product) {
+                return;
+            }
+            res.total += line.get_quantity();
+            if (line.is_reward_line) {
+                res.free += line.get_quantity();
+            }
+        }, {total: 0, free: 0});
+        productQuantities.free -= args['additionalQty'] || 0;
+        if ((productQuantities.total - productQuantities.free) < reward.reward_product_qty) {
+            return false;
+        }
         return [{
-            product: product,
-            unit_price: 0,
+            product: this.pos.db.get_product_by_id(reward.discount_line_product_id),
+            unit_price: -product.lst_price,
             quantity: reward.reward_product_qty,
             reward_id: reward.id,
+            reward_product_id: product.id,
             coupon_id: args['coupon_id'],
-            points_cost: reward.clear_wallet ? (this._get_real_coupon_points(args['coupon_id']) + additionalPoints) : reward.required_points,
+            points_cost: (reward.clear_wallet ? (this._get_real_coupon_points(args['coupon_id']) + additionalPoints) : reward.required_points),
             reward_identifier_code: _newRandomRewardCode(),
         }]
     },
@@ -692,7 +751,7 @@ models.Order = models.Order.extend({
             }
             const program = this.program_by_id[couponProgram.program_id];
             // No automatic reward if multiple are available in the program or if loyalty program
-            if (program.reward_ids.length > 1 || program.applies_to !== 'current') {
+            if (program.reward_ids.length > 1 || program.applies_on !== 'current') {
                 continue;
             }
             const reward = this.reward_by_id[program.reward_ids[0]];
@@ -742,5 +801,62 @@ models.Order = models.Order.extend({
         if (res !== true) {
             Gui.showNotification(res);
         }
-    }
+    },
+    get_loyalty_points() {
+        let won = 0;
+        let spent = 0;
+        let total = 0;
+        const client = this.get_client();
+        if (client && this.env.pos.config.loyalty_program_id) {
+            const loyaltyProgram = this.env.pos.program_by_id[this.env.pos.config.loyalty_program_id];
+            const dbCoupon = this.pos.couponCache.find((coupon) => coupon.program_id === loyaltyProgram.id && coupon.partner_id === client.id);
+            if (dbCoupon) {
+                for (const pe of this.couponPointChanges) {
+                    if (pe.coupon_id === dbCoupon.id) {
+                        won += pe.points;
+                        break;
+                    }
+                }
+                for (const line of this._get_reward_lines()) {
+                    if (line.coupon_id === dbCoupon.id) {
+                        spent += line.points_cost;
+                    }
+                }
+                total = dbCoupon.points + won - spent;
+            }
+        }
+        return {
+            won: round_precision(won, 2),
+            spent: round_precision(spent, 2),
+            total: round_precision(total, 2),
+        }
+    },
+    get_claimable_rewards() {
+        const allCouponPrograms = this.couponPointChanges.map((pe) => {
+            return {
+                program_id: pe.program_id,
+                coupon_id: pe.coupon_id
+            };
+        }).concat(this.codeActivatedCoupons.map((code) => {
+            const coupon = this.pos.couponCache.find((c) => c.code === code);
+            return {
+                program_id: coupon.program_id,
+                coupon_id: coupon.id,
+            };
+        }));
+        const result = [];
+        for (const couponProgram of allCouponPrograms) {
+            const program = this.pos.program_by_id[couponProgram.program_id];
+            const points = this._get_real_coupon_points(couponProgram.coupon_id);
+            for (const reward of program.rewards) {
+                if (points >= reward.required_points) {
+                    result.push({
+                        coupon_id: couponProgram.coupon_id,
+                        reward: reward,
+                    });
+                }
+            }
+        }
+        return result;
+    },
 }); 

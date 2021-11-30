@@ -9,7 +9,6 @@ from odoo import api, fields, models, _
 from odoo.fields import Command
 from odoo.exceptions import ValidationError
 from odoo.tools.float_utils import float_round
-from odoo.tools.misc import formatLang
 from odoo.osv import expression
 
 def _generate_random_reward_code():
@@ -47,7 +46,7 @@ class SaleOrder(models.Model):
     def action_confirm(self):
         for order in self:
             status = order._check_update_applied_rewards(block=True)
-            if 'error' in status:
+            if status and 'error' in status:
                 raise ValidationError(status['error'])
         #TODO: do we drop coupon state?
         # self.generated_coupon_ids.write({'state': 'new'})
@@ -75,7 +74,8 @@ class SaleOrder(models.Model):
         for coupon, changes in self._get_point_changes().items():
             coupon.points -= changes
         # self.applied_coupon_ids.sales_order_id = False
-        self._check_update_applied_rewards()
+        for order in self:
+            order._check_update_applied_rewards()
         return res
 
     def action_draft(self):
@@ -474,7 +474,7 @@ class SaleOrder(models.Model):
 
         # Fetch all automatic programs that are not already applied
         already_applied_programs = self._get_points_programs()
-        domain = expression.AND([self._get_program_domain(), [('id', 'not in', already_applied_programs), ('trigger', '=', 'auto')]])
+        domain = expression.AND([self._get_program_domain(), [('id', 'not in', already_applied_programs.ids), ('trigger', '=', 'auto')]])
         automatic_programs = self.env['loyalty.program'].search(domain)
         all_new_coupons = self.env['loyalty.program']
         for program in automatic_programs:
