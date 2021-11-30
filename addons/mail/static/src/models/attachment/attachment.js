@@ -57,7 +57,10 @@ function factory(dependencies) {
          * Send the attachment for the browser to download.
          */
         download() {
-            this.env.services.navigate(`/web/content/ir.attachment/${this.id}/datas`, { download: true });
+            let downloadLink = document.createElement('a');
+            downloadLink.setAttribute('href', `/web/content/ir.attachment/${this.id}/datas`);
+            downloadLink.setAttribute('download','');
+            downloadLink.click();
         }
 
         /**
