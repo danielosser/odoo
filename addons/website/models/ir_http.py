@@ -319,6 +319,7 @@ class Http(models.AbstractModel):
         if not request.env.user:
             cls._auth_method_public()
         cls._frontend_pre_dispatch()
+        request.params = request.get_http_params()
 
         website_page = cls._serve_page()
         if website_page:

@@ -670,7 +670,7 @@ class Request:
         self.httprequest = httprequest
         self.type = 'json' if httprequest.mimetype in JSON_MIMETYPES else 'http'
         self.future_response = FutureResponse()
-        self.params = {}
+        #self.params = {}  # set in _http_dispatch and _json_dispatch
 
         self.db = None
         self.registry = None
@@ -1135,6 +1135,22 @@ class Request:
                 response.set_cookie(k, v)
         return response
 
+    def get_http_params(self):
+        """
+        Extract key=value pairs from the query string and the forms
+        present in the body (both application/x-www-form-urlencoded and
+        multipart/form-data).
+
+        :returns dict: The merged key-value pairs.
+        """
+        params = {
+            **self.httprequest.args,
+            **self.httprequest.form,
+            **self.httprequest.files
+        }
+        params.pop('session_id', None)
+        return params
+
     def _http_dispatch(self, endpoint, args):
         """
         Perform http-related actions such as deserializing the request
@@ -1144,13 +1160,7 @@ class Request:
         See :meth:`~odoo.http.Response.load`: method for the compatible
         endpoint return types.
         """
-        self.params = dict(
-            self.httprequest.args,
-            **self.httprequest.form,
-            **self.httprequest.files,
-            **args,
-        )
-        self.params.pop('session_id', None)
+        self.params = dict(self.get_http_params(), **args)
 
         # Check for CSRF token for relevant requests
         if self.httprequest.method not in ('GET', 'HEAD', 'OPTIONS', 'TRACE') and endpoint.routing.get('csrf', True):

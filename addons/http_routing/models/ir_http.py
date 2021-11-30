@@ -610,6 +610,7 @@ class IrHttp(models.AbstractModel):
         if not request.env.uid:
             cls._auth_method_public()
         request.env['ir.http']._frontend_pre_dispatch()
+        request.params = request.get_http_params()
 
         code, values = cls._get_exception_code_values(exception)
 
