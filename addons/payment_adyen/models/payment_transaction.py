@@ -269,10 +269,13 @@ class PaymentTransaction(models.Model):
                     ('acquirer_reference', '=', source_reference),
                     ('provider', '=', 'adyen'),
                 ])
-                # Manually create a refund transaction with a new reference. The reference of
-                # the refund transaction was personalized from Adyen and could be identical to
-                # that of an existing transaction.
-                tx = self._adyen_create_refund_tx_from_feedback_data(source_tx, data)
+                if source_tx:
+                    # Manually create a refund transaction with a new reference. The reference of
+                    # the refund transaction was personalized from Adyen and could be identical to
+                    # that of an existing transaction.
+                    tx = self._adyen_create_refund_tx_from_feedback_data(source_tx, data)
+                else:  # The refund was initiated for an unknown source transaction
+                    pass  # Don't do anything with the refund notification
 
         if not tx:
             raise ValidationError(
