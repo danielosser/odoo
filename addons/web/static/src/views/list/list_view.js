@@ -13,10 +13,28 @@ import { ListRenderer } from "./list_renderer";
 import { RelationalModel } from "../relational_model";
 import { useViewButtons } from "@web/views/view_button/hook";
 import { Field } from "@web/fields/field";
+import { ViewButton } from "@web/views/view_button/view_button";
 
-const { onWillStart } = owl.hooks;
+const { onWillStart, useState, useSubEnv } = owl.hooks;
 
-const { useSubEnv } = owl.hooks;
+export class ListViewHeaderButton extends ViewButton {
+    onClick() {
+        const clickParams = this.props.clickParams;
+        const { resModel, resIds } = this.props.record;
+
+        clickParams.buttonContext = {
+            active_domain: this.props.domain,
+            active_id: resIds[0],
+            active_ids: resIds,
+            active_model: resModel,
+        };
+
+        this.trigger("action-button-clicked", {
+            clickParams,
+            record: this.props.record,
+        });
+    }
+}
 
 export class GroupListArchParser extends XMLParser {
     parse(arch, fields) {
@@ -52,6 +70,7 @@ export class ListArchParser extends XMLParser {
             buttons: {},
             fields: {},
         };
+        let headerButtons = [];
         const groupListArchParser = new GroupListArchParser();
         let buttonGroup = undefined;
         this.visitXML(arch, (node) => {
@@ -112,10 +131,18 @@ export class ListArchParser extends XMLParser {
                 );
                 groupBy.buttons[fieldName] = buttons;
                 groupBy.fields[fieldName] = { activeFields, fields: parsedFields };
+                return false;
+            } else if (node.tagName === "header") {
+                headerButtons = [...node.children].map((node) => ({
+                    ...processButton(node),
+                    type: "button",
+                    id: buttonId++,
+                }));
+                return false;
             }
         });
 
-        return { activeActions, fields: activeFields, columns, groupBy };
+        return { activeActions, headerButtons, fields: activeFields, columns, groupBy };
     }
 }
 
@@ -125,7 +152,7 @@ class ListView extends owl.Component {
     setup() {
         this.actionService = useService("action");
         this.user = useService("user");
-
+        debugger;
         this.archInfo = new ListArchParser().parse(this.props.arch, this.props.fields);
         this.activeActions = this.archInfo.activeActions;
         this.model = useModel(RelationalModel, {
@@ -162,6 +189,38 @@ class ListView extends owl.Component {
                 },
             };
         });
+        this.state = useState({
+            selection: [],
+        });
+
+        this.toggleSelection = () => {
+            if (this.state.selection.length === this.model.root.records.length) {
+                this.state.selection = [];
+            } else {
+                this.state.selection = [...this.model.root.records];
+            }
+        };
+
+        this.toggleRecordSelection = (record) => {
+            const index = this.state.selection.indexOf(record);
+            if (index > -1) {
+                this.state.selection.splice(index, 1);
+            } else {
+                this.state.selection.push(record);
+            }
+        };
+
+        this.getRecords = () => {
+            const resModel = this.model.root.resModel;
+            let resIds = [];
+            if (this.state.selection) {
+                resIds = this.state.selection.map((el) => el.resId);
+            }
+            return {
+                resIds,
+                resModel,
+            };
+        };
     }
 
     openRecord(record) {
@@ -178,7 +237,7 @@ ListView.type = "list";
 ListView.display_name = "List";
 ListView.icon = "fa-list-ul";
 ListView.multiRecord = true;
-ListView.components = { ListRenderer, Layout };
+ListView.components = { ListViewHeaderButton, ListRenderer, Layout, ViewButton };
 ListView.props = {
     ...standardViewProps,
     hasSelectors: { type: Boolean, optional: 1 },

@@ -34,6 +34,7 @@ import {
     toggleMenuItemOption,
     toggleSaveFavorite,
     groupByMenu,
+    getButtons,
 } from "../search/helpers";
 import { createWebClient, doAction } from "../webclient/helpers";
 import { makeView } from "./helpers";
@@ -600,7 +601,7 @@ QUnit.module("Views", (hooks) => {
                     <field name="foo" />
                 </tree>`,
         });
-        let cpButtons = testUtils.controlPanel.getButtons(list);
+        // let cpButtons = testUtils.controlPanel.getButtons(list);
         assert.containsNone(cpButtons[0], 'button[name="x"]');
         assert.containsNone(cpButtons[0], ".o_list_selection_box");
         assert.containsNone(cpButtons[0], 'button[name="y"]');
@@ -627,7 +628,7 @@ QUnit.module("Views", (hooks) => {
         assert.containsNone(cpButtons[0], 'button[name="y"]');
     });
 
-    QUnit.skip(
+    QUnit.test(
         "list view: action button executes action on click: buttons are disabled and re-enabled",
         async function (assert) {
             assert.expect(3);
@@ -644,18 +645,16 @@ QUnit.module("Views", (hooks) => {
                     </header>
                     <field name="foo" />
                 </tree>`,
-                intercepts: {
-                    async execute_action(ev) {
-                        const { on_success } = ev.data;
-                        await executeActionDef;
-                        on_success();
-                    },
+            });
+            patchWithCleanup(list.env.services.action, {
+                doActionButton: async () => {
+                    await executeActionDef;
                 },
             });
             await click(
                 list.el.querySelector('.o_data_row .o_list_record_selector input[type="checkbox"]')
             );
-            const cpButtons = testUtils.controlPanel.getButtons(list);
+            const cpButtons = getButtons(list.el);
             assert.ok(
                 Array.from(cpButtons[0].querySelectorAll("button")).every((btn) => !btn.disabled)
             );
@@ -666,7 +665,7 @@ QUnit.module("Views", (hooks) => {
             );
 
             executeActionDef.resolve();
-            await testUtils.nextTick();
+            await nextTick();
             assert.ok(
                 Array.from(cpButtons[0].querySelectorAll("button")).every((btn) => !btn.disabled)
             );
@@ -705,10 +704,10 @@ QUnit.module("Views", (hooks) => {
         }
     );
 
-    QUnit.skip(
+    QUnit.test(
         "list view: action button executes action on click: correct parameters",
         async function (assert) {
-            assert.expect(4);
+            assert.expect(6);
 
             const list = await makeView({
                 type: "list",
@@ -721,37 +720,32 @@ QUnit.module("Views", (hooks) => {
                     </header>
                     <field name="foo" />
                 </tree>`,
-                intercepts: {
-                    async execute_action(ev) {
-                        const {
-                            action_data: { context, name, type },
-                            env,
-                        } = ev.data;
-                        // Action's own properties
-                        assert.strictEqual(name, "x");
-                        assert.strictEqual(type, "object");
+            });
+            patchWithCleanup(list.env.services.action, {
+                doActionButton: async (params) => {
+                    const { buttonContext, context, name, resModel, resIds, type } = params;
+                    // Action's own properties
+                    assert.strictEqual(name, "x");
+                    assert.strictEqual(type, "object");
 
-                        // The action's execution context
-                        assert.deepEqual(context, {
-                            active_domain: [],
-                            active_id: 1,
-                            active_ids: [1],
-                            active_model: "foo",
-                            plouf: "plif",
-                        });
-                        // The current environment (not owl's, but the current action's)
-                        assert.deepEqual(env, {
-                            context: {},
-                            model: "foo",
-                            resIDs: [1],
-                        });
-                    },
+                    // The action's execution context
+                    assert.deepEqual(buttonContext, {
+                        active_domain: [],
+                        active_id: 1,
+                        active_ids: [1],
+                        active_model: "foo",
+                        plouf: "plif",
+                    });
+
+                    assert.strictEqual(resModel, "foo");
+                    assert.deepEqual([...resIds], [1]);
+                    assert.strictEqual(JSON.stringify(context), "{}");
                 },
             });
             await click(
                 list.el.querySelector('.o_data_row .o_list_record_selector input[type="checkbox"]')
             );
-            const cpButtons = testUtils.controlPanel.getButtons(list);
+            const cpButtons = getButtons(list.el);
             await click(cpButtons[0].querySelector('button[name="x"]'));
         }
     );
@@ -772,45 +766,71 @@ QUnit.module("Views", (hooks) => {
                     </header>
                     <field name="foo" />
                 </tree>`,
-                intercepts: {
-                    async execute_action(ev) {
-                        assert.step("execute_action");
-                        const {
-                            action_data: { context, name, type },
-                            env,
-                        } = ev.data;
-                        // Action's own properties
-                        assert.strictEqual(name, "x");
-                        assert.strictEqual(type, "object");
+                // intercepts: {
+                //     async execute_action(ev) {
+                //         assert.step("execute_action");
+                //         const {
+                //             action_data: { context, name, type },
+                //             env,
+                //         } = ev.data;
+                //         // Action's own properties
+                //         assert.strictEqual(name, "x");
+                //         assert.strictEqual(type, "object");
 
-                        // The action's execution context
-                        assert.deepEqual(context, {
-                            active_domain: [],
-                            active_id: 1,
-                            active_ids: [1, 2, 3, 4],
-                            active_model: "foo",
-                        });
-                        // The current environment (not owl's, but the current action's)
-                        assert.deepEqual(env, {
-                            context: {},
-                            model: "foo",
-                            resIDs: [1, 2, 3, 4],
-                        });
-                    },
-                },
+                //         // The action's execution context
+                //         assert.deepEqual(context, {
+                //             active_domain: [],
+                //             active_id: 1,
+                //             active_ids: [1, 2, 3, 4],
+                //             active_model: "foo",
+                //         });
+                //         // The current environment (not owl's, but the current action's)
+                //         assert.deepEqual(env, {
+                //             context: {},
+                //             model: "foo",
+                //             resIDs: [1, 2, 3, 4],
+                //         });
+                //     },
+                // },
                 mockRPC(route, args) {
                     if (args.method === "search") {
                         assert.step("search");
                         assert.strictEqual(args.model, "foo");
                         assert.deepEqual(args.args, [[]]); // empty domain since no domain in searchView
                     }
-                    return this._super.call(this, ...arguments);
                 },
             });
+            patchWithCleanup(list.env.services.action, {
+                doActionButton: async (params) => {
+                    const { buttonContext, context, name, resModel, resIds, type } = params;
+                    assert.step("execute_action");
+                    // Action's own properties
+                    assert.strictEqual(name, "x");
+                    assert.strictEqual(type, "object");
+
+                    // The action's execution context
+                    assert.deepEqual(buttonContext, {
+                        active_domain: [],
+                        active_id: 1,
+                        active_ids: [1, 2, 3, 4],
+                        active_model: "foo",
+                    });
+                    // // The current environment (not owl's, but the current action's)
+                    // assert.deepEqual(env, {
+                    //     context: {},
+                    //     model: "foo",
+                    //     resIDs: [1, 2, 3, 4],
+                    // });
+                    assert.strictEqual(JSON.stringify(context), "{}");
+                    assert.strictEqual(resModel, "foo");
+                    assert.deepEqual([...resIds], [1, 2, 3, 4]);
+                },
+            });
+            debugger;
             await click(
                 list.el.querySelector('.o_data_row .o_list_record_selector input[type="checkbox"]')
             );
-            const cpButtons = testUtils.controlPanel.getButtons(list);
+            const cpButtons = getButtons(list.el);
 
             await click(cpButtons[0].querySelector(".o_list_select_domain"));
             assert.verifySteps([]);

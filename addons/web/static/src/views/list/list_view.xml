@@ -4,9 +4,11 @@
     <t t-name="web.ListView" owl="1">
         <Layout viewType="'list'" useSampleModel="model.useSampleModel">
             <t t-set-slot="control-panel-bottom-left">
+                <div class="o_cp_buttons" role="toolbar" aria-label="Control panel buttons" t-ref="buttons">
                 <t t-call="{{ constructor.buttonTemplate }}"/>
+                </div>
             </t>
-            <ListRenderer list="model.root" fields="props.fields" info="archInfo" hasSelectors="props.hasSelectors" openRecord="openRecord" />
+            <ListRenderer list="model.root" fields="props.fields" info="archInfo" hasSelectors="props.hasSelectors" openRecord="openRecord" toggleSelection="toggleSelection" toggleRecordSelection="toggleRecordSelection" selection="state.selection"/>
         </Layout>
     </t>
 
@@ -25,6 +27,20 @@
             </t>
             <t t-if="activeActions['exportXlsx'] and isExportEnable">
                 <button type="button" class="btn btn-secondary fa fa-download o_list_export_xlsx" data-tooltip="Export All" aria-label="Export All"/>
+            </t>
+            <t t-if="state.selection.length">
+                <t t-foreach="archInfo.headerButtons" t-as="button" t-key="button.id">
+                    <ListViewHeaderButton
+                        classes="[]"
+                        clickParams="button.clickParams"
+                        context="button.context"
+                        defaultRank="button.defaultRank"
+                        domain="props.domain"
+                        icon="button.icon"
+                        record="getRecords()"
+                        string="button.string"
+                        title="button.title"/>
+                </t>
             </t>
         </div>
     </t>

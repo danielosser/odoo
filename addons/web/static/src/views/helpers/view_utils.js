@@ -47,7 +47,7 @@ export const getIds = (idsList) => {
     }
 };
 
-export function processButton(node, fields, viewType) {
+export function processButton(node) {
     const modifiers = evaluateExpr(node.getAttribute("modifiers") || "{}");
     if (modifiers.invisible == true) {
         modifiers.invisible = [[]];
@@ -61,6 +61,7 @@ export function processButton(node, fields, viewType) {
         invisible: modifiers.invisible ? new Domain(modifiers.invisible) : false, // || modifiers.column_invisible === true;
         readonly: modifiers.readonly == true,
         clickParams: {
+            context: node.getAttribute("context") || "{}",
             name: node.getAttribute("name"),
             type: node.getAttribute("type"),
         },

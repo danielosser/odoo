@@ -29,7 +29,7 @@ export class ListRenderer extends Component {
         this.getOptionalActiveFields();
         this.activeActions = this.props.info.activeActions;
         this.cellClassByColumn = {};
-        this.selection = [];
+        this.selection = this.props.selection;
         this.groupByButtons = this.props.info.groupBy.buttons;
         this.state = useState({
             columns: this.allColumns.filter(
@@ -109,13 +109,13 @@ export class ListRenderer extends Component {
     }
     get selectAll() {
         let nbDisplayedRecords = this.props.list.records.length;
-        return nbDisplayedRecords > 0 && this.selection.length === nbDisplayedRecords;
+        return nbDisplayedRecords > 0 && this.props.selection.length === nbDisplayedRecords;
     }
 
     get aggregates() {
         let values;
-        if (this.selection.length) {
-            values = this.selection.map((r) => r.data);
+        if (this.props.selection.length) {
+            values = this.props.selection.map((r) => r.data);
         } else if (this.props.list.isGrouped) {
             values = this.props.list.groups.map((g) => g.aggregates);
         } else {
@@ -220,7 +220,7 @@ export class ListRenderer extends Component {
         if (fieldType === "boolean") {
             return "";
         }
-        const formatter = registry.category("formatters").get(fieldType);
+        const formatter = formatterRegistry.get(fieldType, (val) => val);
         const formatOptions = {
             escape: false,
             data: record.data,
@@ -335,22 +335,13 @@ export class ListRenderer extends Component {
     }
 
     toggleSelection() {
-        if (this.selection.length === this.props.list.records.length) {
-            this.selection = [];
-        } else {
-            this.selection = [...this.props.list.records];
-        }
-        this.render();
+        this.props.toggleSelection();
     }
+
     toggleRecordSelection(record) {
-        const index = this.selection.indexOf(record);
-        if (index > -1) {
-            this.selection.splice(index, 1);
-        } else {
-            this.selection.push(record);
-        }
-        this.render();
+        this.props.toggleRecordSelection(record);
     }
+
     toggleOptionalField(ev) {
         const fieldName = ev.detail.payload.name;
         this.optionalActiveFields[fieldName] = !this.optionalActiveFields[fieldName];
