@@ -104,13 +104,13 @@ var html5jp = window.html5jp || {};
         }
         if(zero_num > 1) { return; }
         //
-        var step = 2;
-        var cover_step = step * 5;
+        var step = 1;
         //
         var ctxo = this.p.ctxo;
         var ctxt = this.p.ctxt;
         ctxt.clearRect(0, 0, ctxt.canvas.width, ctxt.canvas.height);
         if(base_index % 2 == 0) { // top or bottom side
+            let cover_step = step * ow/oh*Math.max(dims[1], dims[3])/Math.min(dims[0], dims[2]) + 2;
             var ctxl = this.create_canvas_context(ow, cover_step);
             ctxl.globalCompositeOperation = "copy";
             var cvsl = ctxl.canvas;
@@ -122,8 +122,7 @@ var html5jp = window.html5jp || {};
                 var ey = d1y + (d2y-d1y) * r;
                 var ag = Math.atan( (ey-sy) / (ex-sx) );
                 var sc = Math.sqrt( Math.pow(ex-sx, 2) + Math.pow(ey-sy, 2) ) / ow;
-                ctxl.setTransform(1, 0, 0, 1, 0, -y);
-                ctxl.drawImage(ctxo.canvas, 0, 0);
+                ctxl.drawImage(ctxo.canvas, 0, y, ow, step, 0, 0, ow, cover_step);
                 //
                 ctxt.translate(sx, sy);
                 ctxt.rotate(ag);
@@ -133,6 +132,7 @@ var html5jp = window.html5jp || {};
                 ctxt.setTransform(1, 0, 0, 1, 0, 0);
             }
         } else if(base_index % 2 == 1) { // right or left side
+            let cover_step = step * oh/owh*Math.maxn(dims[0], dims[2])/Math.min(dims[1], dims[3]) + 2;
             var ctxl = this.create_canvas_context(cover_step, oh);
             ctxl.globalCompositeOperation = "copy";
             var cvsl = ctxl.canvas;
@@ -144,6 +144,7 @@ var html5jp = window.html5jp || {};
                 var ey = d3y + (d2y-d3y) * r;
                 var ag = Math.atan( (sx-ex) / (ey-sy) );
                 var sc = Math.sqrt( Math.pow(ex-sx, 2) + Math.pow(ey-sy, 2) ) / oh;
+                ctxl.drawImage(ctxo.canvas, 0, x, step, oh, 0, 0, cover_step, oh);
                 ctxl.setTransform(1, 0, 0, 1, -x, 0);
                 ctxl.drawImage(ctxo.canvas, 0, 0);
                 //
