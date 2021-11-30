@@ -114,16 +114,27 @@ publicWidget.registry.popup = PopupWidget;
 // Prevent bootstrap to prevent scrolling and to add the strange body
 // padding-right they add if the popup does not use a backdrop (especially
 // important for default cookie bar).
+
+const _baseShowElement = $.fn.modal.Constructor.prototype._showElement;
+$.fn.modal.Constructor.prototype._showElement = function (relatedTarget){
+    _baseShowElement.apply(this, relatedTarget);
+    this._setScrollbar();
+}
+
 const _baseSetScrollbar = $.fn.modal.Constructor.prototype._setScrollbar;
 $.fn.modal.Constructor.prototype._setScrollbar = function () {
-    if (this._element.classList.contains('s_popup_no_backdrop')) {
+    const modalContent = this._element.getElementsByClassName('modal-content')[0];
+    if (this._element.classList.contains('s_popup_no_backdrop') && modalContent.offsetHeight < window.innerHeight) {
+        this._element.classList.remove('s_popup_overflow_page');
         return;
     }
+    this._element.classList.add('s_popup_overflow_page');
     return _baseSetScrollbar.apply(this, ...arguments);
 };
 const _baseGetScrollbarWidth = $.fn.modal.Constructor.prototype._getScrollbarWidth;
 $.fn.modal.Constructor.prototype._getScrollbarWidth = function () {
-    if (this._element.classList.contains('s_popup_no_backdrop')) {
+    const modalContent = this._element.getElementsByClassName('modal-content')[0];
+    if (this._element.classList.contains('s_popup_no_backdrop') && modalContent.offsetHeight < window.innerHeight) {
         return 0;
     }
     return _baseGetScrollbarWidth.apply(this, ...arguments);

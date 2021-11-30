@@ -63,7 +63,9 @@
 
     // No backdrop
     .s_popup_no_backdrop {
-        pointer-events: none;
+        &:not(.s_popup_overflow_page) {
+            pointer-events: none;
+        }
 
         .modal-content {
             pointer-events: auto;
