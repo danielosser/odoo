@@ -7,7 +7,6 @@ odoo.define('point_of_sale.PaymentScreen', function (require) {
     const NumberBuffer = require('point_of_sale.NumberBuffer');
     const { useListener } = require('web.custom_hooks');
     const Registries = require('point_of_sale.Registries');
-    const { onChangeOrder } = require('point_of_sale.custom_hooks');
     const { isConnectionError } = require('point_of_sale.utils');
 
     class PaymentScreen extends PosComponent {
@@ -21,6 +20,7 @@ odoo.define('point_of_sale.PaymentScreen', function (require) {
             useListener('send-payment-cancel', this._sendPaymentCancel);
             useListener('send-payment-reverse', this._sendPaymentReverse);
             useListener('send-force-done', this._sendForceDone);
+            useListener('validate-order', () => this.validateOrder(false));
             NumberBuffer.use({
                 // The numberBuffer listens to this event to update its state.
                 // Basically means 'update the buffer when this event is triggered'
@@ -29,7 +29,6 @@ odoo.define('point_of_sale.PaymentScreen', function (require) {
                 // Note that the component listens to it.
                 triggerAtInput: 'update-selected-paymentline',
             });
-            onChangeOrder(this._onPrevOrder, this._onNewOrder);
             useErrorHandlers();
             this.payment_interface = null;
             this.error = false;
@@ -99,7 +98,7 @@ odoo.define('point_of_sale.PaymentScreen', function (require) {
             this.render();
         }
         openCashbox() {
-            this.env.pos.proxy.printer.open_cashbox();
+            this.env.proxy.printer.open_cashbox();
         }
         async addTip() {
             // click_tip
@@ -151,18 +150,6 @@ odoo.define('point_of_sale.PaymentScreen', function (require) {
             NumberBuffer.reset();
             this.render();
         }
-        /**
-         * Returns false if the current order is empty and has no payments.
-         * @returns {boolean}
-         */
-        _isValidEmptyOrder() {
-            const order = this.currentOrder;
-            if (order.get_orderlines().length == 0) {
-                return order.get_paymentlines().length != 0;
-            } else {
-                return true;
-            }
-        }
         async validateOrder(isForceValidate) {
             if(this.env.pos.config.cash_rounding) {
                 if(!this.env.pos.get_order().check_paymentlines_rounding()) {
@@ -183,7 +170,7 @@ odoo.define('point_of_sale.PaymentScreen', function (require) {
         }
         async _finalizeValidation() {
             if ((this.currentOrder.is_paid_with_cash() || this.currentOrder.get_change()) && this.env.pos.config.iface_cashdrawer) {
-                this.env.pos.proxy.printer.open_cashbox();
+                this.env.proxy.printer.open_cashbox();
             }
 
             this.currentOrder.initialize_validation_date();
@@ -363,7 +350,7 @@ odoo.define('point_of_sale.PaymentScreen', function (require) {
                 return false;
             }
 
-            if (!this._isValidEmptyOrder()) return false;
+            if (!this.currentOrder._isValidEmptyOrder()) return false;
 
             return true;
         }
@@ -386,6 +373,7 @@ odoo.define('point_of_sale.PaymentScreen', function (require) {
             } else {
                 line.set_payment_status('retry');
             }
+            this.render();
         }
         async _sendPaymentCancel({ detail: line }) {
             const payment_terminal = line.payment_method.payment_terminal;
@@ -396,6 +384,7 @@ odoo.define('point_of_sale.PaymentScreen', function (require) {
             } else {
                 line.set_payment_status('waitingCard');
             }
+            this.render();
         }
         async _sendPaymentReverse({ detail: line }) {
             const payment_terminal = line.payment_method.payment_terminal;
@@ -409,22 +398,11 @@ odoo.define('point_of_sale.PaymentScreen', function (require) {
                 line.can_be_reversed = false;
                 line.set_payment_status('done');
             }
+            this.render();
         }
         async _sendForceDone({ detail: line }) {
             line.set_payment_status('done');
-        }
-        _onPrevOrder(prevOrder) {
-            prevOrder.off('change', null, this);
-            prevOrder.paymentlines.off('change', null, this);
-            if (prevOrder) {
-                prevOrder.stop_electronic_payment();
-            }
-        }
-        async _onNewOrder(newOrder) {
-            newOrder.on('change', this.render, this);
-            newOrder.paymentlines.on('change', this.render, this);
-            NumberBuffer.reset();
-            await this.render();
+            this.render();
         }
     }
     PaymentScreen.template = 'PaymentScreen';

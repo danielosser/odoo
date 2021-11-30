@@ -237,7 +237,13 @@ odoo.define('pos_restaurant.FloorScreen', function (require) {
             if (this.state.isEditMode) {
                 this.state.selectedTableId = table.id;
             } else {
-                this.env.pos.set_table(table);
+                this.env.pos.set_table(table).then(() => {
+                    const order = this.env.pos.get_order();
+                    if (order) {
+                        const { name: screenName } = order.get_screen_data();
+                        this.showScreen(screenName);
+                    }
+                });
             }
         }
         _onDeselectTable() {

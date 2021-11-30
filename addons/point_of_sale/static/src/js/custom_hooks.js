@@ -3,6 +3,7 @@ odoo.define('point_of_sale.custom_hooks', function (require) {
 
     const { Component } = owl;
     const { onMounted, onPatched, onWillUnmount } = owl.hooks;
+    const { batchedRenderFunctions, clearReactivesForCallback, batched, reactive } = '@point_of_sale/js/reactivity.js';
 
     /**
      * Introduce error handlers in the component.
@@ -74,50 +75,9 @@ odoo.define('point_of_sale.custom_hooks', function (require) {
         onPatched(autofocus);
     }
 
-    /**
-     * Use this hook when you want to do something on previously selected and
-     * newly selected order when the order changes.
-     *
-     * Normally, a component is rendered then the current order is changed. When
-     * this happens, we want to rerender the component because the new information
-     * should be reflected in the screen. Additionally, we might want to remove listeners
-     * to the previous order and attach listeners to the new one. This hook is
-     * perfect for the described situation.
-     *
-     * Internally, this hook performs the following:
-     * 1. call newOrderCB on mounted
-     * 2. listen to order changes and perform the following sequence:
-     *    - call prevOrderCB(prevOrder)
-     *    - call newOrderCB(newOrder)
-     * 3. call prevOrderCB on willUnmount
-     *
-     * @param {Function} prevOrderCB apply this callback on the previous order
-     * @param {Function} newOrderCB apply this callback on the new order
-     */
-    function onChangeOrder(prevOrderCB, newOrderCB) {
-        const current = Component.current;
-        prevOrderCB = prevOrderCB ? prevOrderCB.bind(current) : () => {};
-        newOrderCB = newOrderCB ? newOrderCB.bind(current) : () => {};
-        onMounted(() => {
-            current.env.pos.on(
-                'change:selectedOrder',
-                async (pos, newOrder) => {
-                    await prevOrderCB(pos.previous('selectedOrder'));
-                    await newOrderCB(newOrder);
-                },
-                current
-            );
-            newOrderCB(current.env.pos.get_order());
-        });
-        onWillUnmount(() => {
-            current.env.pos.off('change:selectedOrder', null, current);
-            prevOrderCB(current.env.pos.get_order());
-        });
-    }
-
     function useBarcodeReader(callbackMap, exclusive = false) {
         const current = Component.current;
-        const barcodeReader = current.env.pos.barcode_reader;
+        const barcodeReader = current.env.barcode_reader;
         for (let [key, callback] of Object.entries(callbackMap)) {
             callbackMap[key] = callback.bind(current);
         }
@@ -145,5 +105,46 @@ odoo.define('point_of_sale.custom_hooks', function (require) {
         });
     }
 
-    return { useErrorHandlers, useAutoFocusToLast, onChangeOrder, useBarcodeReader };
+    function usePropsAsState(keys) {
+        const stateProps = {};
+        const atoms = {};
+        keys = keys || Object.keys(owl.Component.current.props);
+        for (const key of keys) {
+            Object.defineProperty(stateProps, key, {
+                enumerable: true,
+                get() {
+                    return atoms[key];
+                },
+            });
+        }
+
+        const component = owl.Component.current;
+        if (!batchedRenderFunctions.has(component)) {
+            batchedRenderFunctions.set(
+                component,
+                batched(() => component.render())
+            );
+        }
+        const render = batchedRenderFunctions.get(component);
+        function makeReactiveProps(props) {
+            for (const key of keys) {
+                if (props[key]) {
+                    atoms[key] = reactive(props[key], render);
+                } else {
+                    atoms[key] = props[key];
+                }
+            }
+        }
+
+        makeReactiveProps(component.props);
+        owl.hooks.onWillUpdateProps((nextProps) => {
+            clearReactivesForCallback(render);
+            makeReactiveProps(nextProps);
+        });
+        owl.hooks.onWillUnmount(() => clearReactivesForCallback(render));
+        return stateProps;
+    }
+
+
+    return { useErrorHandlers, useAutoFocusToLast, useBarcodeReader, usePropsAsState };
 });

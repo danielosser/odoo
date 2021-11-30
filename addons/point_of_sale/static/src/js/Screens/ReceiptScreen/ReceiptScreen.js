@@ -3,8 +3,8 @@ odoo.define('point_of_sale.ReceiptScreen', function (require) {
 
     const { Printer } = require('point_of_sale.Printer');
     const { is_email } = require('web.utils');
-    const { useRef, useContext } = owl.hooks;
-    const { useErrorHandlers, onChangeOrder } = require('point_of_sale.custom_hooks');
+    const { useRef } = owl.hooks;
+    const { useErrorHandlers } = require('point_of_sale.custom_hooks');
     const Registries = require('point_of_sale.Registries');
     const AbstractReceiptScreen = require('point_of_sale.AbstractReceiptScreen');
 
@@ -13,11 +13,10 @@ odoo.define('point_of_sale.ReceiptScreen', function (require) {
             constructor() {
                 super(...arguments);
                 useErrorHandlers();
-                onChangeOrder(null, (newOrder) => newOrder && this.render());
                 this.orderReceipt = useRef('order-receipt');
                 const order = this.currentOrder;
                 const client = order.get_client();
-                this.orderUiState = useContext(order.uiState.ReceiptScreen);
+                this.orderUiState = order.uiState.ReceiptScreen;
                 this.orderUiState.inputEmail = this.orderUiState.inputEmail || (client && client.email) || '';
                 this.is_email = is_email;
             }
@@ -79,8 +78,11 @@ odoo.define('point_of_sale.ReceiptScreen', function (require) {
                     }
                 }
             }
-            orderDone() {
-                this.currentOrder.finalize();
+            async orderDone() {
+                const order = this.currentOrder;
+                const deletedIndex = this.env.pos.orders.remove(order);
+                await this.env.pos.on_removed_order(order, deletedIndex)
+                order.finalize();
                 const { name, props } = this.nextScreen;
                 this.showScreen(name, props);
             }
@@ -95,7 +97,7 @@ odoo.define('point_of_sale.ReceiptScreen', function (require) {
             }
             _shouldCloseImmediately() {
                 var invoiced_finalized = this.currentOrder.is_to_invoice() ? this.currentOrder.finalized : true;
-                return this.env.pos.proxy.printer && this.env.pos.config.iface_print_skip_screen && invoiced_finalized;
+                return this.env.proxy.printer && this.env.pos.config.iface_print_skip_screen && invoiced_finalized;
             }
             async _sendReceiptToCustomer() {
                 const printer = new Printer(null, this.env.pos);
