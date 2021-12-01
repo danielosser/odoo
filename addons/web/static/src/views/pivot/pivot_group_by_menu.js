@@ -46,14 +46,16 @@ export class PivotGroupByMenu extends GroupByMenu {
      * @override
      * @param {CustomEvent} ev
      */
-    onGroupBySelected(ev) {
-        const { itemId, optionId } = ev.detail.payload;
-        const item = this.items.find(({ id }) => id === itemId);
-        // Augment payload data
-        Object.assign(ev.detail.payload, {
-            fieldName: item.fieldName,
-            interval: optionId,
-            groupId: this.props.cell.groupId,
-        });
+    onGroupBySelected({ itemId, optionId }) {
+        if (this.props.onItemSelected) {
+            const item = this.items.find(({ id }) => id === itemId);
+            this.props.onItemSelected({
+                itemId,
+                optionId,
+                fieldName: item.fieldName,
+                interval: optionId,
+                groupId: this.props.cell.groupId,
+            });
+        }
     }
 }

@@ -42,10 +42,6 @@ export class UserMenu extends Component {
             });
         return sortedItems;
     }
-
-    onDropdownItemSelected(ev) {
-        ev.detail.payload.callback();
-    }
 }
 UserMenu.template = "web.UserMenu";
 UserMenu.components = { UserMenuItem };

@@ -86,32 +86,26 @@
     </t>
 
     <t t-name="web.legacy.PivotGroupByMenu" owl="1">
-        <Dropdown class="o_pivot_field_menu" toggler="'parent'">
+        <Dropdown class="o_pivot_field_menu" toggler="'parent'" onItemSelected="fieldName => _onClickMenuGroupBy(fieldName, null)">
             <t t-set="currentGroup" t-value="null"/>
             <t t-foreach="items" t-as="item" t-key="item.id">
                 <t t-if="item.groupNumber and currentGroup !== null and currentGroup !== item.groupNumber">
                     <li class="dropdown-divider" role="separator"/>
                 </t>
                 <t t-if="(item.fieldType === 'date') || (item.fieldType === 'datetime')">
-                    <Dropdown togglerClass="'o_menu_item dropdown-item'">
+                    <Dropdown togglerClass="'o_menu_item dropdown-item'" onItemSelected="({fieldName, optionId}) => _onClickMenuGroupBy(fieldName, optionId)">
                         <t t-set-slot="toggler">
                             <t t-esc="item.description"/>
                         </t>
                         <t t-foreach="Object.values(intervalOptions)" t-as="option" t-key="option.id">
-                            <DropdownItem
-                                class="o_item_option dropdown-item"
-                                t-on-dropdown-item-selected.stop="_onClickMenuGroupBy(item.fieldName, option.id)"
-                            >
+                            <DropdownItem class="o_item_option dropdown-item" payload="{optionId: option.id, fieldName: item.fieldName}">
                                 <t t-esc="option.description"/>
                             </DropdownItem>
                         </t>
                     </Dropdown>
                 </t>
                 <t t-else="">
-                    <DropdownItem
-                        class="o_menu_item dropdown-item"
-                        t-on-dropdown-item-selected.stop="_onClickMenuGroupBy(item.fieldName, null)"
-                    >
+                    <DropdownItem class="o_menu_item dropdown-item" payload="item.fieldName">
                         <t t-esc="item.description"/>
                     </DropdownItem>
                 </t>

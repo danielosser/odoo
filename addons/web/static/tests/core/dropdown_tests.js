@@ -192,12 +192,12 @@ QUnit.module("Components", ({ beforeEach }) => {
 
     QUnit.test("payload received on item selection", async (assert) => {
         class Parent extends owl.Component {
-            onItemSelected(ev) {
-                assert.deepEqual(ev.detail.payload, { answer: 42 });
+            onItemSelected(payload) {
+                assert.deepEqual(payload, { answer: 42 });
             }
         }
         Parent.template = owl.tags.xml`
-        <Dropdown t-on-dropdown-item-selected="onItemSelected">
+        <Dropdown onItemSelected="onItemSelected">
             <DropdownItem payload="{ answer: 42 }"/>
         </Dropdown>
       `;
@@ -323,16 +323,16 @@ QUnit.module("Components", ({ beforeEach }) => {
         assert.containsNone(parent.el, ".dropdown-menu");
     });
 
-    QUnit.test("multi-level dropdown: payload bubbles on item selection", async (assert) => {
+    QUnit.skip("multi-level dropdown: payload bubbles on item selection", async (assert) => {
         assert.expect(2);
         class Parent extends owl.Component {
-            onItemSelected(ev) {
-                assert.deepEqual(ev.detail.payload, { answer: 42 });
+            onItemSelected(payload) {
+                assert.deepEqual(payload, { answer: 42 });
             }
         }
         Parent.template = owl.tags.xml`
-        <Dropdown t-on-dropdown-item-selected="onItemSelected">
-            <Dropdown t-on-dropdown-item-selected="onItemSelected">
+        <Dropdown onItemSelected="onItemSelected">
+            <Dropdown onItemSelected="onItemSelected">
                 <DropdownItem payload="{ answer: 42 }" />
             </Dropdown>
         </Dropdown>
@@ -572,13 +572,12 @@ QUnit.module("Components", ({ beforeEach }) => {
     QUnit.test("dropdowns keynav", async (assert) => {
         assert.expect(26);
         class Parent extends owl.Component {
-            onItemSelected(ev) {
-                const { payload } = ev.detail;
+            onItemSelected(payload) {
                 assert.step(payload.val.toString());
             }
         }
         Parent.template = owl.tags.xml`
-        <Dropdown hotkey="'m'" t-on-dropdown-item-selected="onItemSelected">
+        <Dropdown hotkey="'m'" onItemSelected="onItemSelected">
             <DropdownItem class="item1" payload="{val:1}">item1</DropdownItem>
             <DropdownItem class="item2" hotkey="'2'" payload="{val:2}">item2</DropdownItem>
             <DropdownItem class="item3" payload="{val:3}">item3</DropdownItem>
@@ -689,17 +688,16 @@ QUnit.module("Components", ({ beforeEach }) => {
     QUnit.test("multi-level dropdown: keynav", async (assert) => {
         assert.expect(125);
         class Parent extends owl.Component {
-            onItemSelected(ev) {
-                const { payload } = ev.detail;
+            onItemSelected(payload) {
                 assert.step(payload.val);
             }
         }
         Parent.template = owl.tags.xml`
-            <Dropdown class="first" hotkey="'1'" t-on-dropdown-item-selected="onItemSelected">
+            <Dropdown class="first" hotkey="'1'" onItemSelected="onItemSelected">
                 <DropdownItem class="first-first" payload="{val:'first-first'}">O</DropdownItem>
-                <Dropdown class="second">
+                <Dropdown class="second" onItemSelected="onItemSelected">
                     <DropdownItem class="second-first" payload="{val:'second-first'}">O</DropdownItem>
-                    <Dropdown class="third">
+                    <Dropdown class="third" onItemSelected="onItemSelected">
                         <DropdownItem class="third-first" payload="{val:'third-first'}">O</DropdownItem>
                         <DropdownItem class="third-last" payload="{val:'third-last'}">O</DropdownItem>
                     </Dropdown>

@@ -26,29 +26,35 @@ export const ParentClosingMode = {
  */
 export class DropdownItem extends Component {
     /**
-     * Triggers a custom DropdownItemSelectedEvent
+     * Tells the parent dropdown that an item was selected and closes the
+     * parent(s) dropdown according the the parentClosingMode prop.
+     *
      * @param {MouseEvent} ev
      */
     onClick(ev) {
-        if (this.props.href){
+        const { href, payload, parentClosingMode } = this.props;
+        if (href) {
             ev.preventDefault();
         }
-
-        /** @type DropdownItemSelectedEventDetail */
-        const detail = {
-            payload: this.props.payload,
-            dropdownClosingRequest: {
-                isFresh: true,
-                mode: this.props.parentClosingMode,
-            },
-        };
-        this.trigger("dropdown-item-selected", detail);
+        const { dropdown } = this.env;
+        if (!dropdown) {
+            return;
+        }
+        dropdown.selectItem(payload);
+        const { ClosestParent, AllParents } = ParentClosingMode;
+        switch (parentClosingMode) {
+            case ClosestParent:
+                dropdown.close();
+                break;
+            case AllParents:
+                dropdown.closeAllParents();
+                break;
+        }
     }
 }
 DropdownItem.template = "web.DropdownItem";
 DropdownItem.props = {
     payload: {
-        type: Object,
         optional: true,
     },
     parentClosingMode: {

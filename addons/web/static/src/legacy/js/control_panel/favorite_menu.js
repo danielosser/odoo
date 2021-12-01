@@ -66,9 +66,8 @@ odoo.define('web.FavoriteMenu', function (require) {
          * @private
          * @param {OwlEvent} ev
          */
-        onFavoriteSelected(ev) {
-            ev.stopPropagation();
-            this.model.dispatch('toggleFilter', ev.detail.payload.itemId);
+        onFavoriteSelected(itemId) {
+            this.model.dispatch('toggleFilter', itemId);
         }
 
         /**

@@ -5,14 +5,15 @@
         <Dropdown class="o_debug_manager"
           beforeOpen="getElements"
           position="'bottom-end'"
-          togglerClass="`o-dropdown--narrow ${env.inDialog?'btn btn-link':''}`">
+          togglerClass="`o-dropdown--narrow ${env.inDialog?'btn btn-link':''}`"
+          onItemSelected="callback => callback()">
             <t t-set-slot="toggler">
                 <i class="fa fa-bug"/>
             </t>
             <t t-foreach="elements" t-as="element" t-key="element_index">
                 <DropdownItem
                     t-if="element.type == 'item'"
-                    t-on-dropdown-item-selected.stop="element.callback"
+                    payload="element.callback"
                     href="element.href"
                     t-esc="element.description"
                 />

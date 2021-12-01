@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
 
     <t t-name="web.FilterMenu" owl="1">
-        <Dropdown class="o_filter_menu btn-group" togglerClass="'btn btn-light'" t-on-dropdown-item-selected="onFilterSelected">
+        <Dropdown class="o_filter_menu btn-group" togglerClass="'btn btn-light'" onItemSelected="payload => onFilterSelected(payload)">
             <t t-set-slot="toggler">
                 <i class="small mr-1" t-att-class="icon"/>
                 <span class="o_dropdown_title">Filters</span>
@@ -13,7 +13,7 @@
                     <div class="dropdown-divider" role="separator"/>
                 </t>
                 <t t-if="item.options">
-                    <Dropdown togglerClass="'o_menu_item' + (item.isActive ? ' selected' : '')">
+                    <Dropdown togglerClass="'o_menu_item' + (item.isActive ? ' selected' : '')" onItemSelected="payload => onFilterSelected(payload)">
                         <t t-set-slot="toggler">
                             <t t-esc="item.description"/>
                         </t>

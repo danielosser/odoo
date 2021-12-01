@@ -66,8 +66,19 @@ export class Dropdown extends Component {
         );
 
         // Set up nested dropdowns ---------------------------------------------
-        this.hasParentDropdown = this.env.inDropdown;
-        useSubEnv({ inDropdown: true });
+        this.parentDropdown = this.env.dropdown;
+        useSubEnv({
+            dropdown: {
+                selectItem: this.selectItem.bind(this),
+                close: this.close.bind(this),
+                closeAllParents: () => {
+                    this.close();
+                    if (this.parentDropdown) {
+                        this.parentDropdown.closeAllParents();
+                    }
+                },
+            },
+        });
 
         // Set up key navigation -----------------------------------------------
         useDropdownNavigation();
@@ -75,7 +86,7 @@ export class Dropdown extends Component {
         // Set up toggler and positioning --------------------------------------
         /** @type {string} **/
         let position =
-            this.props.position || (this.hasParentDropdown ? "right-start" : "bottom-start");
+            this.props.position || (this.parentDropdown ? "right-start" : "bottom-start");
         let [direction, variant = "middle"] = position.split("-");
         if (localization.direction === "rtl") {
             if (["bottom", "top"].includes(direction)) {
@@ -176,28 +187,18 @@ export class Dropdown extends Component {
         return this.changeStateAndNotify({ open: toggled, groupIsOpen: toggled });
     }
 
+    /**
+     * @param {DropdownItemSelectedEventDetail} detail
+     */
+    selectItem(detail) {
+        if (this.props.onItemSelected) {
+            this.props.onItemSelected(detail);
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Handlers
     // -------------------------------------------------------------------------
-
-    /**
-     * Checks if should close on dropdown item selection.
-     *
-     * @param {CustomEvent<import("./dropdown_item").DropdownItemSelectedEventDetail>} ev
-     */
-    onItemSelected(ev) {
-        // Handle parent closing request
-        const { dropdownClosingRequest } = ev.detail;
-        const closeAll = dropdownClosingRequest.mode === ParentClosingMode.AllParents;
-        const closeSelf =
-            dropdownClosingRequest.isFresh &&
-            dropdownClosingRequest.mode === ParentClosingMode.ClosestParent;
-        if (!this.props.manualOnly && (closeAll || closeSelf)) {
-            this.close();
-        }
-        // Mark closing request as started
-        ev.detail.dropdownClosingRequest.isFresh = false;
-    }
 
     /**
      * Dropdowns react to each other state changes through this method.
@@ -309,6 +310,10 @@ Dropdown.props = {
     },
     position: {
         type: String,
+        optional: true,
+    },
+    onItemSelected: {
+        type: Function,
         optional: true,
     },
 };

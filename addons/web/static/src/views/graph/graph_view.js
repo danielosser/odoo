@@ -98,10 +98,9 @@ export class GraphView extends Component {
     }
 
     /**
-     * @param {CustomEvent} ev
+     * @param {string} measure
      */
-    onMeasureSelected(ev) {
-        const { measure } = ev.detail.payload;
+    onMeasureSelected({ measure }) {
         this.model.updateMetaData({ measure });
     }
 

@@ -41,9 +41,7 @@ odoo.define('web.FilterMenu', function (require) {
          * @private
          * @param {OwlEvent} ev
          */
-        onFilterSelected(ev) {
-            ev.stopPropagation();
-            const { itemId, optionId } = ev.detail.payload;
+        onFilterSelected({ itemId, optionId }) {
             if (optionId) {
                 this.model.dispatch('toggleFilterWithOptions', itemId, optionId);
             } else {
