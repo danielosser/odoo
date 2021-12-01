@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
 
     <t t-name="project.ProjectControlPanelContentBadge" owl="1">
-        <t t-tag="isProjectUser ? 'button' : 'span'" class="badge border d-flex p-2 ml-2 bg-white">
+        <t t-tag="isProjectUser ? 'button' : 'span'" class="badge border d-flex p-2 ml-2 bg-white" data-hotkey="y">
             <span t-attf-class="o_status_bubble o_color_bubble_{{data.color}}"/>
             <span t-att-class="'font-weight-normal ml-1' + (data.color === 0 ? ' text-muted' : '')" t-esc="data.status"/>
         </t>
@@ -10,7 +10,7 @@
 
     <t t-name="project.ProjectControlPanelContent" owl="1">
         <t t-if="showProjectUpdate">
-            <li t-if="isProjectUser" class="o_project_updates_breadcrumb pl-3" t-on-click="onStatusClick" data-hotkey="y">
+            <li t-if="isProjectUser" class="o_project_updates_breadcrumb pl-3" t-on-click="onStatusClick">
                 <t t-call="project.ProjectControlPanelContentBadge"></t>
             </li>
             <li t-else="" class="o_project_updates_breadcrumb pl-3">

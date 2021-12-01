@@ -1031,6 +1031,7 @@ QUnit.module('relational_fields', {
 
         const legacyEnv = makeTestEnvironment({ bus: core.bus });
         const serviceRegistry = registry.category("services");
+
         serviceRegistry.add("legacy_command", makeLegacyCommandService(legacyEnv));
 
         const views = {
@@ -1053,10 +1054,12 @@ QUnit.module('relational_fields', {
 
         triggerHotkey("control+k")
         await nextTick();
-        const idx = [...webClient.el.querySelectorAll(".o_command")].map(el => el.textContent).indexOf("Move to Trululu...ALT + SHIFT + X")
+        var movestage = webClient.el.querySelectorAll(".o_command");
+
+        const idx = [...movestage].map(el => el.textContent).indexOf("Move to Trululu...ALT + SHIFT + X")
         assert.ok(idx >= 0);
 
-        await click([...webClient.el.querySelectorAll(".o_command")][idx])
+        await click(movestage[idx])
         await nextTick();
         assert.deepEqual([...webClient.el.querySelectorAll(".o_command")].map(el => el.textContent), [
             "first record",
@@ -1064,7 +1067,6 @@ QUnit.module('relational_fields', {
             "aaa",
           ])
         await click(webClient.el, "#o_command_2")
-        await legacyExtraNextTick();
     });
 
     QUnit.module('FieldSelection');
