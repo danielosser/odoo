@@ -17,8 +17,8 @@ const {
     backgroundImageCssToParts,
     backgroundImagePartsToCss,
     DEFAULT_PALETTE,
-    autocompleteWithPages,
-    loadAnchors,
+/*     autocompleteWithPages,
+    loadAnchors, */
 } = weUtils;
 var weWidgets = require('wysiwyg.widgets');
 const {
@@ -582,12 +582,12 @@ const UserValueWidget = Widget.extend({
      * @param {boolean} show
      */
     toggleVisibility: function (show) {
-        const wasInvisible = this.el.classList.contains('d-none');
+        /* const wasInvisible = this.el.classList.contains('d-none'); */
         this.el.classList.toggle('d-none', !show);
-        const requestFocus = this.el.dataset.requestFocus;
+        /* const requestFocus = this.el.dataset.requestFocus;
         if (show && wasInvisible && requestFocus === "true") {
             this.el.querySelector('input').focus();
-        }
+        } */
     },
 
     //--------------------------------------------------------------------------
@@ -4669,19 +4669,19 @@ registry.ReplaceMedia = SnippetOptionWidget.extend({
     /**
      * @override
      */
-    start() {
+    /* start() {
         this.$urlInputEl = this.$el.find('we-input[data-set-url] input');
         this._setAutoCompletionOnInput(this.$urlInputEl);
         return this._super(...arguments);
-    },
+    }, */
     /**
      * @override
      */
-    onFocus() {
+    /* onFocus() {
         // In order to be sure that when we edit an image, the we-select that
         // proposes the anchors is in a consistent state, I have to rerender.
         this.rerender = true;
-    },
+    }, */
 
     //--------------------------------------------------------------------------
     // Options
@@ -4775,7 +4775,7 @@ registry.ReplaceMedia = SnippetOptionWidget.extend({
     /**
      * @override
      */
-    async updateUI() {
+    /* async updateUI() {
         if (this.rerender) {
             this.rerender = false;
             await this._rerenderXML();
@@ -4784,7 +4784,7 @@ registry.ReplaceMedia = SnippetOptionWidget.extend({
             return;
         }
         return this._super.apply(this, arguments);
-    },
+    }, */
 
     //--------------------------------------------------------------------------
     // Private
@@ -4837,7 +4837,7 @@ registry.ReplaceMedia = SnippetOptionWidget.extend({
      *
      * @param  {jQueryElement} $inputEl
      */
-    _setAutoCompletionOnInput($inputEl) {
+    /* _setAutoCompletionOnInput($inputEl) {
         const options = {
             position: {
                 collision: 'flip fit',
@@ -4847,11 +4847,11 @@ registry.ReplaceMedia = SnippetOptionWidget.extend({
             },
         };
         autocompleteWithPages(this, $inputEl, options);
-    },
+    }, */
     /**
      * @override
      */
-    async _renderCustomXML(uiFragment) {
+    /* async _renderCustomXML(uiFragment) {
         const rowEl = uiFragment.querySelector('we-row');
         rowEl.insertAdjacentHTML('beforeend', qweb.render('web_editor.image_link_tools_button'));
         rowEl.insertAdjacentHTML('afterend', qweb.render('web.editor.image_link_tools_fields'));
@@ -4869,7 +4869,7 @@ registry.ReplaceMedia = SnippetOptionWidget.extend({
             selectEl.append(weButtonEl);
 
         }
-    },
+    }, */
 });
 
 /*
