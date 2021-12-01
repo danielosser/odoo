@@ -4,7 +4,8 @@ import options from 'web_editor.snippets.options';
 
 
 let websiteId;
-const urlInDbByFieldName = { // This will be filled in start().
+// Maybe those 3 dictionaries should be initialized in start() ?
+const dbData = { // This will be filled in start() with urls in the database.
     'social_facebook': '',
     'social_twitter': '',
     'social_instagram': '',
@@ -20,14 +21,13 @@ const dbFieldByUrl = {
     '/website/social/linkedin': 'social_linkedin',
     '/website/social/github': 'social_github',
 };
-const localURLByDbField = {
+const localUrlByDbField = {
     'social_facebook': '/website/social/facebook',
     'social_twitter': '/website/social/twitter',
     'social_youtube': '/website/social/youtube',
     'social_instagram': '/website/social/instagram',
     'social_linkedin': '/website/social/linkedin',
     'social_github': '/website/social/github',
-    'item': '',
 };
 
 
@@ -38,13 +38,13 @@ options.registry.SocialMedia = options.Class.extend({
         await this._rpc({
             model: 'website',
             method: 'search_read',
-            args: [[], ['social_facebook', 'social_twitter', 'social_instagram', 'social_youtube', 'social_github', 'social_linkedin']],
+            args: [[], Object.keys(dbData)],
             limit: 1,
         }).then(function (res) {
             if (res) {
                 delete res[0].id;
                 for (let key in res[0]) {
-                    urlInDbByFieldName[key] = res[0][key];
+                    dbData[key] = res[0][key];
                 }
             }
         });
@@ -68,7 +68,7 @@ options.registry.SocialMedia = options.Class.extend({
                     // It is a DB social link
                     listEntries.push({
                         id: _t(dbFieldByUrl[href]),
-                        display_name: _t(urlInDbByFieldName[dbFieldByUrl[href]]),
+                        display_name: _t(dbData[dbFieldByUrl[href]]),
                         undeletable: true,
                         is_toggled: !anchorsEls[i].classList.contains('d-none'),
                     });
@@ -82,7 +82,6 @@ options.registry.SocialMedia = options.Class.extend({
                     });
                 }
             }
-            //console.log('listEntries', listEntries)
             return JSON.stringify(listEntries);
         }
         return this._super(methodName, params);
@@ -126,9 +125,9 @@ options.registry.SocialMedia = options.Class.extend({
             anchorEl.classList.toggle('d-none', !entry.is_toggled);
 
             // build table for db links
-            if (entry.el_name in localURLByDbField) {
+            if (entry.el_name in localUrlByDbField) {
                 newDBLinks[entry.el_name] = entry.display_name;
-                urlInDbByFieldName[entry.el_name] = entry.display_name;
+                dbData[entry.el_name] = entry.display_name;
             } else {
                 // Handle URL change for custom links.
                 anchorEl.setAttribute('href', entry.display_name);

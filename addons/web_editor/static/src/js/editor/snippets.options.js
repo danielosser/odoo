@@ -2017,7 +2017,7 @@ const ListUserValueWidget = UserValueWidget.extend({
         if (id) {
             inputEl.name = id;
         }
-        if (recordData) { // recordData = {selected: true} => Maybe here i can toggle depending on the value
+        if (recordData) {
             for (const key of Object.keys(recordData)) {
                 inputEl.dataset[key] = recordData[key];
             }
@@ -2137,8 +2137,9 @@ const ListUserValueWidget = UserValueWidget.extend({
      */
     _onAddCustomItemClick() {
         if (this.el.dataset.defaultValue === 'https://www.exemple.com') {
-            console.log('setting a brand new element')
-            const id = Math.random().toString(36).substring(2, 15);
+            // l'id doit etre uen string afin qu'elle ne puisse pas être parsé
+            // par int() dans notifyCurrentState()
+            const id = this.generateId(30);
             const recordData = {
                 undeletable: false,
                 is_toggled: true,
@@ -2148,6 +2149,15 @@ const ListUserValueWidget = UserValueWidget.extend({
             this._addItemToTable();
         }
         this._notifyCurrentState();
+    },
+    generateId(length) { // this have to be moved to private function
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+        const charactersLength = characters.length;
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
     },
     /**
      * @private
@@ -2187,7 +2197,7 @@ const ListUserValueWidget = UserValueWidget.extend({
      * @private
      * @param {Event} ev
      */
-    _onRemoveItemClick(ev) {
+    _onRemoveItemClick(ev) { // Interesting
         const minElements = this.el.dataset.allowEmpty ? 0 : 1;
         if (ev.target.closest('table').querySelectorAll('tr').length > minElements) {
             ev.target.closest('tr').remove();
