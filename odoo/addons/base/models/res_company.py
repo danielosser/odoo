@@ -204,8 +204,7 @@ class Company(models.Model):
             if not vals.get('favicon'):
                 vals['favicon'] = self._get_default_favicon()
             if not vals.get('name') or vals.get('partner_id'):
-                self.clear_caches()
-                return super(Company, self).create(vals)
+                continue
             partner = self.env['res.partner'].create({
                 'name': vals['name'],
                 'is_company': True,
@@ -219,7 +218,7 @@ class Company(models.Model):
             # compute stored fields, for example address dependent fields
             partner.flush()
             vals['partner_id'] = partner.id
-            self.clear_caches()
+        self.clear_caches()
         companies = super().create(vals_list)
         # The write is made on the user to set it automatically in the multi company group.
         self.env.user.write({'company_ids': [Command.link(company.id) for company in companies]})
