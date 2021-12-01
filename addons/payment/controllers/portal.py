@@ -175,6 +175,19 @@ class PaymentPortal(portal.CustomerPortal):
         }
         return request.render('payment.payment_methods', rendering_context)
 
+    @http.route('/my/payment_method/archive', type='json', auth='user')
+    def archive_token(self, token_id):
+        user_partner = request.env.user.partner_id
+        token_sudo = request.env['payment.token'].sudo().search([
+            ('id', '=', token_id),
+            ('partner_id', 'in', [user_partner.id, user_partner.sudo().commercial_partner_id.id])
+        ])
+
+        if token_sudo:
+            token_sudo.sudo().write({'active': False})
+
+        return
+
     def _get_custom_rendering_context_values(self, **kwargs):
         """ Return a dict of additional rendering context values.
 

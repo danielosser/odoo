@@ -69,3 +69,13 @@ class TestMultiCompanyFlows(PaymentMultiCompanyCommon, PaymentHttpCommon):
         self.assertEqual(processing_values['currency_id'], self.currency.id)
         self.assertEqual(processing_values['partner_id'], self.user_company_a.partner_id.id)
         self.assertEqual(processing_values['reference'], self.reference)
+
+    def test_delete_token(self):
+        company_b = self.env['res.company'].create({'name': 'Company B'})
+        token = self.create_token(partner_id=self.portal_partner.id)
+        self.portal_user.write({'company_ids': [company_b.id], 'company_id': company_b.id})
+        self.authenticate('payment_portal', 'payment_portal')
+        url = self._build_url('/my/payment_method/archive')
+        self._make_json_request(url, {'token_id': token.id})
+        token.invalidate_cache()
+        self.assertFalse(token.active)

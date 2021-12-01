@@ -80,26 +80,19 @@ odoo.define('payment.manage_form', require => {
         _deleteToken: function (tokenId) {
             const execute = () => {
                 this._rpc({
-                    model: 'payment.token',
-                    method: 'write',
-                    args: [[tokenId], {active: false}],
+                    route: '/my/payment_method/archive',
+                    params: {
+                        'token_id': tokenId,
+                    },
                 }).then(result => {
-                    if (result === true) { // Token successfully deleted, remove it from the view
-                        const $tokenCard = this.$(
-                            `input[name="o_payment_radio"][data-payment-option-id="${tokenId}"]` +
-                            `[data-payment-option-type="token"]`
-                        ).closest('div[name="o_payment_option_card"]');
-                        $tokenCard.siblings(`#o_payment_token_inline_form_${tokenId}`).remove();
-                        $tokenCard.remove();
-                        this._disableButton(false);
-                    }
-                }).guardedCatch(error => {
-                    this._displayError(
-                        _t("Server Error"),
-                        _t("We are not able to delete your payment method."),
-                        error.message.data.message
-                    );
-                });
+                    const $tokenCard = this.$(
+                        `input[name="o_payment_radio"][data-payment-option-id="${tokenId}"]` +
+                        `[data-payment-option-type="token"]`
+                    ).closest('div[name="o_payment_option_card"]');
+                    $tokenCard.siblings(`#o_payment_token_inline_form_${tokenId}`).remove();
+                    $tokenCard.remove();
+                    this._disableButton(false);
+                })
             };
 
             // Fetch documents linked to the token
