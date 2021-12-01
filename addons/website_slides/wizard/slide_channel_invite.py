@@ -44,15 +44,16 @@ class SlideChannelInvite(models.TransientModel):
                         ', '.join(invalid_partners.mapped('name'))
                     ))
 
-    @api.model
-    def create(self, values):
-        if values.get('template_id') and not (values.get('body') or values.get('subject')):
-            template = self.env['mail.template'].browse(values['template_id'])
-            if not values.get('subject'):
-                values['subject'] = template.subject
-            if not values.get('body'):
-                values['body'] = template.body_html
-        return super(SlideChannelInvite, self).create(values)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('template_id') and not (vals.get('body') or vals.get('subject')):
+                template = self.env['mail.template'].browse(vals['template_id'])
+                if not vals.get('subject'):
+                    vals['subject'] = template.subject
+                if not vals.get('body'):
+                    vals['body'] = template.body_html
+        return super().create(vals_list)
 
     def action_invite(self):
         """ Process the wizard content and proceed with sending the related

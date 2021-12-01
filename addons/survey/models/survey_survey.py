@@ -328,12 +328,13 @@ class Survey(models.Model):
     # CRUD
     # ------------------------------------------------------------
 
-    @api.model
-    def create(self, vals):
-        survey = super(Survey, self).create(vals)
-        if vals.get('certification_give_badge'):
-            survey.sudo()._create_certification_badge_trigger()
-        return survey
+    @api.model_create_multi
+    def create(self, vals_list):
+        surveys = super().create(vals_list)
+        for survey in surveys:
+            if survey.certification_give_badge:
+                survey.sudo()._create_certification_badge_trigger()
+        return surveys
 
     def write(self, vals):
         result = super(Survey, self).write(vals)

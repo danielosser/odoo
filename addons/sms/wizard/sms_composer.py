@@ -172,17 +172,18 @@ class SendSMS(models.TransientModel):
     # CRUD
     # ------------------------------------------------------------
 
-    @api.model
-    def create(self, values):
+    @api.model_create_multi
+    def create(self, vals_list):
         # TDE FIXME: currently have to compute manually to avoid required issue, waiting VFE branch
-        if not values.get('body') or not values.get('composition_mode'):
-            values_wdef = self._add_missing_default_values(values)
-            cache_composer = self.new(values_wdef)
-            cache_composer._compute_body()
-            cache_composer._compute_composition_mode()
-            values['body'] = values.get('body') or cache_composer.body
-            values['composition_mode'] = values.get('composition_mode') or cache_composer.composition_mode
-        return super(SendSMS, self).create(values)
+        for vals in vals_list:
+            if not vals.get('body') or not vals.get('composition_mode'):
+                values_wdef = self._add_missing_default_values(vals)
+                cache_composer = self.new(values_wdef)
+                cache_composer._compute_body()
+                cache_composer._compute_composition_mode()
+                vals['body'] = vals.get('body') or cache_composer.body
+                vals['composition_mode'] = vals.get('composition_mode') or cache_composer.composition_mode
+        return super().create(vals_list)
 
     # ------------------------------------------------------------
     # Actions
