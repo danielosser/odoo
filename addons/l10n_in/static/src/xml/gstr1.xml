@@ -1,12 +1,137 @@
 <templates>
     <t t-name="GSTR1">
-        <span>Hello World!</span>
+        <div class="o_gstr_main">
+            <t t-call="invoiceDetails">
+                <t t-set="invoiceSection" t-value="widget.data.sections.invoice_section"/>
+            </t>
+            <t t-call="orderDetails">
+                <t t-set="orderSection" t-value="widget.data.sections.order_section"/>
+            </t>
+            <t t-call="amendmentsDetails">
+                <t t-set="amendmentsSection" t-value="widget.data.sections.amendments_section"/>
+            </t>
+        </div>
     </t>
 
-    <template t-name="search_template_date_filter">
+    <t t-name="invoiceDetails">
+        <div class="o_section o_invoice_section">
+            <div>
+                <h3>Invoice level details</h3>
+                <hr class="o_section_hr"/>
+                <p>We have grouped the invoices uploaded/created by you in here in GSTR1(goverment) defined non aggregate categories
+                like B2B, B2C(large), Credit/Debit Notes (Registered), Credit/Debit Notes (Unregistered), Export.</p>
+            </div>
+            <div class="table-responsive">
+                <table class="table o_invoice_section_table">
+                    <thead>
+                        <th t-foreach="invoiceSection.columns" t-as="column">
+                            <t t-esc="column.string"/>
+                            <t t-if="column.meta_string" t-esc="column.meta_string" class="text-muted"/>
+                        </th>
+                        <th></th>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="invoiceSection.rows" t-as="row">
+                            <td t-foreach="row.row_data" t-as="cellData">
+                                <t t-if="cellData.type === 'html'">
+                                    <t t-raw="cellData.value or '-'"/>
+                                </t>
+                                <t t-else="">
+                                    <t t-esc="cellData.value or '-'"/>
+                                </t>
+                            </td>
+                            <td>
+                                <button class="btn btn-primary" t-attf-data-action="openAccountMoveLine" t-att-domain="row.row_domain">View/Edit</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="orderDetails">
+        <div class="o_section o_order_section">
+            <div>
+                <h3>Order details</h3>
+                <hr class="o_section_hr"/>
+                <p>GSTR1(goverment) has specified that summary level details are enough for B2C Others,
+                Nill rated supplies, Advanced received and Adjustment of Advances.</p>
+                <div class="alert alert-primary" role="alert">
+                    Note: If you have imported invoices and still don't see the values, click on <strong>'View/Edit'</strong>
+                    and then click on <strong>'Autocompute'.</strong> Please do not use 'Autocompute' if you have imported data using
+                    Tally/Busy/Goverment Excel as it will reset these values to 0.
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table o_invoice_section_table">
+                    <thead>
+                        <th t-foreach="orderSection.columns" t-as="column">
+                            <t t-esc="column.string"/>
+                            <t t-if="column.meta_string" t-esc="column.meta_string"/>
+                        </th>
+                        <th></th>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="orderSection.rows" t-as="row">
+                            <td t-foreach="row.row_data" t-as="cellData">
+                                <t t-if="cellData.type === 'html'">
+                                    <t t-raw="cellData.value or '-'"/>
+                                </t>
+                                <t t-else="">
+                                    <t t-esc="cellData.value or '-'"/>
+                                </t>
+                            </td>
+                            <td>
+                                <button class="btn btn-primary" t-attf-data-action="openAccountMoveLine" t-att-domain="row.row_domain">View/Edit</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="amendmentsDetails">
+        <div class="o_section o_amendments_section">
+            <div>
+                <h3>Amendment Details</h3>
+                <hr class="o_section_hr"/>
+            </div>
+            <div class="table-responsive">
+                <table class="table o_invoice_section_table">
+                    <thead>
+                        <th t-foreach="amendmentsSection.columns" t-as="column">
+                            <t t-esc="column.string"/>
+                            <t t-if="column.meta_string" t-esc="column.meta_string"/>
+                        </th>
+                        <th></th>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="amendmentsSection.rows" t-as="row">
+                            <td t-foreach="row.row_data" t-as="cellData">
+                                <t t-if="cellData.type === 'html'">
+                                    <t t-raw="cellData.value or '-'"/>
+                                </t>
+                                <t t-else="">
+                                    <t t-esc="cellData.value or '-'"/>
+                                </t>
+                            </td>
+                            <td>
+                                <button class="btn btn-primary" t-attf-data-action="openAccountMoveLine" t-att-domain="row.row_domain">View/Edit</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="search_template_date_filter">
         <button type="button" class="o-no-caret btn btn-secondary dropdown-toggle" data-toggle="dropdown">
             <span class="fa fa-calendar" title="Dates" role="img" aria-label="Dates"/>
-            <t t-esc="widget.filters['date']['string']"/>
+            <t t-if="widget.data.filters.date" t-esc="widget.data.filters.date.string"/>
+            <t t-else="" t-esc="Date"/>
         </button>
         <div class="dropdown-menu o_filter_menu" role="menu">
             <a role="menuitem" class="dropdown-item js_account_report_date_filter" title="This Month" data-filter="this_month">This Month</a>
@@ -19,7 +144,7 @@
         </div>
     </t>
 
-    <template t-name="search_template_journals">
+    <t t-name="search_template_journals">
         <button type="button" class="o-no-caret btn btn-secondary dropdown-toggle" data-toggle="dropdown">
             <span class="fa fa-book"/>
             Journals:
@@ -32,7 +157,7 @@
             </t>
         </button>
         <div class="dropdown-menu o_filter_menu" role="menu">
-            <t t-foreach="widget.filters.journals" t-as="j">
+            <t t-foreach="widget.data.filters.journals" t-as="j">
                 <!-- <t t-if="j.get('id') == 'divider'">
                     <div role="separator" class="dropdown-divider"/>
                     <b role="menuitem" class="ml4 dropdown-item-text"><t t-esc="j.get('name')"/></b>
@@ -44,9 +169,9 @@
                             <t t-esc="j.get('name')"/>
                         </a>
                     </t> -->
-                    <t t-else="">
-                        <a role="menuitem" class="dropdown-item js_account_report_choice_filter" t-att-title="j.get('name')+ '-' + j.get('code')" t-att-data-id="j.get('id')" data-filter="journals">
-                            <t t-esc="j.get('name')"/>
+                    <t>
+                        <a role="menuitem" class="dropdown-item js_account_report_choice_filter" t-att-title="j.name + '-' + j.code" t-att-data-id="j.id" data-filter="journals">
+                            <t t-esc="j.name"/>
                         </a>
                     </t>
                 <!-- </t> -->
@@ -54,13 +179,13 @@
         </div>
     </t>
 
-    <template id="search_template">
-        <div class="btn-group dropdown o_account_reports_filter_date" t-if="options.get('date') != None">
-            <t t-call="account_reports.search_template_date_filter"/>
+    <t t-name="search_template">
+        <div class="btn-group dropdown o_account_reports_filter_date" t-if="widget.data.filters.date">
+            <t t-call="search_template_date_filter"/>
         </div>
-        <div class="btn-group dropdown o_account_reports_filter_journals" t-if="options.get('journals') != None">
-            <t t-call="account_reports.search_template_journals"/>
+        <div class="btn-group dropdown o_account_reports_filter_journals" t-if="widget.data.filters.journals">
+            <t t-call="search_template_journals"/>
         </div>
-    </template>
+    </t>
 
 </templates>
