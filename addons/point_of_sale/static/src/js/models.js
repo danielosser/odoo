@@ -1804,6 +1804,7 @@ exports.Orderline = Backbone.Model.extend({
     initialize: function(attr,options){
         this.pos   = options.pos;
         this.order = options.order;
+        this.price_manually_set = options.price_manually_set || false;
         if (options.json) {
             try {
                 this.init_from_JSON(options.json);
@@ -1823,7 +1824,6 @@ exports.Orderline = Backbone.Model.extend({
         this.price_extra = 0;
         this.full_product_name = '';
         this.id = orderline_id++;
-        this.price_manually_set = false;
         this.customerNote = this.customerNote || '';
 
         if (options.price) {
