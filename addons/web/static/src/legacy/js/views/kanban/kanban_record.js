@@ -709,6 +709,7 @@ var KanbanRecord = Widget.extend(WidgetAdapterMixin, {
             elem = elem.parentElement;
         }
         if (trigger) {
+            console.log("click")
             this._openRecord();
         }
     },

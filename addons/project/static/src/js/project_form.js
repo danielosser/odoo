@@ -8,10 +8,12 @@ import { device } from 'web.config';
 import viewRegistry from 'web.view_registry';
 
 const ProjectFormController = FormController.extend({
-    on_attach_callback() {
+    init() {
+        console.log("attach project form");
         this._super(...arguments);
         if (!device.isMobile) {
             bus.on("DOM_updated", this, () => {
+                console.log("domUpdated project form", this.$el);
                 const $editable = this.$el.find('.note-editable');
                 if ($editable.length) {
                     const resizerHeight = this.$el.find('.o_wysiwyg_resizer').outerHeight();
@@ -21,10 +23,11 @@ const ProjectFormController = FormController.extend({
             });
         }
     },
-    on_detach_callback() {
-        this._super(...arguments);
-        bus.off("DOM_updated", this);
-    },
+    // on_detach_callback() {
+    //     console.log("detach project form");
+    //     this._super(...arguments);
+    //     // bus.off("DOM_updated", this);
+    // },
     _getActionMenuItems(state) {
         if (!this.archiveEnabled || !state.data['recurrence_id']) {
             return this._super(...arguments);
