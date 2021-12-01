@@ -5,17 +5,17 @@
         <field name="sequence" eval="1"/>
         <field name="country_id" ref="base.dk"/>
     </record>
-
     <record id="account_tax_report_line_vat_statement" model="account.tax.report.line">
         <field name="name">Momsangivelse (positivt beløb = betale, negativt beløb = penge tilgode)</field>
         <field name="sequence" eval="1"/>
         <field name="parent_id" ref="l10n_dk.account_tax_report"/>
         <field name="country_id" ref="base.dk"/>
+<!--        TODO: make the formula-->
+        <field name="formula">0</field>
     </record>
-
     <record id="account_tax_report_line_sales_group" model="account.tax.report.line">
-        <field name="name">Salgsmoms</field>
-        <field name="code">Momsangivelse</field>
+        <field name="name">Skyldig moms</field>
+        <field name="code">SkyldigMoms</field>
         <field name="sequence" eval="1"/>
         <field name="parent_id" ref="l10n_dk.account_tax_report"/>
         <field name="country_id" ref="base.dk"/>
@@ -34,6 +34,7 @@
         <field name="parent_id" ref="l10n_dk.account_tax_report_line_sales_group"/>
         <field name="country_id" ref="base.dk"/>
     </record>
+    <!--  VAT on service purchases abroad with reverse charge-->
     <record id="account_tax_report_line_international_purchase_services" model="account.tax.report.line">
         <field name="name">Moms af ydelseskøb i udlandet med omvendt betalingspligt</field>
         <field name="tag_name">Moms af ydelseskøb i udlandet med omvendt betalingspligt</field>
@@ -41,7 +42,6 @@
         <field name="parent_id" ref="l10n_dk.account_tax_report_line_sales_group"/>
         <field name="country_id" ref="base.dk"/>
     </record>
-
     <record id="account_tax_report_line_deduction_group" model="account.tax.report.line">
         <field name="name">Fradrag</field>
         <field name="code">Momsangivelse</field>
@@ -98,8 +98,6 @@
         <field name="parent_id" ref="l10n_dk.account_tax_report_line_deduction_group"/>
         <field name="country_id" ref="base.dk"/>
     </record>
-
-
     <record id="account_tax_report_line_additional_info" model="account.tax.report.line">
         <field name="name">Supplerende oplysninger</field>
         <field name="sequence" eval="2"/>
@@ -142,11 +140,10 @@
         <field name="country_id" ref="base.dk"/>
     </record>
     <record id="account_tax_report_line_section_c" model="account.tax.report.line">
-        <field name="name">Rubrik C - Værdien af andre varer og ydelser, der leveres uden afgift her i landet, i andre EU-lande og til lande udenfor EU</field>
-        <field name="tag_name">Rubrik C - Værdien af andre varer og ydelser, der leveres uden afgift her i landet, i andre EU-lande og til lande udenfor EU</field>
+        <field name="name">Rubrik C - Værdien af andre varer og ydelser, der leveres afgift her i landet, i andre EU-lande og til lande udenfor EU</field>
+        <field name="tag_name">Rubrik C - Værdien af andre varer og ydelser, der leveres afgift her i landet, i andre EU-lande og til lande udenfor EU</field>
         <field name="sequence" eval="6"/>
         <field name="parent_id" ref="l10n_dk.account_tax_report_line_additional_info"/>
         <field name="country_id" ref="base.dk"/>
     </record>
-
 </odoo>
