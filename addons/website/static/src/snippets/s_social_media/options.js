@@ -1,12 +1,10 @@
 /** @odoo-module **/
-
+import { _t } from 'web.core';
 import options from 'web_editor.snippets.options';
 
-const core = require('web.core');
-const _t = core._t;
 
 let websiteId;
-const urlInDbByFieldName = { // This will filled in start().
+const urlInDbByFieldName = { // This will be filled in start().
     'social_facebook': '',
     'social_twitter': '',
     'social_instagram': '',
