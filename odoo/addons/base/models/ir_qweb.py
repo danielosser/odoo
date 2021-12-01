@@ -8,7 +8,7 @@ import markupsafe
 from lxml import html, etree
 
 from odoo import api, models, tools
-from odoo.tools.safe_eval import check_values, assert_valid_codeobj, _BUILTINS, to_opcodes, _EXPR_OPCODES, _BLACKLIST
+from odoo.tools.safe_eval import assert_valid_codeobj, _BUILTINS, to_opcodes, _EXPR_OPCODES, _BLACKLIST
 from odoo.tools.misc import get_lang
 from odoo.http import request
 from odoo.modules.module import get_resource_path
@@ -377,7 +377,6 @@ class IrQWeb(models.AbstractModel, QWeb):
         :param values: template values to be used for rendering
         :param options: frozen dict of compilation parameters.
         """
-        check_values(values)
         values['true'] = True
         values['false'] = False
         if 'request' not in values:
