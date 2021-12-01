@@ -3370,6 +3370,7 @@ Fields:
             forbidden = missing.exists()
             if forbidden:
                 raise self.env['ir.rule']._make_access_error('read', forbidden)
+        return fetched
 
     def _read(self, fields):
         """ Read the given fields of the records in ``self`` from the database,
@@ -5102,30 +5103,20 @@ Fields:
         :return: List of dictionaries containing the asked fields.
         :rtype: list(dict).
         """
-        records = self.search(domain or [], offset=offset, limit=limit, order=order)
-        if not records:
-            return []
+        query = self._search(domain or [], offset=offset, limit=limit, order=order)
+        fields = self.check_field_access_rights('read', fields)
+        field_names = self._get_read_fields_name(fields)
 
-        if fields and fields == ['id']:
-            # shortcut read if we only want the ids
-            return [{'id': record.id} for record in records]
+        self.flush(field_names)
 
-        # read() ignores active_test, but it would forward it to any downstream search call
-        # (e.g. for x2m or function fields), and this is not the desired behavior, the flag
-        # was presumably only meant for the main search().
-        # TODO: Move this to read() directly?
-        if 'active_test' in self._context:
-            context = dict(self._context)
-            del context['active_test']
-            records = records.with_context(context)
+        fields_pre = self._get_read_column_fields(field_names)
 
-        result = records.read(fields, **read_kwargs)
-        if len(result) <= 1:
-            return result
+        query_str, params = query.select(*self._qualify_field_query(fields_pre, query))
+        self.env.cr.execute(query_str, params)
+        result = self.env.cr.fetchall()
+        records = self._process_result_read(result, fields_pre, field_names)
 
-        # reorder read
-        index = {vals['id']: vals for vals in result}
-        return [index[record.id] for record in records if record.id in index]
+        return records._read_format(fnames=fields, load=read_kwargs.get('load', '_classic_read'))
 
     def toggle_active(self):
         """ Inverse the value of the field ``(x_)active`` on the records in ``self``. """
