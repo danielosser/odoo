@@ -306,3 +306,58 @@ class TestTimesheet(TestCommonTimesheet):
         self.task1.write({'partner_id': partner2})
 
         self.assertEqual(timesheet_entry.partner_id, partner2, "The timesheet entry's partner should still be equal to the task's partner/customer, after the change")
+
+    def test_task_with_timesheet_project_change(self):
+        project_manager = self.env['res.users'].create({
+            'name': 'user_project_manager',
+            'login': 'user_project_manager',
+            'groups_id': [(6, 0, [self.ref('project.group_project_manager')])],
+        })
+
+        second_project_manager = self.env['res.users'].create({
+            'name': 'user_second_project_manager',
+            'login': 'user_second_project_manager',
+            'groups_id': [(6, 0, [self.ref('project.group_project_manager')])],
+        })
+
+        project = self.env['project.project'].create({
+            'name': 'Project With Timesheets',
+            'privacy_visibility': 'employees',
+            'allow_timesheets': True,
+            'user_id': project_manager.id,
+        })
+        second_project = self.env['project.project'].create({
+            'name': 'Project w/ timesheets',
+            'privacy_visibility': 'employees',
+            'allow_timesheets': True,
+            'user_id': second_project_manager.id,
+        })
+
+        task_1 = self.env['project.task'].create({
+            'name': 'First task',
+            'user_id': self.user_employee2.id,
+            'project_id': project.id
+        })
+
+        self.env['account.analytic.line'].create({
+            'name': 'FirstTimeSheet',
+            'project_id': project.id,
+            'task_id': task_1.id,
+            'unit_amount': 2,
+            'employee_id': self.empl_employee2.id
+        })
+
+        self.env['account.analytic.line'].create({
+            'name': 'SecondTimeSheet',
+            'project_id': project.id,
+            'task_id': task_1.id,
+            'unit_amount': 5,
+            'employee_id': self.empl_employee.id
+        })
+
+        project.tasks[0].with_user(second_project_manager).write({
+            'project_id': second_project.id
+        })
+
+        self.assertEqual(len(project.tasks), 0, 'First project should not have any task')
+        self.assertEqual(len(second_project.tasks), 1, 'Second project should have a task')
