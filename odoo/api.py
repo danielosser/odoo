@@ -387,6 +387,7 @@ _create_logger = logging.getLogger(__name__ + '.create')
 
 def _model_create_single(create, self, arg):
     # 'create' expects a dict and returns a record
+    _create_logger.warning("Rewrite the create method to work in batch for model %s", self._name)
     if isinstance(arg, Mapping):
         return create(self, arg)
     if len(arg) > 1:
