@@ -4,8 +4,8 @@
             <t t-call="invoiceDetails">
                 <t t-set="invoiceSection" t-value="widget.data.sections.invoice_section"/>
             </t>
-            <t t-call="orderDetails">
-                <t t-set="orderSection" t-value="widget.data.sections.order_section"/>
+            <t t-call="otherDetails">
+                <t t-set="otherSection" t-value="widget.data.sections.other_section"/>
             </t>
             <t t-call="amendmentsDetails">
                 <t t-set="amendmentsSection" t-value="widget.data.sections.amendments_section"/>
@@ -26,7 +26,9 @@
                     <thead>
                         <th t-foreach="invoiceSection.columns" t-as="column">
                             <t t-esc="column.string"/>
-                            <t t-if="column.meta_string" t-esc="column.meta_string" class="text-muted"/>
+                            <t t-if="column.meta_string">
+                                <span t-esc="column.meta_string" class="text-muted"/>
+                            </t>
                         </th>
                         <th></th>
                     </thead>
@@ -41,7 +43,7 @@
                                 </t>
                             </td>
                             <td>
-                                <button class="btn btn-primary" t-attf-data-action="openAccountMoveLine" t-att-domain="row.row_domain">View/Edit</button>
+                                <button class="btn btn-primary o_open_move_list" t-attf-data-action="openAccountMoveLine" t-att-domain="row.row_domain">View/Edit</button>
                             </td>
                         </tr>
                     </tbody>
@@ -50,30 +52,25 @@
         </div>
     </t>
 
-    <t t-name="orderDetails">
+    <t t-name="otherDetails">
         <div class="o_section o_order_section">
             <div>
-                <h3>Order details</h3>
+                <h3>Other details</h3>
                 <hr class="o_section_hr"/>
                 <p>GSTR1(goverment) has specified that summary level details are enough for B2C Others,
                 Nill rated supplies, Advanced received and Adjustment of Advances.</p>
-                <div class="alert alert-primary" role="alert">
-                    Note: If you have imported invoices and still don't see the values, click on <strong>'View/Edit'</strong>
-                    and then click on <strong>'Autocompute'.</strong> Please do not use 'Autocompute' if you have imported data using
-                    Tally/Busy/Goverment Excel as it will reset these values to 0.
-                </div>
             </div>
             <div class="table-responsive">
                 <table class="table o_invoice_section_table">
                     <thead>
-                        <th t-foreach="orderSection.columns" t-as="column">
+                        <th t-foreach="otherSection.columns" t-as="column">
                             <t t-esc="column.string"/>
                             <t t-if="column.meta_string" t-esc="column.meta_string"/>
                         </th>
                         <th></th>
                     </thead>
                     <tbody>
-                        <tr t-foreach="orderSection.rows" t-as="row">
+                        <tr t-foreach="otherSection.rows" t-as="row">
                             <td t-foreach="row.row_data" t-as="cellData">
                                 <t t-if="cellData.type === 'html'">
                                     <t t-raw="cellData.value or '-'"/>
@@ -83,7 +80,7 @@
                                 </t>
                             </td>
                             <td>
-                                <button class="btn btn-primary" t-attf-data-action="openAccountMoveLine" t-att-domain="row.row_domain">View/Edit</button>
+                                <button class="btn btn-primary o_open_move_list" t-attf-data-action="openAccountMoveLine" t-att-domain="row.row_domain">View/Edit</button>
                             </td>
                         </tr>
                     </tbody>
@@ -118,7 +115,7 @@
                                 </t>
                             </td>
                             <td>
-                                <button class="btn btn-primary" t-attf-data-action="openAccountMoveLine" t-att-domain="row.row_domain">View/Edit</button>
+                                <button class="btn btn-primary o_open_move_list" t-attf-data-action="openAccountMoveLine" t-att-domain="row.row_domain">View/Edit</button>
                             </td>
                         </tr>
                     </tbody>
@@ -127,20 +124,14 @@
         </div>
     </t>
 
-    <t t-name="search_template_date_filter">
+    <t t-name="search_template_fiscal_period_filter">
         <button type="button" class="o-no-caret btn btn-secondary dropdown-toggle" data-toggle="dropdown">
-            <span class="fa fa-calendar" title="Dates" role="img" aria-label="Dates"/>
-            <t t-if="widget.data.filters.date" t-esc="widget.data.filters.date.string"/>
-            <t t-else="" t-esc="Date"/>
+            <t t-set="activePeriod" t-value="widget.getActivePeriod()"></t>
+            <span class="fa fa-calendar" title="Periods" role="img" aria-label="Periods"/>
+            <t t-if="activePeriod" t-esc="activePeriod.name"/>
         </button>
         <div class="dropdown-menu o_filter_menu" role="menu">
-            <a role="menuitem" class="dropdown-item js_account_report_date_filter" title="This Month" data-filter="this_month">This Month</a>
-            <a role="menuitem" class="dropdown-item js_account_report_date_filter" title="This Quarter" data-filter="this_quarter">This Quarter</a>
-            <a role="menuitem" class="dropdown-item js_account_report_date_filter" title="This Financial Year" data-filter="this_year">This Financial Year</a>
-            <div role="separator" class="dropdown-divider"></div>
-            <a role="menuitem" class="dropdown-item js_account_report_date_filter" title="Last Month" data-filter="last_month">Last Month</a>
-            <a role="menuitem" class="dropdown-item js_account_report_date_filter" title="Last Quarter" data-filter="last_quarter">Last Quarter</a>
-            <a role="menuitem" class="dropdown-item js_account_report_date_filter" title="Last Financial Year" data-filter="last_year">Last Financial Year</a>
+            <a t-foreach="widget.data.filters.fiscal_periods" t-as="period" role="menuitem" class="dropdown-item js_gstr_fiscal_period_filter" t-att-title="period.name" data-filter="period.id"><t t-esc="period.name"/></a>
         </div>
     </t>
 
@@ -148,7 +139,7 @@
         <button type="button" class="o-no-caret btn btn-secondary dropdown-toggle" data-toggle="dropdown">
             <span class="fa fa-book"/>
             Journals:
-            <t t-set="selected_journals" t-value="widget.filters.selected_journal"/>
+            <t t-set="selected_journals" t-value="widget.getActiveJournals()"/>
             <t t-if="selected_journals">
                 <t t-esc="selected_journals"/>
             </t>
@@ -170,7 +161,7 @@
                         </a>
                     </t> -->
                     <t>
-                        <a role="menuitem" class="dropdown-item js_account_report_choice_filter" t-att-title="j.name + '-' + j.code" t-att-data-id="j.id" data-filter="journals">
+                        <a role="menuitem" class="dropdown-item js_gstr_journal_filter" t-att-title="j.name + '-' + j.code" t-att-data-id="j.id" data-filter="journals">
                             <t t-esc="j.name"/>
                         </a>
                     </t>
@@ -180,8 +171,8 @@
     </t>
 
     <t t-name="search_template">
-        <div class="btn-group dropdown o_account_reports_filter_date" t-if="widget.data.filters.date">
-            <t t-call="search_template_date_filter"/>
+        <div class="btn-group dropdown o_account_reports_filter_date">
+            <t t-call="search_template_fiscal_period_filter"/>
         </div>
         <div class="btn-group dropdown o_account_reports_filter_journals" t-if="widget.data.filters.journals">
             <t t-call="search_template_journals"/>
