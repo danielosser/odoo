@@ -3,7 +3,7 @@
 
 import logging
 import time
-
+import timeit
 from odoo.tests import common, tagged
 from odoo.tests.common import users, warmup
 
@@ -16,7 +16,7 @@ class TestPERF(common.TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.ENTITIES = 50
+        cls.ENTITIES = 1
 
         cls.products = cls.env['product.product'].create([{
             'name': 'Product %s' % i,
@@ -48,9 +48,9 @@ class TestPERF(common.TransactionCase):
         } for i in range(self.ENTITIES)]
 
         with self.assertQueryCount(admin=1148):
-            t0 = time.time()
+            t0 = timeit.default_timer()
             self.env["sale.order"].create(vals_list)
-            t1 = time.time()
+            t1 = timeit.default_timer()
             _logger.info(MSG, 'sale.order', self.ENTITIES, "BATCH", t1 - t0)
             self.env.cr.flush()
-            _logger.info(MSG, 'sale.order', self.ENTITIES, "FLUSH", time.time() - t1)
+            _logger.info(MSG, 'sale.order', self.ENTITIES, "FLUSH", timeit.default_timer() - t1)
