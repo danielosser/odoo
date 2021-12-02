@@ -57,7 +57,15 @@ function factory(dependencies) {
          * Send the attachment for the browser to download.
          */
         download() {
-            this.env.services.navigate(`/web/content/ir.attachment/${this.id}/datas`, { download: true });
+            if (
+                this.messaging.currentGuest &&
+                this.originThread &&
+                this.originThread.model === 'mail.channel'
+            ) {
+                this.env.services.navigate(this.downloadUrl, { download: true });
+            } else {
+                this.env.services.navigate(`/web/content/ir.attachment/${this.id}/datas`, { download: true });
+            }
         }
 
         /**

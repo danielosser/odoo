@@ -136,8 +136,16 @@ export class AttachmentViewer extends Component {
      * @private
      */
     _download() {
-        const id = this.attachmentViewer.attachment.id;
-        this.env.services.navigate(`/web/content/ir.attachment/${id}/datas`, { download: true });
+        const attachment = this.attachmentViewer.attachment;
+        if (
+            this.messaging.currentGuest &&
+            attachment.originThread &&
+            attachment.originThread.model === 'mail.channel'
+        ) {
+            this.env.services.navigate(attachment.downloadUrl, { download: true });
+        } else {
+            this.env.services.navigate(`/web/content/ir.attachment/${attachment.id}/datas`, { download: true });
+        }
     }
 
     /**
@@ -227,7 +235,7 @@ export class AttachmentViewer extends Component {
                     </script>
                 </head>
                 <body onload='onloadImage()'>
-                    <img src="${this.attachmentViewer.attachment.defaultSource}" alt=""/>
+                    <img src="${this.attachmentViewer.imageUrl}" alt=""/>
                 </body>
             </html>`);
         printWindow.document.close();
