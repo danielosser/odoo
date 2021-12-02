@@ -6,6 +6,7 @@ import { FieldCommand, unlinkAll } from '@mail/model/model_field_command';
 import { Listener } from '@mail/model/model_listener';
 import { patchClassMethods, patchInstanceMethods } from '@mail/utils/utils';
 import { makeDeferred } from '@mail/utils/deferred/deferred';
+import { SelfOrderingSet } from '@mail/utils/self_ordering_set/self_ordering_set';
 
 /**
  * Object that manage models and records, notably their update cycle: whenever
@@ -488,6 +489,7 @@ export class ModelManager {
                             'related',
                             'relationType',
                             'required',
+                            'sort',
                             'to',
                         ].includes(key)
                     );
@@ -502,6 +504,9 @@ export class ModelManager {
                     }
                     if (field.required && !(['one2one', 'many2one'].includes(field.relationType))) {
                         throw new Error(`Relational field "${Model}/${fieldName}" has "required" true with a relation of type "${field.relationType}" but "required" is only supported for "one2one" and "many2one".`);
+                    }
+                    if (field.sort && !(['one2many', 'many2many'].includes(field.relationType))) {
+                        throw new Error(`Relational field "${Model}/${fieldName}" has "sort" with a relation of type "${field.relationType}" but "sort" is only supported for "one2many" and "many2many".`);
                     }
                 }
                 // 3. Computed field.
@@ -739,7 +744,7 @@ export class ModelManager {
             record.__values[field.fieldName] = undefined;
             if (field.fieldType === 'relation') {
                 if (['one2many', 'many2many'].includes(field.relationType)) {
-                    record.__values[field.fieldName] = new Set();
+                    record.__values[field.fieldName] = field.sort ? new SelfOrderingSet(() => record[field.sort]()) : new Set();
                 }
             }
         }

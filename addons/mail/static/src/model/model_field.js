@@ -24,6 +24,7 @@ export class ModelField {
         related,
         relationType,
         required = false,
+        sort,
         to,
     } = {}) {
         /**
@@ -97,6 +98,11 @@ export class ModelField {
          * null or empty string are NOT considered empty value, meaning these values meet the requirement.
         */
         this.required = required;
+        /**
+         * Determines the name of the compare function used to sort records on
+         * this field (only makes sense for relational x2many).
+         */
+        this.sort = sort;
         /**
          * This prop only makes sense in a relational field. Determine which
          * model name this relation refers to.
