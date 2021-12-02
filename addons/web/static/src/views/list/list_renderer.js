@@ -1,7 +1,9 @@
 /** @odoo-module **/
 
 import { browser } from "@web/core/browser/browser";
+import { Domain } from "@web/core/domain";
 import { CheckBoxDropdownItem } from "@web/core/dropdown/checkbox_dropdown_item";
+import { evaluateExpr } from "@web/core/py_js/py";
 import { registry } from "@web/core/registry";
 import { Field } from "@web/fields/field";
 import { ViewButton } from "@web/views/view_button/view_button";
@@ -207,8 +209,11 @@ export class ListRenderer extends Component {
             this.cellClassByColumn[column.name] = classNames;
         }
         const modifiersClassNames = [];
-        if (column.invisible && column.invisible.contains(record.data)) {
-            modifiersClassNames.push("o_invisible_modifier");
+        if (column.type === "field") {
+            const invisible = record.activeFields[column.name].modifiers.invisible;
+            if (invisible && new Domain(invisible).contains(record.data)) {
+                modifiersClassNames.push("o_invisible_modifier");
+            }
         }
 
         return [...this.cellClassByColumn[column.name], ...modifiersClassNames].join(" ");
@@ -232,6 +237,7 @@ export class ListRenderer extends Component {
 
     getButtonClass(button, record) {
         const classes = [...button.classes];
+        // new Domain(evaluateExpr(button.invisible, record.data)).contains(record.data);
         if (button.invisible && button.invisible.contains(record.data)) {
             classes.push("o_invisible_modifier");
         }

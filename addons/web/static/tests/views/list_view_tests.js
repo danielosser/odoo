@@ -724,7 +724,6 @@ QUnit.module("Views", (hooks) => {
             patchWithCleanup(list.env.services.action, {
                 doActionButton: async (params) => {
                     const { buttonContext, context, name, resModel, resIds, type } = params;
-                    debugger;
                     // Action's own properties
                     assert.strictEqual(name, "x");
                     assert.strictEqual(type, "object");

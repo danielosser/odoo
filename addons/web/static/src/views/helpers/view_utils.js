@@ -1,5 +1,7 @@
 /** @odoo-module */
 
+import { Domain } from "@web/core/domain";
+import { evaluateExpr } from "@web/core/py_js/py";
 import { isAttr } from "../../core/utils/xml";
 
 export const X2M_TYPES = ["one2many", "many2many"];

@@ -2,20 +2,20 @@
 
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
-import { XMLParser, isAttr } from "@web/core/utils/xml";
+import { isAttr, XMLParser } from "@web/core/utils/xml";
+import { Field } from "@web/fields/field";
 import { usePager } from "@web/search/pager_hook";
 import { useModel } from "@web/views/helpers/model";
 import { standardViewProps } from "@web/views/helpers/standard_view_props";
 import { useSetupView } from "@web/views/helpers/view_hook";
 import { Layout } from "@web/views/layout";
-import { getActiveActions, processButton } from "../helpers/view_utils";
-import { ListRenderer } from "./list_renderer";
-import { RelationalModel } from "../relational_model";
 import { useViewButtons } from "@web/views/view_button/hook";
-import { Field } from "@web/fields/field";
 import { ViewButton } from "@web/views/view_button/view_button";
+import { getActiveActions, processButton } from "../helpers/view_utils";
+import { RelationalModel } from "../relational_model";
+import { ListRenderer } from "./list_renderer";
 
-const { onWillStart, useState, useSubEnv } = owl.hooks;
+const { onWillStart, useSubEnv } = owl.hooks;
 
 export class ListViewHeaderButton extends ViewButton {
     async onClick() {
