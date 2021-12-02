@@ -506,29 +506,49 @@ class AccountEdiFormat(models.Model):
             # Sometimes, the vat is specified with some whitespaces.
             normalized_vat = vat.replace(' ', '')
 
-            # Country prefix is optional.
-            country_prefix = normalized_vat[:2]
-            if country_prefix.isalpha():
+            partner = self.env['res.partner'].search([('vat', '=', normalized_vat)], limit=1)
+
+            # Try to remove the country code prefix from the vat.
+            if not partner and len(normalized_vat) > 2 and normalized_vat[:2].isalpha():
+                country_prefix = normalized_vat[:2]
                 normalized_vat = normalized_vat[2:]
+                partner = self.env['res.partner'].search(extra_domain + [
+                    ('vat', '=', normalized_vat),
+                    ('country_id', '!=', False),
+                    ('country_id.code', '=', country_prefix.lower()),
+                ], limit=1)
 
-            try:
-                # We want to remove the zeros at the beginning of normalized_vat if it only consists of digits".
-                normalized_vat = str(int(normalized_vat))
-            except ValueError:
-                pass
+                # The country could be not specified.
+                if not partner:
+                    partner = self.env['res.partner'].search(extra_domain + [
+                        ('vat', '=', normalized_vat),
+                        ('country_id', '=', False),
+                    ], limit=1)
 
-            query = self.env['res.partner']._where_calc([('active', '=', True)], extra_domain)
-            tables, where_clause, where_params = query.get_sql()
+            # The vat could be a string of alphanumeric values without country code but with missing zeros at the
+            # beginning.
+            if not partner:
+                try:
+                    vat_only_alphanumeric = str(int(normalized_vat))
 
-            self._cr.execute(f'''
-                SELECT res_partner.id
-                FROM {tables}
-                WHERE {where_clause}
-                AND res_partner.vat ~ %s
-                LIMIT 1
-            ''', where_params + ['^([A-z]{2})?0*%s$' % normalized_vat])
-            partner_row = self._cr.fetchone()
-            return self.env['res.partner'].browse(partner_row[0]) if partner_row else None
+                    query = self.env['res.partner']._where_calc([('active', '=', True)], extra_domain)
+                    tables, where_clause, where_params = query.get_sql()
+
+                    self._cr.execute(f'''
+                        SELECT res_partner.id
+                        FROM {tables}
+                        WHERE {where_clause}
+                        AND res_partner.vat ~ %s
+                        LIMIT 1
+                    ''', where_params + ['^0*%s$' % vat_only_alphanumeric])
+                    partner_row = self._cr.fetchone()
+                    if partner_row:
+                        partner = self.env['res.partner'].browse(partner_row[0])
+
+                except ValueError:
+                    pass
+
+            return partner
 
         def search_with_phone_mail(extra_domain):
             domains = []
