@@ -2,9 +2,9 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 from odoo import models
-from odoo.tests.common import TransactionCase
+from odoo.tests.common import TransactionCase, tagged
 
-
+@tagged('prout')
 class TestStreetFields(TransactionCase):
 
     @classmethod
@@ -54,6 +54,7 @@ class TestStreetFields(TransactionCase):
         # test street -> street values (compute)
         for idx, (company_values, expected_vals) in enumerate(zip(input_values, expected)):
             company_values['name'] = 'Test-%2d' % idx
+            print(company_values)
             company = self.env['res.company'].create(company_values)
             self.assertStreetVals(company, expected_vals)
             self.assertStreetVals(company.partner_id, expected_vals)
@@ -63,6 +64,9 @@ class TestStreetFields(TransactionCase):
             company_values['name'] = 'TestNew-%2d' % idx
             expected_street = company_values.pop('street')
             company_values.update(expected_vals)
+            print(company_values)
+            if company_values['name'] == "TestNew- 0":
+                import pdb; pdb.set_trace()
             company = self.env['res.company'].create(company_values)
             self.assertEqual(company.street, expected_street)
             self.assertStreetVals(company, company_values)
