@@ -6409,6 +6409,32 @@ QUnit.module('basic_fields', {
         form.destroy();
     });
 
+    QUnit.test('priority widget tooltip', async function (assert) {
+        assert.expect(2);
+
+        var form = await createView({
+            View: FormView,
+            model: 'partner',
+            data: this.data,
+            arch: '<form string="Partners">' +
+                    '<sheet>' +
+                        '<group>' +
+                            '<field name="selection" widget="priority"/>' +
+                        '</group>' +
+                    '</sheet>' +
+                '</form>',
+            res_id: 1,
+        });
+
+        // check hover string
+        assert.strictEqual(form.$('.o_field_widget.o_priority').find('a.o_priority_star')[0].title, 'Selection: Blocked',
+            "should have the field name");
+        assert.strictEqual(form.$('.o_field_widget.o_priority').find('a.o_priority_star')[1].title, 'Selection: Done',
+            "should have the field name");
+
+        form.destroy();
+    });
+
     QUnit.test('priority widget in form view', async function (assert) {
         assert.expect(22);
 
