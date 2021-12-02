@@ -64,14 +64,15 @@ class Slide(models.Model):
             if slide.slide_category == 'certification':
                 slide.slide_type = 'certification'
 
-    @api.model
-    def create(self, values):
-        rec = super(Slide, self).create(values)
-        if rec.survey_id:
-            rec.slide_category = 'certification'
-        if 'survey_id' in values:
-            rec._ensure_challenge_category()
-        return rec
+    @api.model_create_multi
+    def create(self, vals_list):
+        slides = super().create(vals_list)
+        for slide, vals in zip(slides, vals_list):
+            if slide.survey_id:
+                slide.slide_category = 'certification'
+            if 'survey_id' in vals:
+                slide._ensure_challenge_category()
+        return slides
 
     def write(self, values):
         old_surveys = self.mapped('survey_id')

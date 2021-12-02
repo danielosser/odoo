@@ -136,14 +136,15 @@ class StockPickingBatch(models.Model):
     # -------------------------------------------------------------------------
     # CRUD
     # -------------------------------------------------------------------------
-    @api.model
-    def create(self, vals):
-        if vals.get('name', '/') == '/':
-            if vals.get('is_wave'):
-                vals['name'] = self.env['ir.sequence'].next_by_code('picking.wave') or '/'
-            else:
-                vals['name'] = self.env['ir.sequence'].next_by_code('picking.batch') or '/'
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', '/') == '/':
+                if vals.get('is_wave'):
+                    vals['name'] = self.env['ir.sequence'].next_by_code('picking.wave') or '/'
+                else:
+                    vals['name'] = self.env['ir.sequence'].next_by_code('picking.batch') or '/'
+        return super().create(vals_list)
 
     def write(self, vals):
         res = super().write(vals)
