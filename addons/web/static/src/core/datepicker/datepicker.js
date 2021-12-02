@@ -44,7 +44,6 @@ const luxonFormatToMomentFormat = (format) => {
  */
 export class DatePicker extends Component {
     setup() {
-        debugger;
         this.inputRef = useRef("input");
         this.state = useState({ warning: false });
 
