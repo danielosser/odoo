@@ -681,22 +681,7 @@ class Channel(models.Model):
         self.message_unsubscribe(partner_ids=partner_ids)
 
         if removed_channel_partner_domain:
-            self.env['slide.channel.partner'].sudo().search(removed_channel_partner_domain).unlink()
-
-    def _archive_channel(self, partner_ids):
-        if not partner_ids:
-            raise ValueError("Do not use this method with an empty partner_id recordset")
-
-        archive_channel_partner_domain = []
-        for channel in self:
-            archive_channel_partner_domain = expression.OR([
-                archive_channel_partner_domain,
-                [('partner_id', 'in', partner_ids),
-                 ('channel_id', '=', channel.id)]
-            ])
-
-        if archive_channel_partner_domain:
-            self.env['slide.channel.partner'].sudo().search(archive_channel_partner_domain).action_archive()
+            self.env['slide.channel.partner'].sudo().search(removed_channel_partner_domain).action_archive()
 
     def action_view_slides(self):
         action = self.env["ir.actions.actions"]._for_xml_id("website_slides.slide_slide_action")
