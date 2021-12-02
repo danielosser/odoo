@@ -18,9 +18,9 @@ import { ViewButton } from "@web/views/view_button/view_button";
 const { onWillStart, useState, useSubEnv } = owl.hooks;
 
 export class ListViewHeaderButton extends ViewButton {
-    onClick() {
+    async onClick() {
         const clickParams = this.props.clickParams;
-        const { resModel, resIds } = this.props.record;
+        const { resModel, resIds } = await this.props.getInfo();
 
         clickParams.buttonContext = {
             active_domain: this.props.domain,
@@ -31,7 +31,7 @@ export class ListViewHeaderButton extends ViewButton {
 
         this.trigger("action-button-clicked", {
             clickParams,
-            record: this.props.record,
+            record: { resModel, resIds },
         });
     }
 }
@@ -73,6 +73,7 @@ export class ListArchParser extends XMLParser {
         let headerButtons = [];
         const groupListArchParser = new GroupListArchParser();
         let buttonGroup = undefined;
+        const config = {};
         this.visitXML(arch, (node) => {
             if (node.tagName !== "button") {
                 buttonGroup = undefined;
@@ -139,10 +140,12 @@ export class ListArchParser extends XMLParser {
                     id: buttonId++,
                 }));
                 return false;
+            } else if (node.tagName === "tree") {
+                config.limit = parseInt(node.getAttribute("limit"));
             }
         });
 
-        return { activeActions, headerButtons, fields: activeFields, columns, groupBy };
+        return { activeActions, config, headerButtons, fields: activeFields, columns, groupBy };
     }
 }
 
@@ -152,7 +155,7 @@ class ListView extends owl.Component {
     setup() {
         this.actionService = useService("action");
         this.user = useService("user");
-        debugger;
+
         this.archInfo = new ListArchParser().parse(this.props.arch, this.props.fields);
         this.activeActions = this.archInfo.activeActions;
         this.model = useModel(RelationalModel, {
@@ -161,6 +164,7 @@ class ListView extends owl.Component {
             activeFields: this.archInfo.fields,
             viewMode: "list",
             groupByInfo: this.archInfo.groupBy.fields,
+            limit: this.archInfo.config.limit,
         });
         useViewButtons(this.model);
 
@@ -169,6 +173,7 @@ class ListView extends owl.Component {
         });
 
         this.openRecord = this.openRecord.bind(this);
+        this.getInfo = this.getInfo.bind(this);
 
         useSubEnv({ model: this.model }); // do this in useModel?
 
@@ -189,38 +194,6 @@ class ListView extends owl.Component {
                 },
             };
         });
-        this.state = useState({
-            selection: [],
-        });
-
-        this.toggleSelection = () => {
-            if (this.state.selection.length === this.model.root.records.length) {
-                this.state.selection = [];
-            } else {
-                this.state.selection = [...this.model.root.records];
-            }
-        };
-
-        this.toggleRecordSelection = (record) => {
-            const index = this.state.selection.indexOf(record);
-            if (index > -1) {
-                this.state.selection.splice(index, 1);
-            } else {
-                this.state.selection.push(record);
-            }
-        };
-
-        this.getRecords = () => {
-            const resModel = this.model.root.resModel;
-            let resIds = [];
-            if (this.state.selection) {
-                resIds = this.state.selection.map((el) => el.resId);
-            }
-            return {
-                resIds,
-                resModel,
-            };
-        };
     }
 
     openRecord(record) {
@@ -230,6 +203,43 @@ class ListView extends owl.Component {
 
     onClickCreate() {
         this.actionService.switchView("form", { resId: undefined });
+    }
+
+    async getInfo() {
+        const root = this.model.root;
+        const resModel = root.resModel;
+        let selection;
+        if (root.isDomainSelected) {
+            selection = await this.model.orm.searchRead(this.resModel, this.domain, ["id"]);
+        } else {
+            selection = root.selection;
+        }
+        const resIds = selection.map((r) => r.resId);
+        return {
+            resIds,
+            resModel,
+        };
+    }
+
+    onSelectDomain() {
+        this.model.root.selectDomain(true);
+    }
+
+    get nbSelected() {
+        return this.model.root.selection.length;
+    }
+
+    get isPageSelected() {
+        const root = this.model.root;
+        return root.selection.length === root.records.length;
+    }
+
+    get isDomainSelected() {
+        return this.model.root.isDomainSelected;
+    }
+
+    get nbTotal() {
+        return this.model.root.count;
     }
 }
 

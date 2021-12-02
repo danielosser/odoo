@@ -29,17 +29,12 @@ export class ListRenderer extends Component {
         this.getOptionalActiveFields();
         this.activeActions = this.props.info.activeActions;
         this.cellClassByColumn = {};
-        this.selection = this.props.selection;
         this.groupByButtons = this.props.info.groupBy.buttons;
         this.state = useState({
             columns: this.allColumns.filter(
                 (col) => !col.optional || this.optionalActiveFields[col.name]
             ),
         });
-    }
-
-    willUpdateProps() {
-        this.selection = [];
     }
 
     editGroupRecord(group) {
@@ -108,14 +103,19 @@ export class ListRenderer extends Component {
         }
     }
     get selectAll() {
-        let nbDisplayedRecords = this.props.list.records.length;
-        return nbDisplayedRecords > 0 && this.props.selection.length === nbDisplayedRecords;
+        const list = this.props.list;
+        let nbDisplayedRecords = list.records.length;
+        if (list.isDomainSelected) {
+            return true;
+        } else {
+            return nbDisplayedRecords > 0 && list.selection.length === nbDisplayedRecords;
+        }
     }
 
     get aggregates() {
         let values;
-        if (this.props.selection.length) {
-            values = this.props.selection.map((r) => r.data);
+        if (this.props.list.selection && this.props.list.selection.length) {
+            values = this.props.list.selection.map((r) => r.data);
         } else if (this.props.list.isGrouped) {
             values = this.props.list.groups.map((g) => g.aggregates);
         } else {
@@ -335,11 +335,22 @@ export class ListRenderer extends Component {
     }
 
     toggleSelection() {
-        this.props.toggleSelection();
+        const list = this.props.list;
+        if (list.selection.length === list.records.length) {
+            list.records.forEach((record) => {
+                record.toggleSelection(false);
+                list.selectDomain(false);
+            });
+        } else {
+            list.records.forEach((record) => {
+                record.toggleSelection(true);
+            });
+        }
     }
 
     toggleRecordSelection(record) {
-        this.props.toggleRecordSelection(record);
+        record.toggleSelection();
+        this.props.list.selectDomain(false);
     }
 
     toggleOptionalField(ev) {

@@ -724,6 +724,7 @@ QUnit.module("Views", (hooks) => {
             patchWithCleanup(list.env.services.action, {
                 doActionButton: async (params) => {
                     const { buttonContext, context, name, resModel, resIds, type } = params;
+                    debugger;
                     // Action's own properties
                     assert.strictEqual(name, "x");
                     assert.strictEqual(type, "object");
@@ -766,32 +767,6 @@ QUnit.module("Views", (hooks) => {
                     </header>
                     <field name="foo" />
                 </tree>`,
-                // intercepts: {
-                //     async execute_action(ev) {
-                //         assert.step("execute_action");
-                //         const {
-                //             action_data: { context, name, type },
-                //             env,
-                //         } = ev.data;
-                //         // Action's own properties
-                //         assert.strictEqual(name, "x");
-                //         assert.strictEqual(type, "object");
-
-                //         // The action's execution context
-                //         assert.deepEqual(context, {
-                //             active_domain: [],
-                //             active_id: 1,
-                //             active_ids: [1, 2, 3, 4],
-                //             active_model: "foo",
-                //         });
-                //         // The current environment (not owl's, but the current action's)
-                //         assert.deepEqual(env, {
-                //             context: {},
-                //             model: "foo",
-                //             resIDs: [1, 2, 3, 4],
-                //         });
-                //     },
-                // },
                 mockRPC(route, args) {
                     if (args.method === "search") {
                         assert.step("search");
@@ -815,18 +790,12 @@ QUnit.module("Views", (hooks) => {
                         active_ids: [1, 2, 3, 4],
                         active_model: "foo",
                     });
-                    // // The current environment (not owl's, but the current action's)
-                    // assert.deepEqual(env, {
-                    //     context: {},
-                    //     model: "foo",
-                    //     resIDs: [1, 2, 3, 4],
-                    // });
+
                     assert.strictEqual(JSON.stringify(context), "{}");
                     assert.strictEqual(resModel, "foo");
                     assert.deepEqual([...resIds], [1, 2, 3, 4]);
                 },
             });
-            debugger;
             await click(
                 list.el.querySelector('.o_data_row .o_list_record_selector input[type="checkbox"]')
             );
