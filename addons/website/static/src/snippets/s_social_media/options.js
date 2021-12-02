@@ -1,5 +1,5 @@
 /** @odoo-module **/
-import { _t } from 'web.core';
+import {_t} from 'web.core';
 import options from 'web_editor.snippets.options';
 
 
@@ -94,6 +94,20 @@ options.registry.SocialMedia = options.Class.extend({
     renderListItems: async function (previewMode, value, params) { // This will receive data from we-list widget and will update the target.
         const entries = JSON.parse(value);
         const newDBLinks = [];
+        // TODO : handle the case where an element have been removed from the list.
+        const anchorsEls = this.$target[0].querySelectorAll('a[data-social-id]');
+        if (entries.length < anchorsEls.length) {
+            console.log('[SocialMedia] Warning: some elements have been removed from the list.');
+            const existingSocialIds = entries.map(entry => entry.el_name);
+            console.log('[SocialMedia] existingSocialIds: ', existingSocialIds);
+            for (let i = 0; i < anchorsEls.length; i++) {
+                const socialId = anchorsEls[i].dataset.socialId;
+                if (!existingSocialIds.includes(socialId)) {
+                    console.log('[SocialMedia] Removing socialId: ', socialId);
+                    console.log('[SocialMedia] Removing anchorEl: ', anchorsEls[i]);
+                }
+            }
+        }
         //const anchorsEls = this.$target[0].querySelectorAll('a[data-social-id]');
 /*         if (entries.length < anchorsEls.length) {
             const existingSocialIds = entries.map(entry => entry.el_name);
@@ -124,12 +138,13 @@ options.registry.SocialMedia = options.Class.extend({
             // Handle toggle visibility of the link
             anchorEl.classList.toggle('d-none', !entry.is_toggled);
 
-            // build table for db links
+            // fill table for db links
             if (entry.el_name in localUrlByDbField) {
                 newDBLinks[entry.el_name] = entry.display_name;
                 dbData[entry.el_name] = entry.display_name;
             } else {
                 // Handle URL change for custom links.
+                // TODO search a amazing fa-icon that match the url.
                 anchorEl.setAttribute('href', entry.display_name);
             }
             // Place it at the correct position
