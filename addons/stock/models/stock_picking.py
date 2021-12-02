@@ -88,25 +88,24 @@ class PickingType(models.Model):
         'res.company', 'Company', required=True,
         default=lambda s: s.env.company.id, index=True)
 
-    @api.model
-    def create(self, vals):
-        if 'sequence_id' not in vals or not vals['sequence_id']:
-            if vals['warehouse_id']:
-                wh = self.env['stock.warehouse'].browse(vals['warehouse_id'])
-                vals['sequence_id'] = self.env['ir.sequence'].sudo().create({
-                    'name': wh.name + ' ' + _('Sequence') + ' ' + vals['sequence_code'],
-                    'prefix': wh.code + '/' + vals['sequence_code'] + '/', 'padding': 5,
-                    'company_id': wh.company_id.id,
-                }).id
-            else:
-                vals['sequence_id'] = self.env['ir.sequence'].sudo().create({
-                    'name': _('Sequence') + ' ' + vals['sequence_code'],
-                    'prefix': vals['sequence_code'], 'padding': 5,
-                    'company_id': vals.get('company_id') or self.env.company.id,
-                }).id
-
-        picking_type = super(PickingType, self).create(vals)
-        return picking_type
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if 'sequence_id' not in vals or not vals['sequence_id']:
+                if vals['warehouse_id']:
+                    wh = self.env['stock.warehouse'].browse(vals['warehouse_id'])
+                    vals['sequence_id'] = self.env['ir.sequence'].sudo().create({
+                        'name': wh.name + ' ' + _('Sequence') + ' ' + vals['sequence_code'],
+                        'prefix': wh.code + '/' + vals['sequence_code'] + '/', 'padding': 5,
+                        'company_id': wh.company_id.id,
+                    }).id
+                else:
+                    vals['sequence_id'] = self.env['ir.sequence'].sudo().create({
+                        'name': _('Sequence') + ' ' + vals['sequence_code'],
+                        'prefix': vals['sequence_code'], 'padding': 5,
+                        'company_id': vals.get('company_id') or self.env.company.id,
+                    }).id
+        return super().create(vals_list)
 
     def write(self, vals):
         if 'company_id' in vals:
