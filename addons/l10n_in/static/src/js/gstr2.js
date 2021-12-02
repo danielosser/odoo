@@ -1,4 +1,4 @@
-odoo.define('l10n_in.gstr1', function (require) {
+odoo.define('l10n_in.gstr2', function (require) {
     'use strict';
 
     const core = require('web.core');
@@ -9,7 +9,7 @@ odoo.define('l10n_in.gstr1', function (require) {
 
     const gstrWidget = AbstractAction.extend({
         hasControlPanel: true,
-        contentTemplate: 'GSTR1',
+        contentTemplate: 'GSTR2',
         events: {
             'click .o_open_move_list': 'openMoveList',
         },
@@ -24,224 +24,312 @@ odoo.define('l10n_in.gstr1', function (require) {
                     active_fiscal_period_filter: 1,
                     active_journal_filters: [1]
                 },
-                sections: {
-                    invoice_section: {
+                sections: [
+                    {
+                        section_title: 'Summary Of Supplies From Registered Suppliers B2B(3)',
                         columns: [
-                            { string: 'Type of Invoice' },
-                            { string: 'Count of Documents' },
-                            { string: 'Taxable Amount(A)(₹)' },
-                            { string: 'Tax Amount(B)(₹)' },
-                            { string: 'Invoice Value(₹)'},
+                            { string: 'No. of Suppliers' },
+                            { string: 'No. if Invoices' },
+                            { string: 'Total Invoice Value' },
+                            { string: 'Total Taxable Value' },
+                            { string: 'Total Integrated Tax Paid'},
+                            { string: 'Total Central Tax Paid' },
+                            { string: 'Total TState/UT Tax Paid' },
+                            { string: 'Total Cess' },
+                            { string: 'Total Availed ITC Integrated Tax' },
+                            { string: 'Total Availed ITC Central Tax' },
+                            { string: 'Total Availed ITC State/UT Tax' },
+                            { string: 'Total Availed ITC Cess' },
                         ],
                         rows: [
                             {
                                 row_data: [
-                                    { value: '<strong>B2B</strong> <span class="text-muted">(4A, 4B, 4C, 6B, 6C)</span>', type: 'html'},
-                                    { value: 1 },
-                                    { value: 100 },
-                                    { value: 10 },
-                                    { value: 110 }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>B2C Large</strong> <span class="text-muted">(5A, 5B)</span>', type: 'html' },
                                     { value: "" },
                                     { value: "" },
                                     { value: "" },
-                                    { value: "" }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>Credit/Debit Notes(Registered)</strong> <span class="text-muted">(9B)</span>', type: 'html' },
                                     { value: "" },
                                     { value: "" },
                                     { value: "" },
-                                    { value: "" }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>Credit/Debit Notes(Unregistered)</strong> <span class="text-muted">(9B)</span>', type: 'html' },
                                     { value: "" },
                                     { value: "" },
                                     { value: "" },
-                                    { value: "" }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>Export Invoices</strong> <span class="text-muted">(6A)</span>', type: 'html' },
                                     { value: "" },
                                     { value: "" },
                                     { value: "" },
-                                    { value: "" }
                                 ],
                                 row_domain: [[]],
                             },
                         ]
                     },
-                    other_section: {
+
+                    {
+                        section_title: 'Summary Of Supplies From Unregistered Suppliers B2BUR(4B)',
                         columns: [
-                            { string: 'Type of Invoice' },
-                            { string: 'Taxable Amount(A)(₹)' },
-                            { string: 'Tax Amount(B)(₹)' },
-                            { string: 'Invoice Value' },
+                            { string: 'No. of Invoices (Of Reg Recipient)' },
+                            { string: 'Total Invoice Value' },
+                            { string: 'Total Taxable Value' },
+                            { string: 'Total Integrated Tax Paid' },
+                            { string: 'Total Central Tax Paid' },
+                            { string: 'Total TState/UT Tax Paid' },
+                            { string: 'Total Cess Paid' },
+                            { string: 'Total Availed ITC Integrated Tax' },
+                            { string: 'Total Availed ITC Central Tax' },
+                            { string: 'Total Availed ITC State/UT Tax' },
+                            { string: 'Total Availed ITC Cess' },
                         ],
                         rows: [
                             {
                                 row_data: [
-                                    { value: '<strong>B2C Others</strong> <span class="text-muted">(7)</span>', type: 'html' },
-                                    { value: 100 },
-                                    { value: 10 },
-                                    { value: 110 }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>Nill Rated Supplies</strong> <span class="text-muted">(8A, 8B, 8C, 8D)</span>', type: 'html' },
                                     { value: "" },
                                     { value: "" },
-                                    { value: "" }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>Advances Received(Tax Liability)</strong> <span class="text-muted">(11A(1), 11A(2))</span>', type: 'html' },
                                     { value: "" },
                                     { value: "" },
-                                    { value: "" }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>Adjustment of Advances</strong> <span class="text-muted">(11B(1), 11B(2))</span>', type: 'html' },
                                     { value: "" },
                                     { value: "" },
-                                    { value: "" }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>HSN summary of outward supplies</strong> <span class="text-muted">(12)</span>', type: 'html' },
                                     { value: "" },
                                     { value: "" },
-                                    { value: "" }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>Documents Series Summary</strong> <span class="text-muted">(13)</span>', type: 'html' },
                                     { value: "" },
                                     { value: "" },
-                                    { value: "" }
+                                    { value: "" },
                                 ],
                                 row_domain: [[]],
                             },
                         ]
                     },
-                    amendments_section: {
+
+                    {
+                        section_title: 'Summary For IMPS (4C)',
                         columns: [
-                            { string: 'Type of Invoice' },
-                            { string: 'Count of Documents' },
-                            { string: 'Taxable Amount(A)(₹)' },
-                            { string: 'Tax Amount(B)(₹)' },
-                            { string: 'Invoice Value' },
+                            { string: 'No. of Invoices (Of Reg Recipient)' },
+                            { string: 'Total Invoice Value' },
+                            { string: 'Total Taxable Value' },
+                            { string: 'Total Integrated Tax Paid' },
+                            { string: 'Total Cess Paid' },
+                            { string: 'Total Availed ITC Integrated Tax  ' },
+                            { string: 'Total Availed ITC Cess' },
                         ],
                         rows: [
                             {
                                 row_data: [
-                                    { value: '<strong>B2B Amendments</strong> <span class="text-muted">(9A)</span>', type: 'html' },
-                                    { value: 1 },
-                                    { value: 100 },
-                                    { value: 10 },
-                                    { value: 110 }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>B2C Large Amendments</strong> <span class="text-muted">(9A)</span>', type: 'html' },
                                     { value: "" },
                                     { value: "" },
                                     { value: "" },
-                                    { value: "" }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>Credit/Debit Notes(Registered) Amendments</strong> <span class="text-muted">(9C)</span>', type: 'html' },
                                     { value: "" },
                                     { value: "" },
                                     { value: "" },
-                                    { value: "" }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>Credit/Debit Notes(Unregistered) Amendments</strong> <span class="text-muted">(9C)</span>', type: 'html' },
                                     { value: "" },
-                                    { value: "" },
-                                    { value: "" },
-                                    { value: "" }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>Export Invoices Amendments</strong> <span class="text-muted">(9A)</span>', type: 'html' },
-                                    { value: "" },
-                                    { value: "" },
-                                    { value: "" },
-                                    { value: "" }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>B2C Others Amendments</strong> <span class="text-muted">(10)</span>', type: 'html' },
-                                    { value: "" },
-                                    { value: "" },
-                                    { value: "" },
-                                    { value: "" }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>Advances Received(Tax Liability) Amendments</strong> <span class="text-muted">(11(2))</span>', type: 'html' },
-                                    { value: "" },
-                                    { value: "" },
-                                    { value: "" },
-                                    { value: "" }
-                                ],
-                                row_domain: [[]],
-                            },
-                            {
-                                row_data: [
-                                    { value: '<strong>Adjustment of Advances Amendments</strong> <span class="text-muted">(11(2))</span>', type: 'html' },
-                                    { value: "" },
-                                    { value: "" },
-                                    { value: "" },
-                                    { value: "" }
                                 ],
                                 row_domain: [[]],
                             },
                         ]
                     },
-                },
+
+                    {
+                        section_title: 'Summary For IMPG (5)',
+                        columns: [
+                            { string: 'No. of  Bill of Entry' },
+                            { string: 'Total Bill of Entry Value' },
+                            { string: 'Total Taxable Value' },
+                            { string: 'Total Integrated Tax Paid' },
+                            { string: 'Total Cess Paid' },
+                            { string: 'Total Availed ITC Integrated Tax' },
+                            { string: 'Total Availed ITC Cess' },
+                        ],
+                        rows: [
+                            {
+                                row_data: [
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                ],
+                                row_domain: [[]],
+                            },
+                        ]
+                    },
+
+                    {
+                        section_title: 'Summary For CDNR(6C)',
+                        columns: [
+                            { string: 'No. of Supplier' },
+                            { string: 'No. of Notes/Vouchers' },
+                            { string: 'No. of Invoices' },
+                            { string: 'Total Note/Voucher Value' },
+                            { string: 'Total Taxable Value' },
+                            { string: 'Total Integrated Tax Paid' },
+                            { string: 'Total Central Tax Paid' },
+                            { string: 'Total TState/UT Tax Paid' },
+                            { string: 'Total Cess' },
+                            { string: 'Total Availed ITC Integrated Tax' },
+                            { string: 'Total Availed ITC Central Tax' },
+                            { string: 'Total Availed ITC State/UT Tax' },
+                            { string: 'Total Availed ITC Cess' },
+                        ],
+                        rows: [
+                            {
+                                row_data: [
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                ],
+                                row_domain: [[]],
+                            },
+                        ]
+                    },
+
+                    {
+                        section_title: 'Summary For CDNUR(6C)',
+                        columns: [
+                            { string: 'No of Notes/Vouchers' },
+                            { string: 'No. of Invoices' },
+                            { string: 'Total Note/Refund Voucher Value' },
+                            { string: 'Total Taxable Value' },
+                            { string: 'Total Integrated Tax Paid' },
+                            { string: 'Total Central Tax Paid' },
+                            { string: 'Total TState/UT Tax Paid' },
+                            { string: 'Total Cess Paid' },
+                            { string: 'Total ITC Integrated Tax Amount' },
+                            { string: 'Total Central Tax Amount' },
+                            { string: 'Total ITC State/UT Tax Amount' },
+                            { string: 'Total ITC Cess Amount' },
+                        ],
+                        rows: [
+                            {
+                                row_data: [
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                ],
+                                row_domain: [[]],
+                            },
+                        ]
+                    },
+
+                    {
+                        section_title: 'Summary For  Tax Liability on Advance Paid  under reverse charge(10 A) ',
+                        columns: [
+                            { string: 'Total Advance Paid' },
+                            { string: 'Total Cess Amount' },
+                        ],
+                        rows: [
+                            {
+                                row_data: [
+                                    { value: "" },
+                                    { value: "" },
+                                ],
+                                row_domain: [[]],
+                            },
+                        ]
+                    },
+
+                    {
+                        section_title: 'Summary For Adjustment of advance tax paid earlier for reverse charge supplies (10 B)',
+                        columns: [
+                            { string: 'Total Advance Adjusted' },
+                            { string: 'Total Cess' },
+                        ],
+                        rows: [
+                            {
+                                row_data: [
+                                    { value: "" },
+                                    { value: "" },
+                                ],
+                                row_domain: [[]],
+                            },
+                        ]
+                    },
+
+                    {
+                        section_title: 'Summary For Composition, Nil rated, exempted and non GST inward supplies (7)',
+                        columns: [
+                            { string: 'Total Composition taxable person' },
+                            { string: 'Total Nil Rated Supplies' },
+                            { string: 'Total Exempted Supplies' },
+                            { string: 'Total Non-GST Supplies' },
+                        ],
+                        rows: [
+                            {
+                                row_data: [
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                ],
+                                row_domain: [[]],
+                            },
+                        ]
+                    },
+
+                    {
+                        section_title: 'Summary Input Tax credit Reversal/ Reclaim(11)',
+                        columns: [
+                            { string: 'Total ITC Integrated Tax Amount' },
+                            { string: 'Total Central Tax Amount' },
+                            { string: 'Total ITC State/UT Tax Amount' },
+                            { string: 'Total ITC Cess Amount' },
+                        ],
+                        rows: [
+                            {
+                                row_data: [
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                ],
+                                row_domain: [[]],
+                            },
+                        ]
+                    },
+
+                    {
+                        section_title: 'Summary For HSN(13)',
+                        columns: [
+                            { string: 'No. of HSN' },
+                            { string: 'Total Value' },
+                            { string: 'Total Taxable Value' },
+                            { string: 'Total Integrated Tax' },
+                            { string: 'Total Central Tax' },
+                            { string: 'Total State/UT Tax' },
+                            { string: 'Total Cess' },
+                        ],
+                        rows: [
+                            {
+                                row_data: [
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                    { value: "" },
+                                ],
+                                row_domain: [[]],
+                            },
+                        ]
+                    },
+                ],
             };
             return this._super(...arguments);
         },
@@ -276,7 +364,7 @@ odoo.define('l10n_in.gstr1', function (require) {
          *
          */
         generateSearchView() {
-            this.$searchview_buttons = $(QWeb.render("search_template", { widget: this }));
+            this.$searchview_buttons = $(QWeb.render("gstr2_search_template", { widget: this }));
             return Promise.resolve();
         },
 
@@ -371,5 +459,5 @@ odoo.define('l10n_in.gstr1', function (require) {
         }
     });
 
-    core.action_registry.add('account_report_gstr1', gstrWidget);
+    core.action_registry.add('account_report_gstr2', gstrWidget);
 });
