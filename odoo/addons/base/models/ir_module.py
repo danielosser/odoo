@@ -724,18 +724,18 @@ class Module(models.Model):
             'to_buy': False
         }
 
-    @api.model
-    def create(self, vals):
-        new = super(Module, self).create(vals)
-        module_metadata = {
-            'name': 'module_%s' % vals['name'],
+    @api.model_create_multi
+    def create(self, vals_list):
+        new_modules = super().create(vals_list)
+        module_metadata = [{
+            'name': 'module_%s' % module.name,
             'model': 'ir.module.module',
             'module': 'base',
-            'res_id': new.id,
+            'res_id': module.id,
             'noupdate': True,
-        }
+        } for module in new_modules]
         self.env['ir.model.data'].create(module_metadata)
-        return new
+        return new_modules
 
     # update the list of available packages
     @assert_log_admin_access

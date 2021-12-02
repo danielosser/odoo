@@ -200,6 +200,8 @@ class Company(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        if not vals_list:
+            return self
         for vals in vals_list:
             if not vals.get('favicon'):
                 vals['favicon'] = self._get_default_favicon()
