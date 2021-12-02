@@ -31,7 +31,7 @@ from werkzeug.urls import url_encode, url_parse, iri_to_uri
 import odoo
 import odoo.modules.registry
 from odoo.api import call_kw
-from odoo.addons.base.models.qweb import QWeb
+from odoo.addons.base.models.ir_qweb import IrQWeb
 from odoo.modules import get_resource_path, module
 from odoo.tools import html_escape, pycompat, ustr, apply_inheritance_specs, lazy_property, float_repr, osutil
 from odoo.tools.mimetypes import guess_mimetype

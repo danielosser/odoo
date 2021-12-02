@@ -20,7 +20,7 @@ from odoo.addons.base.models.ir_attachment import IrAttachment
 from odoo.modules.module import get_resource_path, read_manifest
 from odoo.tests import HttpCase, tagged
 from odoo.tests.common import TransactionCase
-from odoo.addons.base.models.qweb import QWebException
+from odoo.addons.base.models.ir_qweb import QWebException
 from odoo.tools import mute_logger, func
 
 

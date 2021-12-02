@@ -12,7 +12,7 @@ from lxml.builder import E
 
 from odoo.modules import get_module_resource
 from odoo.tests.common import TransactionCase
-from odoo.addons.base.models.qweb import QWebException
+from odoo.addons.base.models.ir_qweb import QWebException
 from odoo.tools import misc, mute_logger
 from odoo.tools.json import scriptsafe as json_scriptsafe
 
@@ -1135,7 +1135,7 @@ class TestQWebStaticXml(TransactionCase):
 
         return lambda: self.run_test_file(os.path.join(path, f))
 
-    @mute_logger('odoo.addons.base.models.qweb') # tests t-raw which is deprecated
+    @mute_logger('odoo.addons.base.models.ir_qweb') # tests t-raw which is deprecated
     def run_test_file(self, path):
         self.env.user.tz = 'Europe/Brussels'
         doc = etree.parse(path).getroot()
