@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import models
+from odoo import models, _
 from odoo.exceptions import UserError
 from odoo.tests.common import Form
 
@@ -101,6 +101,17 @@ class AccountEdiFormat(models.Model):
                 partner_vals['bis3_endpoint_scheme'] = COUNTRY_EAS[partner.country_id.code]
 
         return values
+
+    ####################################################
+    # Account.edi.format override
+    ####################################################
+
+    def _check_move_configuration(self, invoice):
+        errors = super()._check_move_configuration(invoice)
+        customer = invoice.commercial_partner_id
+        if customer.country_code not in COUNTRY_EAS:
+            errors.append(_("The customer's country must be specified and part of the EAS (Electronic Address Scheme) code list."))
+        return errors
 
     ####################################################
     # Import
