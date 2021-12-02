@@ -4408,9 +4408,7 @@ Fields:
         self.write(values)
 
     def _load_records_create(self, values):
-        if values:
-            return self.create(values)
-        return self
+        return self.create(values)
 
     def _load_records(self, data_list, update=False):
         """ Create or update records of this model, and assign XMLIDs.
